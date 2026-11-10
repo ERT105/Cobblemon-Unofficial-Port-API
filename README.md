@@ -1,7 +1,7 @@
-# Cooblemon — API para add-ons
+# Coblemon — API para add-ons
 
 Herramientas y documentación para crear add-ons de Minecraft Bedrock que
-añadan Pokémon a **Cooblemon**, el port no oficial de
+añadan Pokémon a **Coblemon**, el port no oficial de
 [Cobblemon](https://cobblemon.com/) a Bedrock.
 
 | Carpeta | Qué hay |
@@ -15,7 +15,7 @@ Cooblemon que la trae.
 
 ## Aviso
 
-Cooblemon **no es oficial** ni está respaldado por Cobblemon, The Pokémon
+Coblemon **no es oficial** ni está respaldado por Cobblemon, The Pokémon
 Company, Nintendo, Game Freak ni Creatures Inc.
 
 - La librería `cooblemon-api` es **MPL-2.0**.
