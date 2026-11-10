@@ -13,7 +13,8 @@ own.
 | --- | --- |
 | `BP/scripts/main.js` | Registration with `registerAddon`: species, night form, spawns, sprites, drops, battle animations and a new evolution for Cobblemon Bedrock's Pikachu. Plus events with `onCobblemonEvent`. |
 | `BP/scripts/cobblemon-bedrock-api.js` | The library, copied from `api/dist/`. |
-| `BP/entities/` | The entities (`pikachu_surf` and its form `pikachu_surf_night`). |
+| `BP/entities/` | The entities (`pikachu_surf`, its form `pikachu_surf_night` and its mega `pikachu_surf_mega`). |
+| `BP/items/`, `RP/textures/item_texture.json` | The mega stone (`ejemplo:surfite`) and a generic Key Stone for testing (`ejemplo:key_stone`). |
 | `RP/entity/`, `RP/textures/` | Client entities (with Cobblemon Bedrock's Pikachu model and animations) and their textures. |
 | `RP/font/glyph_F0.png` | The party panel portraits. |
 | `RP/texts/` | Name, description and the event texts. |
@@ -45,6 +46,7 @@ What should happen:
 | `/scriptevent ejemplo:gift` | A shiny Surfing Pikachu in an Ultra Ball, nicknamed "Wave", tagged `gift`. |
 | `/scriptevent ejemplo:heal` | Heals your party. |
 | `/scriptevent ejemplo:info` | Your party, your Pokédex totals and the wild Pokémon within 32 blocks. |
+| `/scriptevent ejemplo:mega` | Gives you the test Key Stone and a Surfite, and a Surfing Pikachu already holding one. Put the Key Stone in your offhand and battle: the Mega button turns it into Mega Surfing Pikachu (green, Electric/Water, Drizzle). |
 
 A Pokémon with a tag shows it in the event messages: catch the Articuno and
 the chat says `(tag: altar)`.

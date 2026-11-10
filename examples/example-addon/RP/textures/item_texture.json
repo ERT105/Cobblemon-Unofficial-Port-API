@@ -1,0 +1,12 @@
+{
+  "resource_pack_name": "ejemplo",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "ejemplo_surfite": {
+      "textures": "textures/items/water_stone"
+    },
+    "ejemplo_key_stone": {
+      "textures": "textures/items/shiny_stone"
+    }
+  }
+}

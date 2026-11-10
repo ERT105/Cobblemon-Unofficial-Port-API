@@ -12,6 +12,7 @@
 | `spawn` | `{ entries, levels }`: where and at what level they spawn. |
 | `sprites` | UI textures per variant. |
 | `evolutions` | New evolutions for species that aren't yours. |
+| `megas`, `megaAccessories` | Mega evolutions for your species, and the items that work as a Key Stone. See [Megas](#megas). |
 | `onAck` | What to do with the reply. By default, it goes to the content log. |
 
 It's sent when the world loads and whenever Cobblemon Bedrock asks for it,
@@ -107,6 +108,40 @@ evolutions: {
 
 Adds evolutions to species that aren't yours. The result must be one of your
 species. Cobblemon Bedrock's evolutions and other add-ons' aren't touched.
+
+## Megas
+
+Mega evolutions for your own species. The mega is a **form** you register in
+the species' `forms`, usually with `battleOnly: true`:
+
+- its types, base stats and abilities are used after mega evolving;
+- its entity, `myaddon:species_<form>`, is the model shown.
+
+Then say which stone triggers it and which items work as a Key Stone:
+
+```js
+registerAddon({
+  addon: "myaddon",
+  species: [/* …with a form { name: "mega", battleOnly: true, primaryType, baseStats, abilities } */],
+  megas: [{ species: "myaddon:voltrix", form: "mega", stones: ["myaddon:voltrite"], ability: "drizzle" }],
+  megaAccessories: ["myaddon:key_stone"],
+});
+```
+
+| Field | Notes |
+| --- | --- |
+| `species` | One of your species. Megas for other species aren't supported yet. |
+| `form` | The id of the mega form. |
+| `stones` | Item ids that trigger it, held by the Pokémon. They become holdable items. |
+| `ability` | Ability while mega evolved. Defaults to the form's first ability. |
+
+**Cobblemon Bedrock doesn't provide a Key Stone**, so `megaAccessories` must
+list at least one of your items, with `minecraft:allow_off_hand`. The player
+needs it **in the offhand**; then the battle shows the Mega button when the
+Pokémon holding the stone is out.
+
+Sprites for the mega form use its id like any other form:
+`"myaddon:voltrix|mega|0"`.
 
 ## Reply (`ack`)
 

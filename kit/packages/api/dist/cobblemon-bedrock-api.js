@@ -44,6 +44,7 @@ function registerAddon(def) {
     if (def.spawn?.entries.length) sendPacket("spawn", "spawn", def.spawn);
     if (def.sprites && Object.keys(def.sprites).length) sendPacket("sprites", "sprites", def.sprites);
     if (def.evolutions && Object.keys(def.evolutions).length) sendPacket("evolutions", "evolutions", def.evolutions);
+    if (def.megas?.length) sendPacket("megas", "megas", { entries: def.megas, accessories: def.megaAccessories ?? [] });
     send(ApiEvents.DONE, { addon: def.addon });
   };
   let registered = false;

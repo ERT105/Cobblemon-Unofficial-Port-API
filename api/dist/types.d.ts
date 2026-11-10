@@ -145,6 +145,22 @@ export interface SpriteSet {
     /** Party panel portrait: a character from U+F000 to U+F8FF in the add-on's glyph page. */
     glyph?: string;
 }
+/**
+ * A mega evolution. The mega itself is a form you register in the species'
+ * `forms` (usually with `battleOnly: true`): its types and base stats are used
+ * in battle, and its entity (`myaddon:species_<form>`) is the model shown
+ * after mega evolving.
+ */
+export interface MegaDefinition {
+    /** One of your species: `myaddon:species`. */
+    species: string;
+    /** The form id of the mega: `mega`, `mega_x`… */
+    form: string;
+    /** Held item ids that trigger it (your mega stone). */
+    stones: string[];
+    /** Ability while mega evolved. Defaults to the form's first ability. */
+    ability?: string;
+}
 /** Everything an add-on registers. */
 export interface AddonDefinition {
     /** The add-on's namespace: that of its entities and species. */
@@ -156,6 +172,13 @@ export interface AddonDefinition {
     sprites?: Record<string, SpriteSet>;
     /** New evolutions for species that aren't the add-on's: `{ "pikachu": [ … ] }`. */
     evolutions?: Record<string, Evolution[]>;
+    /** Mega evolutions for your own species. */
+    megas?: MegaDefinition[];
+    /**
+     * Item ids that work as a Key Stone (held in the offhand) for your megas.
+     * Cobblemon Bedrock doesn't provide one, so your add-on must.
+     */
+    megaAccessories?: string[];
     /** What to do with Cobblemon Bedrock's reply. By default, it goes to the content log. */
     onAck?: (ack: Ack) => void;
 }

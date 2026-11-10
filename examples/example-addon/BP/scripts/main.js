@@ -7,18 +7,21 @@
  * - its sprites, including the party panel portrait (its own glyphs);
  * - its drops and its battle animations;
  * - a new evolution for Cobblemon Bedrock's Pikachu: with a Water Stone, into this one;
+ * - a mega evolution (`ejemplo:pikachu_surf_mega`), triggered by its stone
+ *   (`ejemplo:surfite`) with a generic test Key Stone (`ejemplo:key_stone`)
+ *   in the offhand;
  * - it listens to Cobblemon Bedrock's events (captures, battles, levels…)
  *   and reports them in chat;
  * - and it has test commands that ask Cobblemon Bedrock to do things
  *   (actions and queries), run with `/scriptevent ejemplo:<command>`:
- *   `altar`, `boss`, `gift`, `heal` and `info`.
+ *   `altar`, `boss`, `gift`, `heal`, `info` and `mega`.
  *
  * Registration and events are handled by the `cobblemon-bedrock-api` library
  * (`cobblemon-bedrock-api.js`, copied from `api/dist/`): this file only holds
  * the data and what to do with each event.
  */
 
-import { system, world } from "@minecraft/server";
+import { ItemStack, system, world } from "@minecraft/server";
 import { onCobblemonEvent, registerAddon } from "./cobblemon-bedrock-api.js";
 // Battle animations and model points: Pikachu's, since that's the model this
 // species uses.
@@ -28,7 +31,7 @@ import { BATTLE_CLIPS, LOCATORS } from "./battleData.js";
 
 /** Your namespace: the one of your entities and your species. */
 const ADDON = "ejemplo";
-const VERSION = "1.4.2";
+const VERSION = "1.5.0";
 
 const SPECIES = {
   id: "ejemplo:pikachu_surf",
@@ -75,6 +78,17 @@ const SPECIES = {
       baseStats: { hp: 45, attack: 70, defence: 45, specialAttack: 60, specialDefence: 55, speed: 100 },
       // Its own level-up moves, in the mod's format: "level:move".
       moves: ["1:thundershock", "1:tailwhip", "5:quickattack", "10:bite", "18:spark", "26:crunch", "36:thunderbolt"],
+    },
+    // The mega: a form that only exists in battle. Its types, stats and
+    // ability are used after mega evolving, and its entity
+    // (`ejemplo:pikachu_surf_mega`) is the model shown. See MEGAS below.
+    {
+      name: "mega",
+      battleOnly: true,
+      primaryType: "electric",
+      secondaryType: "water",
+      baseStats: { hp: 45, attack: 75, defence: 65, specialAttack: 110, specialDefence: 80, speed: 120 },
+      abilities: ["drizzle"],
     },
   ],
   // Drops, in Cobblemon's format.
@@ -156,7 +170,28 @@ const SPRITES = {
     dex: "textures/ejemplo/sprites/dex/pikachu_surf_night_shiny",
     glyph: "\uF003",
   },
+  // The mega form, normal and shiny.
+  "ejemplo:pikachu_surf|mega|0": {
+    pc: "textures/ejemplo/sprites/pc/pikachu_surf_mega",
+    face: "textures/ejemplo/sprites/face/pikachu_surf_mega",
+    dex: "textures/ejemplo/sprites/dex/pikachu_surf_mega",
+    glyph: "\uF004",
+  },
+  "ejemplo:pikachu_surf|mega|1": {
+    pc: "textures/ejemplo/sprites/pc/pikachu_surf_mega_shiny",
+    face: "textures/ejemplo/sprites/face/pikachu_surf_mega_shiny",
+    dex: "textures/ejemplo/sprites/dex/pikachu_surf_mega_shiny",
+    glyph: "\uF005",
+  },
 };
+
+/**
+ * Mega evolution: holding the Surfite, with a Key Stone in the offhand, the
+ * battle shows the Mega button. Cobblemon Bedrock doesn't provide a Key
+ * Stone, so this add-on brings a generic one just for testing.
+ */
+const MEGAS = [{ species: "ejemplo:pikachu_surf", form: "mega", stones: ["ejemplo:surfite"], ability: "drizzle" }];
+const MEGA_ACCESSORIES = ["ejemplo:key_stone"];
 
 /** Cobblemon Bedrock's Pikachu evolves into this one with a Water Stone. */
 const EVOLUTIONS = {
@@ -176,7 +211,16 @@ const EVOLUTIONS = {
 // —— Registration ——
 
 // `registerAddon` returns the client for actions and queries (see "Test commands").
-const cobblemon = registerAddon({ addon: ADDON, version: VERSION, species: [SPECIES], spawn: SPAWN, sprites: SPRITES, evolutions: EVOLUTIONS });
+const cobblemon = registerAddon({
+  addon: ADDON,
+  version: VERSION,
+  species: [SPECIES],
+  spawn: SPAWN,
+  sprites: SPRITES,
+  evolutions: EVOLUTIONS,
+  megas: MEGAS,
+  megaAccessories: MEGA_ACCESSORIES,
+});
 
 // —— Cobblemon Bedrock events (see "Events" in the reference) ——
 
@@ -225,6 +269,7 @@ for (const [name, describe] of Object.entries(ON_EVENT)) {
 // `/scriptevent ejemplo:gift`   A shiny Surfing Pikachu in an Ultra Ball, nicknamed and tagged "gift".
 // `/scriptevent ejemplo:heal`   Heals your party.
 // `/scriptevent ejemplo:info`   Your party, your Pokédex and the wild Pokémon around you.
+// `/scriptevent ejemplo:mega`   The test Key Stone, a Surfite, and a Surfing Pikachu already holding one.
 
 /** Sends a chat line to one player with this example's prefix. */
 function say(player, key, params = []) {
@@ -279,6 +324,18 @@ const COMMANDS = {
     const nearby = await cobblemon.nearby({ player, radius: 32 });
     const wild = nearby.pokemon.slice(0, 5).map((p) => `${p.species} ${p.level} (${p.distance}m)${p.tag ? ` [${p.tag}]` : ""}`).join(", ");
     say(player, "ejemplo.cmd.nearby", [wild || "-"]);
+  },
+  async mega(player) {
+    // The items are plain Bedrock: the add-on gives them itself.
+    const inventory = player.getComponent("minecraft:inventory")?.container;
+    for (const id of ["ejemplo:key_stone", "ejemplo:surfite"]) inventory?.addItem(new ItemStack(id, 1));
+    // A Surfing Pikachu already holding its stone, so it's ready to battle.
+    const result = await cobblemon.give({
+      player,
+      pokemon: { species: "ejemplo:pikachu_surf", level: 30, heldItem: "ejemplo:surfite", tag: "mega" },
+    });
+    say(player, `ejemplo.cmd.gift_${result.destination}`, [speciesName(result.pokemon.species)]);
+    say(player, "ejemplo.cmd.mega");
   },
 };
 

@@ -30,7 +30,7 @@ export interface ApiResult {
     data?: unknown;
 }
 export declare const EVENT_PREFIX = "cooblemon:event.";
-export type ApiKind = "species" | "spawn" | "sprites" | "evolutions";
+export type ApiKind = "species" | "spawn" | "sprites" | "evolutions" | "megas";
 export interface ApiHello {
     addon: string;
     api: number;
