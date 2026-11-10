@@ -36,5 +36,18 @@ What should happen:
 - When you catch, level up, evolve or battle, the chat reports it prefixed
   with `[Example]` (those are the events).
 
+## Test commands (actions and queries)
+
+| Command | What it asks Cobblemon Bedrock |
+| --- | --- |
+| `/scriptevent ejemplo:altar` | A shiny level 50 Articuno with perfect IVs and fixed moves, tagged `altar`, and a battle with you right away. |
+| `/scriptevent ejemplo:boss` | A Surfing Pikachu that can't be caught, tagged `boss`. |
+| `/scriptevent ejemplo:gift` | A shiny Surfing Pikachu in an Ultra Ball, nicknamed "Wave", tagged `gift`. |
+| `/scriptevent ejemplo:heal` | Heals your party. |
+| `/scriptevent ejemplo:info` | Your party, your Pokédex totals and the wild Pokémon within 32 blocks. |
+
+A Pokémon with a tag shows it in the event messages: catch the Articuno and
+the chat says `(tag: altar)`.
+
 It uses Cobblemon models and textures (CC BY-NC): see
 [`LICENSE.md`](../../LICENSE.md).

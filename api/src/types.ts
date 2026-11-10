@@ -179,6 +179,8 @@ export interface PokemonSummary {
   gender: string | null;
   nickname: string | null;
   ball: string | null;
+  /** The tag an add-on gave it with `spawn` or `give`, or `null`. */
+  tag: string | null;
 }
 
 export type BattleKind = "wild" | "trainer" | "raid" | "pvp";
@@ -201,4 +203,142 @@ export interface CobblemonEvents {
   released: { api: number; player: PlayerRef; pokemon: PokemonSummary; from: "pc" | "party" };
   starter_chosen: { api: number; player: PlayerRef; pokemon: PokemonSummary };
   pokedex_registered: { api: number; player: PlayerRef; species: string; status: "seen" | "caught" };
+}
+
+// —— Actions and queries ——
+
+/** A player: their id, their name, or the `Player` object itself. */
+export type PlayerLike = string | { id: string };
+
+/** A point in the world. `dimension` defaults to the overworld. */
+export interface Place {
+  dimension?: "overworld" | "nether" | "the_end";
+  x: number;
+  y: number;
+  z: number;
+}
+
+/**
+ * A Pokémon to spawn or give. Only `species` is required: anything left out
+ * is decided as usual (random IVs and nature, level-up moves, a level from the
+ * species' spawn rules).
+ */
+export interface PokemonRequest {
+  /** `articuno` (Cobblemon Bedrock species) or `myaddon:species`. */
+  species: string;
+  /** A form id (its aspect): `alolan`, `galarian`… */
+  form?: string;
+  /** 1–100. */
+  level?: number;
+  shiny?: boolean;
+  alpha?: boolean;
+  gender?: "male" | "female" | "genderless";
+  nature?: string;
+  /** Each 0–31. Stats left out keep their random roll. */
+  ivs?: Partial<Stats>;
+  /** Each 0–252, 510 in total. */
+  evs?: Partial<Stats>;
+  ability?: string;
+  /** 1 to 4 move ids (Showdown ids, as in the mod). */
+  moves?: string[];
+  heldItem?: string;
+  /** 0–255. */
+  friendship?: number;
+  nickname?: string;
+  /** Up to 64 characters. It travels with the Pokémon and shows up in every event about it. */
+  tag?: string;
+}
+
+export interface SpawnRequest {
+  /** `catchable: false` makes it impossible to catch (an event boss). */
+  pokemon: PokemonRequest & { catchable?: boolean };
+  /** Where: an exact point… */
+  at?: Place;
+  /** …or two blocks next to a player. */
+  nearPlayer?: PlayerLike;
+  /** Start a battle with this player as soon as it spawns. */
+  battle?: PlayerLike;
+}
+
+export interface SpawnResult {
+  /** The entity id, for `startBattle` or to find it later. */
+  entityId: string;
+  /** Whether the battle requested with `battle` started. */
+  battle: boolean;
+}
+
+export interface GiveRequest {
+  player: PlayerLike;
+  /** `ball`: the Poké Ball it was "caught" in (`cooblemon:ultra_ball`…). */
+  pokemon: PokemonRequest & { ball?: string };
+  /** `party` (default; the PC if the party is full) or `pc`. */
+  destination?: "party" | "pc";
+}
+
+export interface GiveResult {
+  destination: "party" | "pc";
+  pokemon: PokemonSummary;
+}
+
+export interface NearbyRequest {
+  /** Around a player… */
+  player?: PlayerLike;
+  /** …or around a point. */
+  at?: Place;
+  /** Blocks, 1–64. Default 16. */
+  radius?: number;
+}
+
+export interface NearbyPokemon {
+  entityId: string;
+  species: string;
+  form: string | null;
+  level: number;
+  shiny: boolean;
+  alpha: boolean;
+  tag: string | null;
+  location: { x: number; y: number; z: number };
+  distance: number;
+}
+
+export interface PokedexResult {
+  seen: number;
+  caught: number;
+  total: number;
+  entries: Array<{ species: string; status: "seen" | "caught" }>;
+}
+
+export interface SpeciesInfo {
+  id: string;
+  name: string;
+  nationalPokedexNumber: number;
+  primaryType: ElementalType;
+  secondaryType: ElementalType | null;
+  baseStats: Stats;
+  abilities: string[];
+  hiddenAbility: string | null;
+  catchRate: number;
+  forms: string[];
+  /** The add-on that registered it, or `null` for Cobblemon Bedrock's own. */
+  addon: string | null;
+  entity: string;
+}
+
+/**
+ * What `registerAddon` returns: ask Cobblemon Bedrock to do or tell you things.
+ * Every call returns a promise that resolves a tick later at the earliest, and
+ * rejects with the reason if the request is invalid.
+ */
+export interface CobblemonClient {
+  spawn(request: SpawnRequest): Promise<SpawnResult>;
+  give(request: GiveRequest): Promise<GiveResult>;
+  /** A battle against a wild Pokémon already in the world. */
+  startBattle(player: PlayerLike, entityId: string): Promise<{ battle: boolean }>;
+  /** Heals the player's whole party, like a healing machine. */
+  heal(player: PlayerLike): Promise<void>;
+  party(player: PlayerLike): Promise<{ pokemon: PokemonSummary[] }>;
+  /** The species the player has seen or caught; `species` narrows the list. */
+  pokedex(player: PlayerLike, species?: string[]): Promise<PokedexResult>;
+  nearby(request: NearbyRequest): Promise<{ pokemon: NearbyPokemon[] }>;
+  species(id: string): Promise<SpeciesInfo>;
 }

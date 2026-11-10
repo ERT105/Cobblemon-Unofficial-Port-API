@@ -167,6 +167,36 @@ Events: `captured`, `battle_start`, `battle_end`, `level_up`, `evolved`,
 `released`, `starter_chosen`, `pokedex_registered`. Their data is in the
 [reference](REFERENCE.md#events).
 
+## Asking Cobblemon Bedrock to do things
+
+`registerAddon` returns a client. With it, your add-on can spawn or give
+Pokémon, start battles, heal, and read a player's party, Pokédex or the wild
+Pokémon around them. For example, an altar that summons a shiny Articuno and
+reacts when it's caught:
+
+```js
+import { registerAddon, onCobblemonEvent } from "./cobblemon-bedrock-api.js";
+
+const cobblemon = registerAddon({ addon: "myaddon", version: "1.0.0" });
+
+// When a player uses your altar (detected by your own script):
+async function summon(player) {
+  await cobblemon.spawn({
+    pokemon: { species: "articuno", level: 50, shiny: true, tag: "altar" },
+    nearPlayer: player,
+    battle: player,
+  });
+}
+
+onCobblemonEvent("captured", (e) => {
+  if (e.pokemon.tag === "altar") console.warn(`${e.player.name} caught the altar's Articuno!`);
+});
+```
+
+The structure, the altar block and the offering item are plain Bedrock: they
+go in your own packs. Every action and query is in the
+[reference](REFERENCE.md#actions-and-queries).
+
 ## The kit
 
 If your Pokémon already exists as a **Cobblemon Java** addon, the creator kit

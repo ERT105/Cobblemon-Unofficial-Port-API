@@ -1,13 +1,14 @@
 /**
  * `cobblemon-bedrock-api`: what an add-on needs to register with Cobblemon
- * Bedrock and listen to its events (guide in `docs/README.md`, formats in
- * `docs/REFERENCE.md`).
+ * Bedrock, listen to its events and ask it to do things (guide in
+ * `docs/README.md`, formats in `docs/REFERENCE.md`).
  *
  * ```js
  * import { registerAddon, onCobblemonEvent } from "./cobblemon-bedrock-api.js";
  *
- * registerAddon({ addon: "myaddon", version: "1.0.0", species: [...], spawn: {...} });
+ * const cobblemon = registerAddon({ addon: "myaddon", version: "1.0.0", species: [...], spawn: {...} });
  * onCobblemonEvent("captured", (e) => console.warn(`${e.player.name} caught ${e.pokemon.species}`));
+ * await cobblemon.spawn({ pokemon: { species: "articuno", level: 50, shiny: true, tag: "altar" }, nearPlayer: player });
  * ```
  *
  * It's bundled into the add-on's script (nothing else to install in the world
@@ -16,28 +17,39 @@
 
 import { system, world } from "@minecraft/server";
 import { API_VERSION, ApiEvents, EVENT_PREFIX } from "./protocol.generated.js";
-import type { Ack, AddonDefinition, CobblemonEvents } from "./types.js";
+import type { Ack, AddonDefinition, CobblemonClient, CobblemonEvents, PlayerLike } from "./types.js";
 
 export * from "./types.js";
 export { API_VERSION };
 
 /** Default chunk size, until Cobblemon Bedrock says how much fits in a message. */
 const DEFAULT_CHUNK = 1500;
+/** How long a request waits for its answer: 30 seconds. */
+const REQUEST_TIMEOUT_TICKS = 600;
 
 function send(id: string, payload: unknown): void {
   system.sendScriptEvent(id, JSON.stringify(payload));
 }
 
+function playerId(player: PlayerLike | undefined): string | undefined {
+  if (player === undefined) return undefined;
+  return typeof player === "string" ? player : player.id;
+}
+
 /**
- * Registers the add-on with Cobblemon Bedrock.
+ * Registers the add-on with Cobblemon Bedrock, and returns a client to ask it
+ * to do things (`spawn`, `give`…) or tell you things (`party`, `nearby`…).
  *
- * Sends on world load and every time Cobblemon Bedrock asks (`ping`), so it
- * doesn't matter which script starts first. Each packet is split to the
- * message size Cobblemon Bedrock measures and announces. The reply (`ack`),
- * with the validation errors and warnings, goes to the content log unless
- * `onAck` is given.
+ * Registration is sent on world load and every time Cobblemon Bedrock asks
+ * (`ping`), so it doesn't matter which script starts first. Each packet is
+ * split to the message size Cobblemon Bedrock measures and announces. The
+ * reply (`ack`), with the validation errors and warnings, goes to the content
+ * log unless `onAck` is given.
+ *
+ * Requests made before Cobblemon Bedrock has accepted the registration wait
+ * for it, so you can call the client right away.
  */
-export function registerAddon(def: AddonDefinition): void {
+export function registerAddon(def: AddonDefinition): CobblemonClient {
   if (!/^[a-z0-9_]+$/.test(def.addon) || def.addon === "cooblemon" || def.addon === "minecraft") {
     throw new Error(`cobblemon-bedrock-api: "${def.addon}" is not a valid namespace (lowercase letters, digits and _)`);
   }
@@ -65,6 +77,27 @@ export function registerAddon(def: AddonDefinition): void {
     send(ApiEvents.DONE, { addon: def.addon });
   };
 
+  // —— Requests: one id per request, answered by `result` ——
+  let registered = false;
+  const queued: Array<() => void> = [];
+  const pending = new Map<string, { resolve: (data: unknown) => void; reject: (err: Error) => void; timer: number }>();
+  let nextId = 0;
+
+  const request = <T>(channel: string, field: "action" | "query", name: string, body: Record<string, unknown>): Promise<T> =>
+    new Promise<T>((resolve, reject) => {
+      const id = `${system.currentTick}-${++nextId}`;
+      const timer = system.runTimeout(() => {
+        pending.delete(id);
+        reject(new Error(`cobblemon-bedrock-api: no answer to ${field} "${name}" (is Cobblemon Bedrock installed?)`));
+      }, REQUEST_TIMEOUT_TICKS);
+      pending.set(id, { resolve: resolve as (data: unknown) => void, reject, timer });
+      const go = () => send(channel, { addon: def.addon, id, [field]: name, ...body });
+      if (registered) go();
+      else queued.push(go);
+    });
+  const action = <T>(name: string, body: Record<string, unknown>) => request<T>(ApiEvents.ACTION, "action", name, body);
+  const query = <T>(name: string, body: Record<string, unknown>) => request<T>(ApiEvents.QUERY, "query", name, body);
+
   system.afterEvents.scriptEventReceive.subscribe((event) => {
     if (event.id === ApiEvents.PING) {
       try {
@@ -78,6 +111,22 @@ export function registerAddon(def: AddonDefinition): void {
       register();
       return;
     }
+    if (event.id === ApiEvents.RESULT) {
+      let result: { addon?: string; id?: string; ok?: boolean; error?: string; data?: unknown };
+      try {
+        result = JSON.parse(event.message);
+      } catch {
+        return;
+      }
+      if (result.addon !== def.addon || typeof result.id !== "string") return;
+      const waiting = pending.get(result.id);
+      if (!waiting) return;
+      pending.delete(result.id);
+      system.clearRun(waiting.timer);
+      if (result.ok) waiting.resolve(result.data);
+      else waiting.reject(new Error(`cobblemon-bedrock-api: ${result.error ?? "request failed"}`));
+      return;
+    }
     if (event.id === ApiEvents.ACK) {
       let ack: Ack;
       try {
@@ -86,6 +135,11 @@ export function registerAddon(def: AddonDefinition): void {
         return;
       }
       if (ack.addon !== def.addon) return;
+      // Registered: requests that were waiting can go now.
+      if (!registered) {
+        registered = true;
+        for (const go of queued.splice(0)) go();
+      }
       if (def.onAck) {
         def.onAck(ack);
         return;
@@ -98,6 +152,18 @@ export function registerAddon(def: AddonDefinition): void {
 
   // In case Cobblemon Bedrock was already listening when we started.
   world.afterEvents.worldLoad.subscribe(() => system.run(register));
+
+  return {
+    spawn: (req) =>
+      action("spawn", { pokemon: req.pokemon, at: req.at, nearPlayer: playerId(req.nearPlayer), battle: playerId(req.battle) }),
+    give: (req) => action("give", { player: playerId(req.player), pokemon: req.pokemon, destination: req.destination }),
+    startBattle: (player, entityId) => action("start_battle", { player: playerId(player), entity: entityId }),
+    heal: (player) => action<undefined>("heal", { player: playerId(player) }).then(() => undefined),
+    party: (player) => query("party", { player: playerId(player) }),
+    pokedex: (player, species) => query("pokedex", { player: playerId(player), species }),
+    nearby: (req) => query("nearby", { player: playerId(req.player), at: req.at, radius: req.radius }),
+    species: (id) => query("species", { species: id }),
+  };
 }
 
 /**

@@ -118,7 +118,8 @@ detail (an unknown move).
 
 With `onCobblemonEvent(name, (data) => …)`. All of them carry `api` and,
 except battle events, `player` (`{ id, name }`). `pokemon` is a summary:
-`{ uuid, species, form, level, shiny, gender, nickname, ball }`.
+`{ uuid, species, form, level, shiny, gender, nickname, ball, tag }`
+(`tag` is set by your add-on with `spawn` or `give`, `null` otherwise).
 
 | Event | Data | When |
 | --- | --- | --- |
@@ -134,6 +135,75 @@ except battle events, `player` (`{ id, name }`). `pokemon` is a summary:
 **In a chat message**, every parameter of a `rawtext` must be an object: the
 level goes as `{ text: "10" }`. A bare number makes `sendMessage` fail with
 "Native variant type conversion failed".
+
+## Actions and queries
+
+`registerAddon` returns a client to ask Cobblemon Bedrock to do things or tell
+you things. Every call returns a promise:
+
+- it resolves **one tick later at the earliest**, never instantly;
+- it rejects with the reason if the request is invalid (an unknown species,
+  a player who isn't online…);
+- requests made before Cobblemon Bedrock accepts your registration wait for
+  it, so you can use the client right away.
+
+```js
+const cobblemon = registerAddon({ addon: "myaddon", /* … */ });
+
+const { entityId } = await cobblemon.spawn({
+  pokemon: { species: "articuno", level: 50, shiny: true, tag: "altar" },
+  nearPlayer: player,
+  battle: player,
+});
+```
+
+Players can be given as the `Player` object, their id or their name. They
+must be online.
+
+### The Pokémon (`spawn` and `give`)
+
+Only `species` is required. Anything left out is decided as usual: random IVs
+and nature, level-up moves, and a level from the species' spawn rules.
+
+| Field | Notes |
+| --- | --- |
+| `species` | `articuno` (a Cobblemon Bedrock species) or `myaddon:species`. |
+| `form` | A form id (its aspect): `alolan`, `galarian`… |
+| `level` | 1–100. |
+| `shiny`, `alpha` | `true` / `false`. |
+| `gender` | `male`, `female`, `genderless`. |
+| `nature` | `modest`, `adamant`… |
+| `ivs`, `evs` | Some or all of the six stats. IVs 0–31; EVs 0–252, 510 in total. |
+| `ability` | An ability id. |
+| `moves` | 1 to 4 move ids (Showdown ids, as in the mod). |
+| `heldItem` | An item id. |
+| `friendship` | 0–255. |
+| `nickname` | Up to 32 characters. |
+| `tag` | Up to 64 characters. **It stays with the Pokémon** and appears as `pokemon.tag` in every event about it (`captured`, `level_up`, `evolved`, `released`…). Use it to recognize "the Articuno from my altar". |
+
+There are no limits on what you can ask for: shiny, legendary or perfect-IV
+Pokémon are all allowed. What doesn't exist is rejected (an unknown nature,
+move or item); it's never silently changed. `/scriptevent
+cooblemon:debug.registry` shows how many actions and queries each add-on has
+made.
+
+### Actions
+
+| Call | What it does | Result |
+| --- | --- | --- |
+| `spawn({ pokemon, at \| nearPlayer, battle? })` | Spawns a wild Pokémon. `at: { dimension, x, y, z }` or `nearPlayer` (two blocks next to them). `battle: player` starts a battle with that player right away. `pokemon.catchable: false` makes it impossible to catch (an event boss). | `{ entityId, battle }` |
+| `give({ player, pokemon, destination? })` | Gives a Pokémon to a player. `destination`: `party` (default, the PC if the party is full) or `pc`. `pokemon.ball`: the Poké Ball it comes in (`cooblemon:ultra_ball`…). It's registered in their Pokédex as caught. | `{ destination, pokemon }` |
+| `startBattle(player, entityId)` | A battle against a wild Pokémon already in the world. | `{ battle }` |
+| `heal(player)` | Heals the whole party, like a healing machine. | — |
+
+### Queries
+
+| Call | Result |
+| --- | --- |
+| `party(player)` | `{ pokemon: [...] }`: the party, as event summaries (with `tag`). |
+| `pokedex(player, species?)` | `{ seen, caught, total, entries: [{ species, status }] }`. `species` narrows the list. |
+| `nearby({ player \| at, radius? })` | `{ pokemon: [{ entityId, species, form, level, shiny, alpha, tag, location, distance }] }`: wild Pokémon, nearest first. `radius` 1–64 blocks (default 16), up to 50 results. |
+| `species(id)` | Its data: name, number, types, base stats, abilities, catch rate, forms, and which add-on registered it (`null` for Cobblemon Bedrock's own). |
 
 ## Debugging
 

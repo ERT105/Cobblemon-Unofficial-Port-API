@@ -7,15 +7,18 @@
  * - its sprites, including the party panel portrait (its own glyphs);
  * - its drops and its battle animations;
  * - a new evolution for Cobblemon Bedrock's Pikachu: with a Water Stone, into this one;
- * - and it listens to Cobblemon Bedrock's events (captures, battles, levels…)
- *   and reports them in chat.
+ * - it listens to Cobblemon Bedrock's events (captures, battles, levels…)
+ *   and reports them in chat;
+ * - and it has test commands that ask Cobblemon Bedrock to do things
+ *   (actions and queries), run with `/scriptevent ejemplo:<command>`:
+ *   `altar`, `boss`, `gift`, `heal` and `info`.
  *
  * Registration and events are handled by the `cobblemon-bedrock-api` library
  * (`cobblemon-bedrock-api.js`, copied from `api/dist/`): this file only holds
  * the data and what to do with each event.
  */
 
-import { world } from "@minecraft/server";
+import { system, world } from "@minecraft/server";
 import { onCobblemonEvent, registerAddon } from "./cobblemon-bedrock-api.js";
 // Battle animations and model points: Pikachu's, since that's the model this
 // species uses.
@@ -25,7 +28,7 @@ import { BATTLE_CLIPS, LOCATORS } from "./battleData.js";
 
 /** Your namespace: the one of your entities and your species. */
 const ADDON = "ejemplo";
-const VERSION = "1.3.1";
+const VERSION = "1.4.2";
 
 const SPECIES = {
   id: "ejemplo:pikachu_surf",
@@ -129,13 +132,29 @@ const SPRITES = {
     pc: "textures/ejemplo/sprites/pc/pikachu_surf",
     face: "textures/ejemplo/sprites/face/pikachu_surf",
     dex: "textures/ejemplo/sprites/dex/pikachu_surf",
-    glyph: "",
+    // The first cell of font/glyph_F0.png. Written as an escape: the character
+    // itself is invisible and easy to lose when editing.
+    glyph: "\uF000",
   },
   "ejemplo:pikachu_surf|night|0": {
     pc: "textures/ejemplo/sprites/pc/pikachu_surf_night",
     face: "textures/ejemplo/sprites/face/pikachu_surf_night",
     dex: "textures/ejemplo/sprites/dex/pikachu_surf_night",
-    glyph: "",
+    glyph: "\uF001",
+  },
+  // The shiny variants (`|1` at the end): without them, the PC, the summary
+  // and the party panel show the normal colors for a shiny one.
+  "ejemplo:pikachu_surf||1": {
+    pc: "textures/ejemplo/sprites/pc/pikachu_surf_shiny",
+    face: "textures/ejemplo/sprites/face/pikachu_surf_shiny",
+    dex: "textures/ejemplo/sprites/dex/pikachu_surf_shiny",
+    glyph: "\uF002",
+  },
+  "ejemplo:pikachu_surf|night|1": {
+    pc: "textures/ejemplo/sprites/pc/pikachu_surf_night_shiny",
+    face: "textures/ejemplo/sprites/face/pikachu_surf_night_shiny",
+    dex: "textures/ejemplo/sprites/dex/pikachu_surf_night_shiny",
+    glyph: "\uF003",
   },
 };
 
@@ -156,7 +175,8 @@ const EVOLUTIONS = {
 
 // —— Registration ——
 
-registerAddon({ addon: ADDON, version: VERSION, species: [SPECIES], spawn: SPAWN, sprites: SPRITES, evolutions: EVOLUTIONS });
+// `registerAddon` returns the client for actions and queries (see "Test commands").
+const cobblemon = registerAddon({ addon: ADDON, version: VERSION, species: [SPECIES], spawn: SPAWN, sprites: SPRITES, evolutions: EVOLUTIONS });
 
 // —— Cobblemon Bedrock events (see "Events" in the reference) ——
 
@@ -186,11 +206,88 @@ for (const [name, describe] of Object.entries(ON_EVENT)) {
     // (the level, "10") makes `sendMessage` fail with "Native variant type
     // conversion failed". Anything already `{ translate }` passes as is.
     const params = raw.map((p) => (typeof p === "string" ? { text: p } : p));
+    // A Pokémon this add-on spawned or gave carries its tag in every event.
+    const tag = data.pokemon?.tag;
+    const tagged = tag ? [{ text: " " }, { translate: "ejemplo.event.tagged", with: { rawtext: [{ text: tag }] } }] : [];
     // To the players involved: the party owner, or both sides of a duel.
     const ids = new Set([data.player?.id, ...(data.players ?? []).map((p) => p.id)].filter(Boolean));
     for (const player of world.getAllPlayers()) {
       if (!ids.has(player.id)) continue;
-      player.sendMessage({ rawtext: [{ text: "§b[Example]§r " }, { translate: key, with: { rawtext: params } }] });
+      player.sendMessage({ rawtext: [{ text: "§b[Example]§r " }, { translate: key, with: { rawtext: params } }, ...tagged] });
     }
   });
 }
+
+// —— Test commands: actions and queries ——
+//
+// `/scriptevent ejemplo:altar`  A shiny Articuno with perfect IVs, tagged "altar", and a battle right away.
+// `/scriptevent ejemplo:boss`   A Surfing Pikachu that can't be caught, tagged "boss".
+// `/scriptevent ejemplo:gift`   A shiny Surfing Pikachu in an Ultra Ball, nicknamed and tagged "gift".
+// `/scriptevent ejemplo:heal`   Heals your party.
+// `/scriptevent ejemplo:info`   Your party, your Pokédex and the wild Pokémon around you.
+
+/** Sends a chat line to one player with this example's prefix. */
+function say(player, key, params = []) {
+  const rawtext = params.map((p) => (typeof p === "string" ? { text: p } : p));
+  // No `with` when there are no parameters: an empty list makes the game
+  // reject the whole message ("Failed to resolve raw message").
+  const line = rawtext.length ? { translate: key, with: { rawtext } } : { translate: key };
+  player.sendMessage({ rawtext: [{ text: "§b[Example]§r " }, line] });
+}
+
+const COMMANDS = {
+  async altar(player) {
+    const result = await cobblemon.spawn({
+      pokemon: {
+        species: "articuno",
+        level: 50,
+        shiny: true,
+        ivs: { hp: 31, attack: 31, defence: 31, specialAttack: 31, specialDefence: 31, speed: 31 },
+        nature: "modest",
+        moves: ["icebeam", "hurricane", "roost", "freezedry"],
+        tag: "altar",
+      },
+      nearPlayer: player,
+      battle: player,
+    });
+    say(player, "ejemplo.cmd.spawned", [speciesName("articuno"), result.entityId]);
+  },
+  async boss(player) {
+    const result = await cobblemon.spawn({
+      pokemon: { species: "ejemplo:pikachu_surf", level: 30, catchable: false, tag: "boss" },
+      nearPlayer: player,
+    });
+    say(player, "ejemplo.cmd.spawned", [speciesName("ejemplo:pikachu_surf"), result.entityId]);
+  },
+  async gift(player) {
+    const result = await cobblemon.give({
+      player,
+      pokemon: { species: "ejemplo:pikachu_surf", level: 15, shiny: true, nickname: "Wave", ball: "cooblemon:ultra_ball", tag: "gift" },
+    });
+    say(player, `ejemplo.cmd.gift_${result.destination}`, [speciesName(result.pokemon.species)]);
+  },
+  async heal(player) {
+    await cobblemon.heal(player);
+    say(player, "ejemplo.cmd.healed");
+  },
+  async info(player) {
+    const party = await cobblemon.party(player);
+    const list = party.pokemon.map((p) => `${p.species} ${p.level}${p.shiny ? "★" : ""}${p.tag ? ` [${p.tag}]` : ""}`).join(", ");
+    say(player, "ejemplo.cmd.party", [list || "-"]);
+    const dex = await cobblemon.pokedex(player);
+    say(player, "ejemplo.cmd.pokedex", [String(dex.seen), String(dex.caught), String(dex.total)]);
+    const nearby = await cobblemon.nearby({ player, radius: 32 });
+    const wild = nearby.pokemon.slice(0, 5).map((p) => `${p.species} ${p.level} (${p.distance}m)${p.tag ? ` [${p.tag}]` : ""}`).join(", ");
+    say(player, "ejemplo.cmd.nearby", [wild || "-"]);
+  },
+};
+
+system.afterEvents.scriptEventReceive.subscribe((event) => {
+  if (!event.id.startsWith(`${ADDON}:`)) return;
+  const player = event.sourceEntity;
+  if (player?.typeId !== "minecraft:player") return;
+  const command = COMMANDS[event.id.slice(ADDON.length + 1)];
+  if (!command) return;
+  // A failed request rejects with the reason: show it, so it's easy to see what went wrong.
+  command(player).catch((err) => say(player, "ejemplo.cmd.error", [String(err?.message ?? err)]));
+});

@@ -13,7 +13,26 @@ export const ApiEvents = {
     PING: "cooblemon:api.ping",
     ACK: "cooblemon:api.ack",
     PROBE: "cooblemon:api.probe",
+    ACTION: "cooblemon:api.action",
+    QUERY: "cooblemon:api.query",
+    RESULT: "cooblemon:api.result",
 } as const;
+
+export interface ApiRequest {
+  addon: string;
+  id: string;
+  action?: string;
+  query?: string;
+  [field: string]: unknown;
+}
+
+export interface ApiResult {
+  addon: string;
+  id: string;
+  ok: boolean;
+  error?: string;
+  data?: unknown;
+}
 
 export const EVENT_PREFIX = "cooblemon:event.";
 

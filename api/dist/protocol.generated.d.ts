@@ -11,7 +11,24 @@ export declare const ApiEvents: {
     readonly PING: "cooblemon:api.ping";
     readonly ACK: "cooblemon:api.ack";
     readonly PROBE: "cooblemon:api.probe";
+    readonly ACTION: "cooblemon:api.action";
+    readonly QUERY: "cooblemon:api.query";
+    readonly RESULT: "cooblemon:api.result";
 };
+export interface ApiRequest {
+    addon: string;
+    id: string;
+    action?: string;
+    query?: string;
+    [field: string]: unknown;
+}
+export interface ApiResult {
+    addon: string;
+    id: string;
+    ok: boolean;
+    error?: string;
+    data?: unknown;
+}
 export declare const EVENT_PREFIX = "cooblemon:event.";
 export type ApiKind = "species" | "spawn" | "sprites" | "evolutions";
 export interface ApiHello {
