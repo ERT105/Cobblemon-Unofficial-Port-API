@@ -2985,6 +2985,10 @@ async function convertItems(opts) {
         description: { identifier: id, menu_category: { category: "items" } },
         components: {
           "minecraft:icon": `${ns}_${name}`,
+          // **El nombre, explícito**, como los objetos de la base. Sin esto el
+          // juego no buscaba `item.<ns>:<nombre>.name` y enseñaba la clave a
+          // pelo (primera prueba en el juego). La clave es la misma de Java.
+          "minecraft:display_name": { value: `%item.${ns}.${name}` },
           // El tamaño de pila está en el código de Java: 64, como la mayoría.
           "minecraft:max_stack_size": 64,
           "minecraft:hand_equipped": shape.handheld
@@ -3006,7 +3010,7 @@ async function convertItems(opts) {
     for (const id of result.items) {
       const name = id.split(":")[1];
       const display = src[`item.${ns}.${name}`];
-      if (display) lines.push(`item.${id}.name=${display}`);
+      if (display) lines.push(`item.${ns}.${name}=${display}`);
     }
     if (lines.length) result.langLines.set(path6.basename(file, ".json"), lines);
   }

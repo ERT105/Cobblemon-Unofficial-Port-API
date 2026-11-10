@@ -31,7 +31,7 @@ import { BATTLE_CLIPS, LOCATORS } from "./battleData.js";
 
 /** Your namespace: the one of your entities and your species. */
 const ADDON = "ejemplo";
-const VERSION = "1.5.0";
+const VERSION = "1.5.1";
 
 const SPECIES = {
   id: "ejemplo:pikachu_surf",
