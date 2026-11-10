@@ -203,7 +203,8 @@ If your Pokémon already exists as a **Cobblemon Java** addon, the creator kit
 converts all of it: species, spawns, drops, languages, model, animations,
 poses (idle, walk, fly, swim, battle, sleep), sprites, forms, female variants,
 riding and shoulder, with the same rules Cobblemon Bedrock applies to the
-mod's Pokémon.
+mod's Pokémon. It also converts flat items (icon and name) and their
+recipes; see [the kit's guide](../kit/README.md#items-and-recipes).
 
 It's in this repository's [`kit/`](../kit/README.md) folder. It needs
 Node.js and the extracted Cobblemon `.jar`:

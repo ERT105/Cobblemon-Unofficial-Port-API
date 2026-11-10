@@ -909,7 +909,7 @@ async function loadAtmSpeciesAdditions() {
   const map = /* @__PURE__ */ new Map();
   const root = allTheMonsJava("data/cobblemon/species_additions");
   if (!root || !existsSync2(root)) return map;
-  async function walk2(dir) {
+  async function walk3(dir) {
     let entries;
     try {
       entries = await readdir2(dir, { withFileTypes: true });
@@ -919,7 +919,7 @@ async function loadAtmSpeciesAdditions() {
     for (const entry of entries) {
       const full = path2.join(dir, entry.name);
       if (entry.isDirectory()) {
-        await walk2(full);
+        await walk3(full);
         continue;
       }
       if (!entry.name.endsWith(".json")) continue;
@@ -932,7 +932,7 @@ async function loadAtmSpeciesAdditions() {
       }
     }
   }
-  await walk2(root);
+  await walk3(root);
   return map;
 }
 var ATM_SCALE_BLOCKLIST;
@@ -1035,9 +1035,9 @@ var init_load_species = __esm({
 // tools/kit/kit.ts
 import archiver from "archiver";
 import { createHash } from "node:crypto";
-import { createWriteStream, existsSync as existsSync5 } from "node:fs";
-import { copyFile as copyFile2, mkdir, readdir as readdir5, readFile as readFile6, rm as rm2, writeFile as writeFile3 } from "node:fs/promises";
-import path6 from "node:path";
+import { createWriteStream, existsSync as existsSync6 } from "node:fs";
+import { copyFile as copyFile2, mkdir as mkdir2, readdir as readdir6, readFile as readFile7, rm as rm2, writeFile as writeFile4 } from "node:fs/promises";
+import path7 from "node:path";
 
 // tools/lib/java-species.ts
 function toCamelStats(stats) {
@@ -1420,7 +1420,7 @@ var tagCache = /* @__PURE__ */ new Map();
 var loaded = false;
 async function preloadNearbyBlockData() {
   if (loaded) return;
-  const { readdir: readdir6 } = await import("node:fs/promises");
+  const { readdir: readdir7 } = await import("node:fs/promises");
   const bedrock = resolveFromRoot(BEDROCK_BLOCKS);
   if (existsSync3(bedrock)) {
     const json = JSON.parse(await readFile4(bedrock, "utf8"));
@@ -1428,7 +1428,7 @@ async function preloadNearbyBlockData() {
   }
   const blocksDir = resolveFromRoot("bp/blocks");
   if (existsSync3(blocksDir)) {
-    for (const name of await readdir6(blocksDir)) {
+    for (const name of await readdir7(blocksDir)) {
       if (name.endsWith(".json")) portBlockIds.add(`cooblemon:${name.replace(/\.json$/, "")}`);
     }
   }
@@ -1436,7 +1436,7 @@ async function preloadNearbyBlockData() {
   for (const ns of ["cobblemon", "minecraft", "c"]) {
     const dir = resolveFromRoot(path4.join(MOD_DATA, ns, "tags/block"));
     if (!existsSync3(dir)) continue;
-    for (const name of await readdir6(dir)) {
+    for (const name of await readdir7(dir)) {
       if (!name.endsWith(".json")) continue;
       const tag = `${ns}:${name.replace(/\.json$/, "")}`;
       if (tagCache.has(tag)) continue;
@@ -2522,6 +2522,542 @@ function bedrockRideSpeed(style, kind, speedStat) {
   return Number((modTopSpeed(style, kind, speedStat) / BEDROCK_BLOCKS_PER_TICK).toFixed(4));
 }
 
+// tools/kit/items.ts
+import { existsSync as existsSync5 } from "node:fs";
+import { mkdir, readdir as readdir5, readFile as readFile6, writeFile as writeFile3 } from "node:fs/promises";
+import path6 from "node:path";
+
+// tools/lib/java-recipes.ts
+var MAX_VARIANTS = 8;
+var TAG_ITEM = {
+  "c:ingots/iron": "minecraft:iron_ingot",
+  "c:ingots/copper": "minecraft:copper_ingot",
+  "c:ingots/gold": "minecraft:gold_ingot",
+  "c:ingots/netherite": "minecraft:netherite_ingot",
+  "c:nuggets/iron": "minecraft:iron_nugget",
+  "c:nuggets/gold": "minecraft:gold_nugget",
+  "c:gems/diamond": "minecraft:diamond",
+  "c:gems/amethyst": "minecraft:amethyst_shard",
+  "c:gems/quartz": "minecraft:quartz",
+  "c:gems/lapis": "minecraft:lapis_lazuli",
+  "c:gems/emerald": "minecraft:emerald",
+  "c:dusts/redstone": "minecraft:redstone",
+  "c:dusts/glowstone": "minecraft:glowstone_dust",
+  "c:strings": "minecraft:string",
+  "c:leathers": "minecraft:leather",
+  "c:slime_balls": "minecraft:slime_ball",
+  "c:rods/wooden": "minecraft:stick",
+  "c:rods/blaze": "minecraft:blaze_rod",
+  "c:storage_blocks/iron": "minecraft:iron_block",
+  "c:raw_materials/gold": "minecraft:raw_gold",
+  "c:tools/shield": "minecraft:shield",
+  "c:feathers": "minecraft:feather",
+  "c:bones": "minecraft:bone",
+  "minecraft:enchantable/fishing": "minecraft:fishing_rod",
+  "minecraft:coals": "minecraft:coal",
+  "c:seeds": "minecraft:wheat_seeds",
+  "c:bricks/normal": "minecraft:brick",
+  "c:dyes/red": "minecraft:red_dye",
+  "c:gems/prismarine": "minecraft:prismarine_shard",
+  "c:buckets/empty": "minecraft:bucket",
+  "c:fertilizers": "minecraft:bone_meal",
+  "c:chests/wooden": "minecraft:chest",
+  // Materiales de ball por nivel: la etiqueta apunta a otra etiqueta.
+  "cobblemon:tier_1_poke_ball_materials": "minecraft:copper_ingot",
+  "cobblemon:tier_2_poke_ball_materials": "minecraft:iron_ingot",
+  "cobblemon:tier_3_poke_ball_materials": "minecraft:gold_ingot",
+  "cobblemon:tier_4_poke_ball_materials": "minecraft:diamond"
+};
+var TAG_FAMILY = {
+  "minecraft:wool": [
+    "minecraft:white_wool",
+    "minecraft:light_gray_wool",
+    "minecraft:gray_wool",
+    "minecraft:black_wool",
+    "minecraft:red_wool",
+    "minecraft:blue_wool",
+    "minecraft:green_wool",
+    "minecraft:yellow_wool"
+  ],
+  "c:concretes": [
+    "minecraft:white_concrete",
+    "minecraft:light_gray_concrete",
+    "minecraft:gray_concrete",
+    "minecraft:black_concrete",
+    "minecraft:red_concrete",
+    "minecraft:blue_concrete",
+    "minecraft:green_concrete",
+    "minecraft:yellow_concrete"
+  ],
+  "minecraft:buttons": [
+    "minecraft:wooden_button",
+    "minecraft:spruce_button",
+    "minecraft:birch_button",
+    "minecraft:stone_button"
+  ],
+  "cobblemon:apricorns": [
+    "cooblemon:black_apricorn",
+    "cooblemon:blue_apricorn",
+    "cooblemon:green_apricorn",
+    "cooblemon:pink_apricorn",
+    "cooblemon:red_apricorn",
+    "cooblemon:white_apricorn",
+    "cooblemon:yellow_apricorn"
+  ],
+  "cobblemon:apples": ["cooblemon:tart_apple", "cooblemon:sweet_apple", "cooblemon:syrupy_apple"],
+  "c:chains": ["minecraft:chain"],
+  "minecraft:wooden_slabs": [
+    "minecraft:oak_slab",
+    "minecraft:spruce_slab",
+    "minecraft:birch_slab",
+    "minecraft:jungle_slab"
+  ],
+  // El zumo sale de cualquier baya; se dejan las cinco de siempre para no
+  // llenar el recetario con setenta entradas iguales.
+  "cobblemon:berries": [
+    "cooblemon:oran_berry",
+    "cooblemon:cheri_berry",
+    "cooblemon:chesto_berry",
+    "cooblemon:pecha_berry",
+    "cooblemon:rawst_berry"
+  ]
+};
+var BEDROCK_NAME = {
+  "minecraft:oak_button": "minecraft:wooden_button",
+  "minecraft:note_block": "minecraft:noteblock",
+  "minecraft:magma_block": "minecraft:magma",
+  "minecraft:melon": "minecraft:melon_block",
+  // El marco luminoso: Java lo llama `glow_item_frame` y Bedrock `glow_frame`.
+  // Con el nombre de Java la receta se rechazaba dos veces —ingrediente
+  // inválido y resultado malformado— y el polvo brillo no servía para nada.
+  "minecraft:glow_item_frame": "minecraft:glow_frame",
+  // Y el marco normal es `frame` a secas, pese a que su receta vanilla se llame
+  // `item_frame.json`: el nombre del fichero no es el del objeto.
+  "minecraft:item_frame": "minecraft:frame"
+};
+function portId(id) {
+  const ported = id.startsWith("cobblemon:") ? `cooblemon:${id.slice("cobblemon:".length)}` : id;
+  return BEDROCK_NAME[ported] ?? ported;
+}
+function resolveIngredient(ingredient, ctx) {
+  const first = Array.isArray(ingredient) ? ingredient[0] : ingredient;
+  if (!first) return null;
+  if (first.item) {
+    const id = portId(first.item);
+    if (!ctx.isKnown(id)) return null;
+    return [id];
+  }
+  const tag = first.tag?.replace(/^#/, "");
+  if (!tag) return null;
+  const single = TAG_ITEM[tag];
+  if (single) return [portId(single)];
+  const family = TAG_FAMILY[tag] ?? ctx.extraFamilies?.[tag];
+  if (family) {
+    const usable = family.map((id) => portId(id)).filter((id) => ctx.isKnown(id));
+    return usable.length > 0 ? usable.slice(0, MAX_VARIANTS) : null;
+  }
+  return null;
+}
+var STATION = {
+  "minecraft:crafting_shaped": ["crafting_table"],
+  "minecraft:crafting_shapeless": ["crafting_table"],
+  "minecraft:smelting": ["furnace"],
+  "minecraft:blasting": ["blast_furnace"],
+  "minecraft:smoking": ["smoker"],
+  "minecraft:campfire_cooking": ["campfire", "soul_campfire"],
+  "minecraft:stonecutting": ["stonecutter"],
+  "minecraft:smithing_transform": ["smithing_table"],
+  // El soporte de pociones de Bedrock no admite estos objetos; va a la olla.
+  "cobblemon:brewing_stand": ["cooblemon:campfire_pot"]
+};
+function convertRecipe(recipe, stem, resultId, count, ctx, idPrefix) {
+  const type = recipe.type ?? "";
+  const tags = STATION[type];
+  if (!tags) return null;
+  const identifier = (suffix) => `${idPrefix}${stem}${suffix}`;
+  const result = { item: resultId, count };
+  if (type === "minecraft:crafting_shaped") {
+    const pattern = recipe.pattern ?? [];
+    const keys = Object.entries(recipe.key ?? {});
+    const resolved = [];
+    for (const [letter, ingredient] of keys) {
+      const items = resolveIngredient(ingredient, ctx);
+      if (!items) return null;
+      resolved.push([letter, items]);
+    }
+    const variantIndex = resolved.findIndex(([, items]) => items.length > 1);
+    const variants = variantIndex >= 0 ? resolved[variantIndex][1] : [""];
+    return variants.map((variant, i) => {
+      const key = {};
+      for (const [letter, items] of resolved) {
+        key[letter] = { item: variant && letter === resolved[variantIndex][0] ? variant : items[0] };
+      }
+      return {
+        name: `${stem}${i > 0 ? `_${i}` : ""}`,
+        json: {
+          format_version: "1.20.10",
+          "minecraft:recipe_shaped": {
+            description: { identifier: identifier(i > 0 ? `_${i}` : "") },
+            tags,
+            pattern,
+            key,
+            unlock: { context: "AlwaysUnlocked" },
+            result
+          }
+        }
+      };
+    });
+  }
+  if (type === "minecraft:crafting_shapeless") {
+    const ingredients = [];
+    for (const ingredient of recipe.ingredients ?? []) {
+      const items = resolveIngredient(ingredient, ctx);
+      if (!items) return null;
+      ingredients.push({ item: items[0] });
+    }
+    if (ingredients.length === 0) return null;
+    return [
+      {
+        name: stem,
+        json: {
+          format_version: "1.20.10",
+          "minecraft:recipe_shapeless": {
+            description: { identifier: identifier("") },
+            tags,
+            ingredients,
+            unlock: { context: "AlwaysUnlocked" },
+            result
+          }
+        }
+      }
+    ];
+  }
+  if (type === "minecraft:smithing_transform") {
+    const base = resolveIngredient(recipe.base ?? {}, ctx);
+    const addition = resolveIngredient(recipe.addition ?? {}, ctx);
+    const template = recipe.template ? resolveIngredient(recipe.template, ctx) : null;
+    if (!base || !addition) return null;
+    return [
+      {
+        name: stem,
+        json: {
+          format_version: "1.20.10",
+          "minecraft:recipe_smithing_transform": {
+            description: { identifier: identifier("") },
+            tags,
+            ...template ? { template: template[0] } : {},
+            base: base[0],
+            addition: addition[0],
+            unlock: { context: "AlwaysUnlocked" },
+            result: resultId
+          }
+        }
+      }
+    ];
+  }
+  if (type === "cobblemon:brewing_stand") {
+    const abajo = resolveIngredient(recipe.bottle ?? {}, ctx);
+    const arriba = resolveIngredient(recipe.input ?? {}, ctx);
+    if (!abajo || !arriba) return null;
+    return [
+      {
+        name: stem,
+        json: {
+          format_version: "1.20.10",
+          "minecraft:recipe_shapeless": {
+            description: { identifier: identifier("") },
+            tags,
+            ingredients: [{ item: abajo[0] }, { item: arriba[0] }],
+            unlock: { context: "AlwaysUnlocked" },
+            result: { item: resultId, count: 1 }
+          }
+        }
+      }
+    ];
+  }
+  if (type === "minecraft:stonecutting") {
+    const input2 = resolveIngredient(recipe.ingredients?.[0] ?? recipe.ingredient ?? {}, ctx);
+    if (!input2) return null;
+    return [
+      {
+        name: stem,
+        json: {
+          format_version: "1.20.10",
+          "minecraft:recipe_shapeless": {
+            description: { identifier: identifier("") },
+            tags,
+            ingredients: [{ item: input2[0] }],
+            unlock: { context: "AlwaysUnlocked" },
+            result
+          }
+        }
+      }
+    ];
+  }
+  const input = resolveIngredient(recipe.ingredient ?? recipe.ingredients?.[0] ?? {}, ctx);
+  if (!input) return null;
+  return [
+    {
+      name: stem,
+      json: {
+        format_version: "1.20.10",
+        "minecraft:recipe_furnace": {
+          description: { identifier: identifier("") },
+          tags,
+          input: input[0],
+          unlock: { context: "AlwaysUnlocked" },
+          output: resultId
+        }
+      }
+    }
+  ];
+}
+
+// tools/kit/items.ts
+init_utils();
+async function walk(dir) {
+  if (!existsSync5(dir)) return [];
+  const out = [];
+  for (const entry of await readdir5(dir, { withFileTypes: true })) {
+    const full = path6.join(dir, entry.name);
+    if (entry.isDirectory()) out.push(...await walk(full));
+    else out.push(full);
+  }
+  return out;
+}
+async function readJsonOrNull(file) {
+  try {
+    return JSON.parse(await readFile6(file, "utf8"));
+  } catch {
+    return null;
+  }
+}
+async function writeJson(file, data) {
+  await mkdir(path6.dirname(file), { recursive: true });
+  await writeFile3(file, `${JSON.stringify(data, null, 2)}
+`, "utf8");
+}
+function splitRef(ref, fallbackNs) {
+  const i = ref.indexOf(":");
+  return i < 0 ? { ns: fallbackNs, path: ref } : { ns: ref.slice(0, i), path: ref.slice(i + 1) };
+}
+async function resolveModel(assets, ns, name) {
+  const textures = {};
+  let ref = `${ns}:item/${name}`;
+  for (let depth = 0; depth < 8; depth++) {
+    const { ns: refNs, path: refPath } = splitRef(ref, "minecraft");
+    if (refNs !== ns) {
+      if (refPath === "builtin/entity") return { kind: "skip", why: "3D model (builtin/entity)" };
+      if (refPath.startsWith("block/")) return { kind: "skip", why: `block item (${ref})` };
+      if (refPath.startsWith("item/")) return { kind: "flat", handheld: refPath.includes("handheld"), textures };
+      return { kind: "skip", why: `unknown parent model "${ref}"` };
+    }
+    if (refPath.startsWith("block/")) return { kind: "skip", why: `block item (${ref})` };
+    const model = await readJsonOrNull(path6.join(assets, "models", `${refPath}.json`));
+    if (!model) return { kind: "skip", why: `model "${ref}" not found` };
+    if (Array.isArray(model.elements) && model.elements.length) return { kind: "skip", why: "3D model (elements)" };
+    for (const [k, v] of Object.entries(model.textures ?? {})) if (!(k in textures)) textures[k] = v;
+    if (!model.parent) return { kind: "skip", why: "model without parent" };
+    ref = model.parent.includes(":") ? model.parent : `minecraft:${model.parent}`;
+  }
+  return { kind: "skip", why: "parent chain too deep" };
+}
+async function composeTexture(assets, ns, textures) {
+  const layers = Object.keys(textures).filter((k) => /^layer\d+$/.test(k)).sort((a, b) => Number(a.slice(5)) - Number(b.slice(5)));
+  if (layers.length === 0) return "no layer0 texture";
+  let out = null;
+  for (const layer of layers) {
+    const { ns: texNs, path: texPath } = splitRef(textures[layer], "minecraft");
+    if (texNs !== ns) return `texture "${textures[layer]}" is not in the addon`;
+    const file = path6.join(assets, "textures", `${texPath}.png`);
+    if (!existsSync5(file)) return `texture "${textures[layer]}" not found`;
+    let img = decodePng(await readFile6(file));
+    if (img.height > img.width && img.height % img.width === 0) {
+      img = { width: img.width, height: img.width, data: Buffer.from(img.data.subarray(0, img.width * img.width * 4)) };
+    }
+    if (!out) {
+      out = { width: img.width, height: img.height, data: Buffer.from(img.data) };
+      continue;
+    }
+    if (img.width !== out.width || img.height !== out.height) continue;
+    for (let i = 0; i < out.data.length; i += 4) {
+      const a = img.data[i + 3] / 255;
+      if (a === 0) continue;
+      for (let c = 0; c < 3; c++) out.data[i + c] = Math.round(img.data[i + c] * a + out.data[i + c] * (1 - a));
+      out.data[i + 3] = Math.max(out.data[i + 3], img.data[i + 3]);
+    }
+  }
+  return out;
+}
+async function baseItemIds() {
+  const listed = resolveFromRoot("data/base-item-ids.json");
+  if (existsSync5(listed)) return new Set(JSON.parse(await readFile6(listed, "utf8")));
+  const ids = /* @__PURE__ */ new Set();
+  for (const [dir, root] of [
+    ["bp/items", "minecraft:item"],
+    ["bp/blocks", "minecraft:block"]
+  ]) {
+    for (const file of (await walk(resolveFromRoot(dir))).filter((f) => f.endsWith(".json"))) {
+      const json = await readJsonOrNull(file);
+      const id = json?.[root]?.description?.identifier;
+      if (id) ids.add(id);
+    }
+  }
+  return ids.size ? ids : null;
+}
+async function baseFurnaceInputs() {
+  const listed = resolveFromRoot("data/base-furnace-inputs.json");
+  if (existsSync5(listed)) return new Set(JSON.parse(await readFile6(listed, "utf8")));
+  const keys = /* @__PURE__ */ new Set();
+  for (const file of (await walk(resolveFromRoot("bp/recipes"))).filter((f) => f.endsWith(".json"))) {
+    for (const key of furnaceKeys(await readJsonOrNull(file))) keys.add(key);
+  }
+  return keys;
+}
+function furnaceKeys(json) {
+  const body = json?.["minecraft:recipe_furnace"];
+  if (!body) return [];
+  const input = typeof body.input === "string" ? body.input : body.input?.item;
+  return input ? (body.tags ?? []).map((tag) => `${tag}|${input}`) : [];
+}
+async function addonTags(data, ns) {
+  const tags = {};
+  for (const folder of ["item", "items"]) {
+    const root = path6.join(data, "tags", folder);
+    for (const file of (await walk(root)).filter((f) => f.endsWith(".json"))) {
+      const json = await readJsonOrNull(file);
+      const name = path6.relative(root, file).replace(/\\/g, "/").replace(/\.json$/, "");
+      const values = (json?.values ?? []).map((v) => typeof v === "string" ? v : v?.id ?? "").filter((v) => v && !v.startsWith("#"));
+      if (values.length) tags[`${ns}:${name}`] = values;
+    }
+  }
+  return tags;
+}
+function whySkipped(recipe, ctx) {
+  if (!STATION[recipe.type ?? ""]) return `recipe type "${recipe.type ?? "?"}" isn't supported`;
+  const extra = recipe;
+  const all = [
+    ...Object.values(recipe.key ?? {}),
+    ...recipe.ingredients ?? [],
+    extra.ingredient,
+    recipe.base,
+    recipe.addition,
+    recipe.template,
+    extra.bottle,
+    extra.input
+  ];
+  for (const ingredient of all) {
+    if (!ingredient || resolveIngredient(ingredient, ctx)) continue;
+    const first = Array.isArray(ingredient) ? ingredient[0] : ingredient;
+    if (first?.item) return `ingredient "${first.item}" doesn't exist in Bedrock`;
+    if (first?.tag) return `tag "#${first.tag}" has no Bedrock equivalent (use an item, or define it in data/<ns>/tags/item)`;
+    return "an ingredient is empty";
+  }
+  return "it can't be converted";
+}
+async function convertItems(opts) {
+  const { ns, bp, rp } = opts;
+  const assets = path6.join(opts.input, "assets", ns);
+  const data = path6.join(opts.input, "data", ns);
+  const result = { items: [], langLines: /* @__PURE__ */ new Map(), recipes: 0 };
+  const modelDir = path6.join(assets, "models", "item");
+  const names = existsSync5(modelDir) ? (await readdir5(modelDir, { withFileTypes: true })).filter((e) => e.isFile() && e.name.endsWith(".json")).map((e) => e.name.slice(0, -5)) : [];
+  const textureData = {};
+  for (const name of names.sort()) {
+    const id = `${ns}:${name}`;
+    const shape = await resolveModel(assets, ns, name);
+    if (shape.kind === "skip") {
+      logWarn(`Item ${id}: ${shape.why}; not converted yet`);
+      continue;
+    }
+    const img = await composeTexture(assets, ns, shape.textures);
+    if (typeof img === "string") {
+      logWarn(`Item ${id}: ${img}; skipped`);
+      continue;
+    }
+    const texPath = `textures/${ns}/items/${name}`;
+    await mkdir(path6.join(rp, "textures", ns, "items"), { recursive: true });
+    await writeFile3(path6.join(rp, `${texPath}.png`), encodePng(img));
+    textureData[`${ns}_${name}`] = { textures: texPath };
+    await writeJson(path6.join(bp, "items", `${name}.json`), {
+      format_version: "1.21.60",
+      "minecraft:item": {
+        description: { identifier: id, menu_category: { category: "items" } },
+        components: {
+          "minecraft:icon": `${ns}_${name}`,
+          // El tamaño de pila está en el código de Java: 64, como la mayoría.
+          "minecraft:max_stack_size": 64,
+          "minecraft:hand_equipped": shape.handheld
+        }
+      }
+    });
+    result.items.push(id);
+  }
+  if (result.items.length) {
+    await writeJson(path6.join(rp, "textures", "item_texture.json"), {
+      resource_pack_name: ns,
+      texture_name: "atlas.items",
+      texture_data: textureData
+    });
+  }
+  for (const file of (await walk(path6.join(assets, "lang"))).filter((f) => f.endsWith(".json"))) {
+    const src = await readJsonOrNull(file) ?? {};
+    const lines = [];
+    for (const id of result.items) {
+      const name = id.split(":")[1];
+      const display = src[`item.${ns}.${name}`];
+      if (display) lines.push(`item.${id}.name=${display}`);
+    }
+    if (lines.length) result.langLines.set(path6.basename(file, ".json"), lines);
+  }
+  const own = new Set(result.items);
+  const base = await baseItemIds();
+  const ctx = {
+    isKnown: (id) => {
+      if (id.startsWith(`${ns}:`)) return own.has(id);
+      if (id.startsWith("cooblemon:")) return base ? base.has(id) : true;
+      return id.startsWith("minecraft:");
+    },
+    extraFamilies: await addonTags(data, ns)
+  };
+  const furnaceUsed = await baseFurnaceInputs();
+  for (const folder of ["recipe", "recipes"]) {
+    const root = path6.join(data, folder);
+    for (const file of (await walk(root)).filter((f) => f.endsWith(".json")).sort()) {
+      const rel = path6.relative(root, file).replace(/\\/g, "/");
+      const recipe = await readJsonOrNull(file);
+      if (!recipe) continue;
+      const rawResult = recipe.result;
+      const rawId = typeof rawResult === "string" ? rawResult : rawResult?.id ?? rawResult?.item;
+      if (!rawId) continue;
+      const resultId = portId(rawId);
+      if (!ctx.isKnown(resultId)) {
+        logWarn(`Recipe ${rel}: result "${rawId}" doesn't exist in Bedrock; skipped`);
+        continue;
+      }
+      const stem = rel.replace(/\.json$/, "").replace(/\//g, "_");
+      const count = typeof rawResult === "string" ? 1 : rawResult?.count ?? 1;
+      const built = convertRecipe(recipe, stem, resultId, count, ctx, `${ns}:`);
+      if (!built) {
+        logWarn(`Recipe ${rel}: ${whySkipped(recipe, ctx)}; skipped`);
+        continue;
+      }
+      for (const { name, json } of built) {
+        const clash = furnaceKeys(json).find((key) => furnaceUsed.has(key));
+        if (clash) {
+          const [station, input] = clash.split("|");
+          logWarn(`Recipe ${rel}: "${input}" already has a ${station} recipe (Bedrock allows only one per ingredient); skipped`);
+          continue;
+        }
+        for (const key of furnaceKeys(json)) furnaceUsed.add(key);
+        await writeJson(path6.join(bp, "recipes", `${name}.json`), json);
+        result.recipes++;
+      }
+    }
+  }
+  return result;
+}
+
 // tools/kit/kit.ts
 function parseArgs() {
   const argv = process.argv.slice(2);
@@ -2537,28 +3073,28 @@ function parseArgs() {
   return {
     sprites: !argv.includes("--no-sprites"),
     glyphPage: page,
-    input: path6.resolve(input),
+    input: path7.resolve(input),
     ns: get("--ns") ?? null,
-    out: get("--out") ? path6.resolve(get("--out")) : null,
+    out: get("--out") ? path7.resolve(get("--out")) : null,
     version: [v[0] ?? 1, v[1] ?? 0, v[2] ?? 0]
   };
 }
-async function walk(dir) {
-  if (!existsSync5(dir)) return [];
+async function walk2(dir) {
+  if (!existsSync6(dir)) return [];
   const out = [];
-  for (const entry of await readdir5(dir, { withFileTypes: true })) {
-    const full = path6.join(dir, entry.name);
-    if (entry.isDirectory()) out.push(...await walk(full));
+  for (const entry of await readdir6(dir, { withFileTypes: true })) {
+    const full = path7.join(dir, entry.name);
+    if (entry.isDirectory()) out.push(...await walk2(full));
     else out.push(full);
   }
   return out;
 }
 async function readJson(file) {
-  return JSON.parse(await readFile6(file, "utf8"));
+  return JSON.parse(await readFile7(file, "utf8"));
 }
-async function writeJson(file, data) {
-  await mkdir(path6.dirname(file), { recursive: true });
-  await writeFile3(file, `${JSON.stringify(data, null, 2)}
+async function writeJson2(file, data) {
+  await mkdir2(path7.dirname(file), { recursive: true });
+  await writeFile4(file, `${JSON.stringify(data, null, 2)}
 `, "utf8");
 }
 function stableUuid(seed) {
@@ -2594,16 +3130,16 @@ function rideStatsOf(raw) {
 }
 var textureRef = (t) => typeof t === "string" ? t : t?.frames?.[0];
 async function resolveAssets(assets, names) {
-  const pokemon = path6.join(assets, "bedrock", "pokemon");
-  const geoFiles = (await walk(path6.join(pokemon, "models"))).filter((f) => f.endsWith(".json"));
-  const poserFiles = (await walk(path6.join(pokemon, "posers"))).filter((f) => f.endsWith(".json"));
-  const tex = (ref) => path6.join(assets, ref.split(":").pop());
+  const pokemon = path7.join(assets, "bedrock", "pokemon");
+  const geoFiles = (await walk2(path7.join(pokemon, "models"))).filter((f) => f.endsWith(".json"));
+  const poserFiles = (await walk2(path7.join(pokemon, "posers"))).filter((f) => f.endsWith(".json"));
+  const tex = (ref) => path7.join(assets, ref.split(":").pop());
   const byName = /* @__PURE__ */ new Map();
-  for (const file of (await walk(path6.join(pokemon, "resolvers"))).filter((f) => f.endsWith(".json"))) {
+  for (const file of (await walk2(path7.join(pokemon, "resolvers"))).filter((f) => f.endsWith(".json"))) {
     const r = await readJson(file);
     const name = speciesName(String(r.species ?? "").split(":").pop() ?? "");
     if (!names.has(name)) continue;
-    const entry = byName.get(name) ?? { folder: path6.basename(path6.dirname(file)), files: [] };
+    const entry = byName.get(name) ?? { folder: path7.basename(path7.dirname(file)), files: [] };
     entry.files.push({ order: r.order ?? 0, variations: r.variations ?? [] });
     byName.set(name, entry);
   }
@@ -2629,14 +3165,14 @@ async function resolveAssets(assets, names) {
           if (v.layers) layers = v.layers;
         }
         if (!model || !texture) return null;
-        const geoFile = geoFiles.find((f) => path6.basename(f) === `${model.split(":").pop()}.json`);
+        const geoFile = geoFiles.find((f) => path7.basename(f) === `${model.split(":").pop()}.json`);
         if (!geoFile) return null;
         const poserName = `${(poser ?? name).split(":").pop()}.json`;
         return {
           geoFile,
           texture: tex(texture),
-          layers: layers.map((l) => textureRef(l.texture)).filter((t) => !!t).map(tex).filter((f) => existsSync5(f)),
-          poserFile: poserFiles.find((f) => path6.basename(f) === poserName) ?? null
+          layers: layers.map((l) => textureRef(l.texture)).filter((t) => !!t).map(tex).filter((f) => existsSync6(f)),
+          poserFile: poserFiles.find((f) => path7.basename(f) === poserName) ?? null
         };
       }
     });
@@ -2644,10 +3180,10 @@ async function resolveAssets(assets, names) {
   return out;
 }
 async function composedTexture(variant, dst) {
-  const base = decodePng(await readFile6(variant.texture));
+  const base = decodePng(await readFile7(variant.texture));
   const data = Buffer.from(base.data);
   for (const file of variant.layers) {
-    const layer = decodePng(await readFile6(file));
+    const layer = decodePng(await readFile7(file));
     for (let y = 0; y < base.height; y++) {
       for (let x = 0; x < base.width; x++) {
         const lx = Math.floor(x * layer.width / base.width);
@@ -2661,18 +3197,18 @@ async function composedTexture(variant, dst) {
       }
     }
   }
-  await mkdir(path6.dirname(dst), { recursive: true });
-  await writeFile3(dst, encodePng({ width: base.width, height: base.height, data }));
+  await mkdir2(path7.dirname(dst), { recursive: true });
+  await writeFile4(dst, encodePng({ width: base.width, height: base.height, data }));
 }
 async function writeGeometry(ns, geoFile, rp, fileName, name) {
-  const geo = JSON.parse(sanitizeGeometryJson(await readFile6(geoFile, "utf8"), name));
+  const geo = JSON.parse(sanitizeGeometryJson(await readFile7(geoFile, "utf8"), name));
   let id = "";
   (geo["minecraft:geometry"] ?? []).forEach((g, index) => {
     const own = `geometry.${ns}.${fileName}${index ? `_${index}` : ""}`;
     g.description = { ...g.description, identifier: own };
     id ||= own;
   });
-  await writeJson(path6.join(rp, "models", "entity", ns, `${fileName}.geo.json`), geo);
+  await writeJson2(path7.join(rp, "models", "entity", ns, `${fileName}.geo.json`), geo);
   return id;
 }
 function poseClip(pose) {
@@ -2769,7 +3305,7 @@ async function behaviorEntity(id, family, raw, extras) {
   e.description.is_spawnable = true;
   e.description.is_summonable = true;
   const templateSpecies = await readJson(
-    (await walk(resolveFromRoot("data/species"))).find((f) => path6.basename(f) === `${template}.json`)
+    (await walk2(resolveFromRoot("data/species"))).find((f) => path7.basename(f) === `${template}.json`)
   );
   const baseScale = raw.baseScale ?? 1;
   rescale(e, baseScale / (templateSpecies.baseScale ?? 1));
@@ -2932,7 +3468,7 @@ function convertSpecies(ns, raw, own, extras) {
     locators: extras.locators
   };
 }
-var RENDERER = existsSync5(resolveFromRoot("tools/kit/render-pokemon-sprites.mjs")) ? [resolveFromRoot("tools/kit/render-pokemon-sprites.mjs")] : [resolveFromRoot("node_modules/tsx/dist/cli.mjs"), resolveFromRoot("tools/render-pokemon-sprites.ts")];
+var RENDERER = existsSync6(resolveFromRoot("tools/kit/render-pokemon-sprites.mjs")) ? [resolveFromRoot("tools/kit/render-pokemon-sprites.mjs")] : [resolveFromRoot("node_modules/tsx/dist/cli.mjs"), resolveFromRoot("tools/render-pokemon-sprites.ts")];
 var QUIET_RENDER = { encoding: "utf8", stdio: "pipe", maxBuffer: 64 * 1024 * 1024 };
 function showRendererOutput(r) {
   const text = `${r.stdout ?? ""}${r.stderr ?? ""}${r.error ? String(r.error) : ""}`.trim();
@@ -2945,16 +3481,16 @@ async function renderSprites(ns, assets, variants, rp, work, page) {
       species: v.name,
       ...v.aspects.length || shiny ? { aspects: [...v.aspects, ...shiny ? ["shiny"] : []] } : {},
       files: {
-        pc: path6.join(work, "pc", `${fileOf(v, shiny)}.png`),
-        face: path6.join(work, "face", `${fileOf(v, shiny)}.png`)
+        pc: path7.join(work, "pc", `${fileOf(v, shiny)}.png`),
+        face: path7.join(work, "face", `${fileOf(v, shiny)}.png`)
       }
     }))
   );
   await rm2(work, { recursive: true, force: true });
-  await mkdir(path6.join(work, "pc"), { recursive: true });
-  await mkdir(path6.join(work, "face"), { recursive: true });
-  const manifest = path6.join(work, "jobs.json");
-  await writeFile3(manifest, JSON.stringify(jobs), "utf8");
+  await mkdir2(path7.join(work, "pc"), { recursive: true });
+  await mkdir2(path7.join(work, "face"), { recursive: true });
+  const manifest = path7.join(work, "jobs.json");
+  await writeFile4(manifest, JSON.stringify(jobs), "utf8");
   logStep(`  Sprites: rendering ${jobs.length} variants (this can take a few minutes)\u2026`);
   const run = spawnSync(
     process.execPath,
@@ -2974,7 +3510,7 @@ async function renderSprites(ns, assets, variants, rp, work, page) {
     logWarn("  Sprites: the renderer failed (is there a browser? see SPRITE_BROWSER); the add-on is built without sprites");
     return {};
   }
-  const dexDir = path6.join(work, "dex");
+  const dexDir = path7.join(work, "dex");
   const dexJobs = variants.flatMap(
     (v) => [false, true].map((shiny) => ({
       name: fileOf(v, shiny),
@@ -2983,12 +3519,12 @@ async function renderSprites(ns, assets, variants, rp, work, page) {
     }))
   );
   for (const pass of ["icon", "portrait", "size"]) {
-    const dir = path6.join(dexDir, pass);
-    await mkdir(dir, { recursive: true });
-    const jobsFile = path6.join(dexDir, `${pass}.jobs.json`);
-    const specFile = path6.join(dexDir, `${pass}.spec.json`);
-    await writeFile3(jobsFile, JSON.stringify(pass === "size" ? dexJobs.filter((j) => !j.name.endsWith("_shiny")) : dexJobs), "utf8");
-    await writeFile3(specFile, JSON.stringify(DEX_PASSES[pass]), "utf8");
+    const dir = path7.join(dexDir, pass);
+    await mkdir2(dir, { recursive: true });
+    const jobsFile = path7.join(dexDir, `${pass}.jobs.json`);
+    const specFile = path7.join(dexDir, `${pass}.spec.json`);
+    await writeFile4(jobsFile, JSON.stringify(pass === "size" ? dexJobs.filter((j) => !j.name.endsWith("_shiny")) : dexJobs), "utf8");
+    await writeFile4(specFile, JSON.stringify(DEX_PASSES[pass]), "utf8");
     const r = spawnSync(
       process.execPath,
       [
@@ -3017,25 +3553,25 @@ async function renderSprites(ns, assets, variants, rp, work, page) {
   for (const v of variants) {
     for (const shiny of [false, true]) {
       const file = fileOf(v, shiny);
-      const pc = path6.join(work, "pc", `${file}.png`);
-      const face = path6.join(work, "face", `${file}.png`);
-      if (!existsSync5(pc)) continue;
+      const pc = path7.join(work, "pc", `${file}.png`);
+      const face = path7.join(work, "face", `${file}.png`);
+      if (!existsSync6(pc)) continue;
       const tex = `textures/${ns}/sprites`;
-      await mkdir(path6.join(rp, tex, "pc"), { recursive: true });
-      await copyFile2(pc, path6.join(rp, tex, "pc", `${file}.png`));
+      await mkdir2(path7.join(rp, tex, "pc"), { recursive: true });
+      await copyFile2(pc, path7.join(rp, tex, "pc", `${file}.png`));
       const set = { pc: `${tex}/pc/${file}`, dex: `${tex}/pc/${file}`, portrait: `${tex}/pc/${file}` };
       for (const [pass, key] of [["icon", "dex"], ["portrait", "portrait"], ["size", "size"]]) {
-        const src = path6.join(dexDir, pass, `${pass === "size" ? fileOf(v, false) : file}.png`);
-        if (!existsSync5(src)) continue;
-        await mkdir(path6.join(rp, tex, "dex", pass), { recursive: true });
-        await copyFile2(src, path6.join(rp, tex, "dex", pass, `${file}.png`));
+        const src = path7.join(dexDir, pass, `${pass === "size" ? fileOf(v, false) : file}.png`);
+        if (!existsSync6(src)) continue;
+        await mkdir2(path7.join(rp, tex, "dex", pass), { recursive: true });
+        await copyFile2(src, path7.join(rp, tex, "dex", pass, `${file}.png`));
         set[key] = `${tex}/dex/${pass}/${file}`;
       }
-      if (existsSync5(face)) {
-        await mkdir(path6.join(rp, tex, "face"), { recursive: true });
-        await copyFile2(face, path6.join(rp, tex, "face", `${file}.png`));
+      if (existsSync6(face)) {
+        await mkdir2(path7.join(rp, tex, "face"), { recursive: true });
+        await copyFile2(face, path7.join(rp, tex, "face", `${file}.png`));
         set.face = `${tex}/face/${file}`;
-        faces.push(decodePng(await readFile6(face)));
+        faces.push(decodePng(await readFile7(face)));
         set.glyph = String.fromCharCode(page << 8 | index++);
       }
       sprites[`${ns}:${v.name}|${v.form ?? ""}|${shiny ? 1 : 0}`] = set;
@@ -3043,30 +3579,29 @@ async function renderSprites(ns, assets, variants, rp, work, page) {
   }
   if (faces.length) {
     const fontName = `glyph_${page.toString(16).toUpperCase()}.png`;
-    await mkdir(path6.join(rp, "font"), { recursive: true });
-    await writeFile3(path6.join(rp, "font", fontName), encodePng(glyphPage(faces)));
+    await mkdir2(path7.join(rp, "font"), { recursive: true });
+    await writeFile4(path7.join(rp, "font", fontName), encodePng(glyphPage(faces)));
   }
   return sprites;
 }
 async function main() {
   const args = parseArgs();
-  const dataRoot = path6.join(args.input, "data");
-  const ns = args.ns ?? (existsSync5(dataRoot) ? (await readdir5(dataRoot, { withFileTypes: true })).find((d) => d.isDirectory() && d.name !== "minecraft")?.name : void 0);
+  const dataRoot = path7.join(args.input, "data");
+  const ns = args.ns ?? (existsSync6(dataRoot) ? (await readdir6(dataRoot, { withFileTypes: true })).find((d) => d.isDirectory() && d.name !== "minecraft")?.name : void 0);
   if (!ns || !/^[a-z0-9_]+$/.test(ns) || ns === "cooblemon" || ns === "cobblemon") {
     throw new Error(`Invalid namespace: "${ns}". Pass it with --ns (lowercase letters, digits and _).`);
   }
-  const data = path6.join(dataRoot, ns);
-  const assets = path6.join(args.input, "assets", ns);
+  const data = path7.join(dataRoot, ns);
+  const assets = path7.join(args.input, "assets", ns);
   const out = args.out ?? resolveFromRoot(`dist/kit/${ns}`);
-  const bp = path6.join(out, "BP");
-  const rp = path6.join(out, "RP");
+  const bp = path7.join(out, "BP");
+  const rp = path7.join(out, "RP");
   await rm2(bp, { recursive: true, force: true });
   await rm2(rp, { recursive: true, force: true });
   const rawSpecies = [];
-  for (const file of (await walk(path6.join(data, "species"))).filter((f) => f.endsWith(".json"))) {
+  for (const file of (await walk2(path7.join(data, "species"))).filter((f) => f.endsWith(".json"))) {
     rawSpecies.push(await readJson(file));
   }
-  if (rawSpecies.length === 0) throw new Error(`No species found in ${path6.join(data, "species")}`);
   const own = new Set(rawSpecies.map((s) => speciesName(s.name)));
   const resolved = await resolveAssets(assets, own);
   const species = [];
@@ -3087,7 +3622,7 @@ async function main() {
     };
     const lengths = /* @__PURE__ */ new Map();
     const renamed = {};
-    for (const file of (await walk(path6.join(assets, "bedrock", "pokemon", "animations", res.folder))).filter((f) => f.endsWith(".animation.json"))) {
+    for (const file of (await walk2(path7.join(assets, "bedrock", "pokemon", "animations", res.folder))).filter((f) => f.endsWith(".animation.json"))) {
       const payload = await readJson(file);
       const tree = sanitizeAnimationTree(payload.animations ?? {});
       for (const [key, anim] of Object.entries(tree)) {
@@ -3141,7 +3676,7 @@ async function main() {
         if (e) battleClips[n] = e;
       }
     }
-    const baseGeo = JSON.parse(await readFile6(base2.geoFile, "utf8"));
+    const baseGeo = JSON.parse(await readFile7(base2.geoFile, "utf8"));
     const modelLocators = locatorsOf(baseGeo);
     const locators = {};
     for (const [locName, vec2] of modelLocators) {
@@ -3206,30 +3741,30 @@ async function main() {
         default: await writeGeometry(ns, variant.geoFile, rp, fileName, name)
       };
       const texDir = `${animTex}/${name}`;
-      await composedTexture(variant, path6.join(rp, `${texDir}/${fileName}.png`));
-      await composedTexture(res.resolve([...aspects, "shiny"]) ?? variant, path6.join(rp, `${texDir}/${fileName}_shiny.png`));
+      await composedTexture(variant, path7.join(rp, `${texDir}/${fileName}.png`));
+      await composedTexture(res.resolve([...aspects, "shiny"]) ?? variant, path7.join(rp, `${texDir}/${fileName}_shiny.png`));
       const textures = { default: `${texDir}/${fileName}`, shiny: `${texDir}/${fileName}_shiny` };
       const female = res.resolve([...aspects, "female"]);
       const femaleGeo = !!female && female.geoFile !== variant.geoFile;
       const femaleTex = !!female && (female.texture !== variant.texture || female.layers.join() !== variant.layers.join());
       if (female && femaleGeo) geometry.female = await writeGeometry(ns, female.geoFile, rp, `${fileName}_female`, name);
       if (female && femaleTex) {
-        await composedTexture(female, path6.join(rp, `${texDir}/${fileName}_female.png`));
-        await composedTexture(res.resolve([...aspects, "female", "shiny"]) ?? female, path6.join(rp, `${texDir}/${fileName}_female_shiny.png`));
+        await composedTexture(female, path7.join(rp, `${texDir}/${fileName}_female.png`));
+        await composedTexture(res.resolve([...aspects, "female", "shiny"]) ?? female, path7.join(rp, `${texDir}/${fileName}_female_shiny.png`));
         textures.female = `${texDir}/${fileName}_female`;
         textures.female_shiny = `${texDir}/${fileName}_female_shiny`;
       }
       const roles = variant.poserFile && variant.poserFile !== base2.poserFile ? (await rolesFor(variant.poserFile, `${form}_`)).roles : baseRoles.roles;
-      await writeJson(
-        path6.join(bp, "entities", `${fileName}.json`),
+      await writeJson2(
+        path7.join(bp, "entities", `${fileName}.json`),
         await behaviorEntity(entityId, `${ns}_${name}`, raw, { shoulder: !!shoulderPose, seats, rideSpeed })
       );
-      await writeJson(
-        path6.join(rp, "entity", `${fileName}.entity.json`),
+      await writeJson2(
+        path7.join(rp, "entity", `${fileName}.entity.json`),
         clientEntity(entityId, fileName, geometry, textures, roles, animId, battleClips, shoulderClip)
       );
-      await writeJson(
-        path6.join(rp, "render_controllers", `${ns}.${fileName}.render_controllers.json`),
+      await writeJson2(
+        path7.join(rp, "render_controllers", `${ns}.${fileName}.render_controllers.json`),
         renderController(entityId, { geometry: femaleGeo, texture: femaleTex })
       );
       spriteJobs.push({ name, form, aspects });
@@ -3246,21 +3781,21 @@ async function main() {
       if (!variant || variant.geoFile === base2.geoFile && variant.texture === base2.texture && variant.layers.join() === base2.layers.join()) continue;
       if (await buildEntity(f.name, aspects)) ownForms.push(f.name);
     }
-    await writeJson(path6.join(rp, "animations", ns, `${name}.animation.json`), { format_version: "1.8.0", animations: renamed });
+    await writeJson2(path7.join(rp, "animations", ns, `${name}.animation.json`), { format_version: "1.8.0", animations: renamed });
     species.push(converted);
     logStep(
       `  ${id}: template ${TEMPLATES[profileOf(raw)]}, ${baseRoles.roles.size} poses, ${Object.keys(battleClips).length} battle clips` + (base2.layers.length ? `, ${base2.layers.length} layer${base2.layers.length === 1 ? "" : "s"}` : "") + (ownForms.length ? `, forms with their own entity: ${ownForms.join(", ")}` : "") + (rideStats ? `, rideable (${Object.keys(rideStats.stats).join("/")}, ${seats?.length ?? 0} seat${seats?.length === 1 ? "" : "s"})` : "") + (shoulderPose ? ", shoulder" : "")
     );
   }
-  const sprites = args.sprites ? await renderSprites(
+  const sprites = args.sprites && spriteJobs.length ? await renderSprites(
     ns,
     assets,
     spriteJobs,
     rp,
-    path6.join(out, ".sprites"),
+    path7.join(out, ".sprites"),
     args.glyphPage
   ) : {};
-  const spawnFiles = (await walk(path6.join(data, "spawn_pool_world"))).filter((f) => f.endsWith(".json"));
+  const spawnFiles = (await walk2(path7.join(data, "spawn_pool_world"))).filter((f) => f.endsWith(".json"));
   const pools = spawnFiles.length ? await convertJavaSpawnPools({ files: spawnFiles, generationOf: () => 0, quiet: true }) : {};
   const entries = [];
   const levels = {};
@@ -3273,7 +3808,11 @@ async function main() {
     entries.push(...bundleSpawnRules(id, spawn));
     levels[id] = { min: spawn.levelMin, max: spawn.levelMax };
   }
-  const langFiles = (await walk(path6.join(assets, "lang"))).filter((f) => f.endsWith(".json"));
+  const items = await convertItems({ input: args.input, ns, bp, rp });
+  if (species.length === 0 && items.items.length === 0) {
+    throw new Error(`No species or items found in ${args.input} (data/${ns}/species, assets/${ns}/models/item)`);
+  }
+  const langFiles = (await walk2(path7.join(assets, "lang"))).filter((f) => f.endsWith(".json"));
   const languages = [];
   for (const file of langFiles) {
     const src = await readJson(file);
@@ -3287,10 +3826,11 @@ async function main() {
       const desc = pick("desc");
       if (desc) lines.push(`cooblemon.species.${id}.desc=${desc.replace(/\n/g, " ")}`);
     }
-    const locale = bedrockLocale(path6.basename(file, ".json"));
+    lines.push(...items.langLines.get(path7.basename(file, ".json")) ?? []);
+    const locale = bedrockLocale(path7.basename(file, ".json"));
     languages.push(locale);
-    await mkdir(path6.join(rp, "texts"), { recursive: true });
-    await writeFile3(path6.join(rp, "texts", `${locale}.lang`), `${lines.join("\n")}
+    await mkdir2(path7.join(rp, "texts"), { recursive: true });
+    await writeFile4(path7.join(rp, "texts", `${locale}.lang`), `${lines.join("\n")}
 `, "utf8");
   }
   const SIBLINGS = {
@@ -3308,18 +3848,18 @@ async function main() {
   for (const locale of [...languages]) {
     for (const sibling of SIBLINGS[locale] ?? []) {
       if (languages.includes(sibling)) continue;
-      await copyFile2(path6.join(rp, "texts", `${locale}.lang`), path6.join(rp, "texts", `${sibling}.lang`));
+      await copyFile2(path7.join(rp, "texts", `${locale}.lang`), path7.join(rp, "texts", `${sibling}.lang`));
       languages.push(sibling);
     }
   }
-  if (languages.length) await writeJson(path6.join(rp, "texts", "languages.json"), languages);
+  if (languages.length) await writeJson2(path7.join(rp, "texts", "languages.json"), languages);
   const version = args.version.join(".");
-  await mkdir(path6.join(bp, "scripts"), { recursive: true });
+  await mkdir2(path7.join(bp, "scripts"), { recursive: true });
   const apiLib = resolveFromRoot("packages/api/dist/cobblemon-bedrock-api.js");
-  if (!existsSync5(apiLib)) throw new Error("Missing packages/api/dist/cobblemon-bedrock-api.js: run npm run api:build first");
-  await copyFile2(apiLib, path6.join(bp, "scripts", "cobblemon-bedrock-api.js"));
-  await writeFile3(
-    path6.join(bp, "scripts", "main.js"),
+  if (!existsSync6(apiLib)) throw new Error("Missing packages/api/dist/cobblemon-bedrock-api.js: run npm run api:build first");
+  await copyFile2(apiLib, path7.join(bp, "scripts", "cobblemon-bedrock-api.js"));
+  await writeFile4(
+    path7.join(bp, "scripts", "main.js"),
     [
       "// Generated by the Cobblemon Bedrock creator kit: do not edit, regenerate it instead.",
       'import { registerAddon } from "./cobblemon-bedrock-api.js";',
@@ -3330,8 +3870,8 @@ async function main() {
     ].join("\n"),
     "utf8"
   );
-  await writeFile3(
-    path6.join(bp, "scripts", "data.js"),
+  await writeFile4(
+    path7.join(bp, "scripts", "data.js"),
     [
       "// Generated by the Cobblemon Bedrock creator kit: do not edit, regenerate it instead.",
       `export const ADDON = ${JSON.stringify(ns)};`,
@@ -3349,9 +3889,9 @@ async function main() {
   const bpManifest = await readJson(resolveFromRoot("bp/manifest.json"));
   const rpManifest = await readJson(resolveFromRoot("rp/manifest.json"));
   const engine = [1, 26, 50];
-  await writeJson(path6.join(bp, "manifest.json"), {
+  await writeJson2(path7.join(bp, "manifest.json"), {
     format_version: 2,
-    header: { name: `${ns} (Cobblemon Bedrock)`, description: `Cobblemon Bedrock add-on generated by the creator kit (${species.length} species).`, uuid: stableUuid(`${ns}:bp`), version: args.version, min_engine_version: engine },
+    header: { name: `${ns} (Cobblemon Bedrock)`, description: `Cobblemon Bedrock add-on generated by the creator kit (${species.length} species, ${items.items.length} items).`, uuid: stableUuid(`${ns}:bp`), version: args.version, min_engine_version: engine },
     modules: [
       { type: "data", uuid: stableUuid(`${ns}:bp:data`), version: args.version },
       { type: "script", language: "javascript", uuid: stableUuid(`${ns}:bp:script`), version: args.version, entry: "scripts/main.js" }
@@ -3362,14 +3902,14 @@ async function main() {
       { module_name: "@minecraft/server", version: "2.10.0" }
     ]
   });
-  await writeJson(path6.join(rp, "manifest.json"), {
+  await writeJson2(path7.join(rp, "manifest.json"), {
     format_version: 2,
     capabilities: ["pbr"],
     header: { name: `${ns} (Cobblemon Bedrock, resources)`, description: "Models, animations, textures and texts.", uuid: stableUuid(`${ns}:rp`), version: args.version, min_engine_version: engine },
     modules: [{ type: "resources", uuid: stableUuid(`${ns}:rp:res`), version: args.version }],
     dependencies: [{ uuid: rpManifest.header.uuid, version: cv }]
   });
-  const pack = path6.join(out, `${ns}.mcaddon`);
+  const pack = path7.join(out, `${ns}.mcaddon`);
   await new Promise((resolve, reject) => {
     const output = createWriteStream(pack);
     const archive = archiver("zip", { zlib: { level: 9 } });
@@ -3382,7 +3922,7 @@ async function main() {
     archive.finalize();
   });
   logStep(
-    `Kit: ${species.length} species, ${entries.length} spawns, ${languages.length} languages, ${Object.keys(sprites).length} sprite sets \u2192 ${pack}`
+    `Kit: ${species.length} species, ${entries.length} spawns, ${items.items.length} items, ${items.recipes} recipes, ${languages.length} languages, ${Object.keys(sprites).length} sprite sets \u2192 ${pack}`
   );
 }
 main().catch((err) => {

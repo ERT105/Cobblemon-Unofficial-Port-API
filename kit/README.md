@@ -4,7 +4,7 @@ Converts a **Cobblemon Java** addon into an add-on for **Cobblemon Bedrock**,
 using the same rules Cobblemon Bedrock applies to the mod's own Pokémon:
 species, spawns, drops, languages, model, animations, poses (idle, walk, run,
 fly, swim, battle, sleep), sprites, forms, female variants, riding and
-shoulder.
+shoulder. It also converts the addon's flat **items** and their **recipes**.
 
 ## Requirements
 
@@ -37,7 +37,12 @@ data/<ns>/spawn_pool_world/*.json
 assets/<ns>/bedrock/pokemon/{models,animations,posers,resolvers}/…
 assets/<ns>/textures/pokemon/…
 assets/<ns>/lang/*.json
+assets/<ns>/models/item/*.json      (items, with their textures)
+data/<ns>/recipe/**/*.json          (recipes)
+data/<ns>/tags/item/*.json          (item tags used by your recipes)
 ```
+
+Species and items are both optional: an addon with only items works too.
 
 The output goes to `dist/kit/<ns>/`: `BP/`, `RP/` and `<ns>.mcaddon`, ready
 to install on top of Cobblemon Bedrock.
@@ -50,6 +55,32 @@ to install on top of Cobblemon Bedrock.
 | `--glyph-page F0` | The glyph page for the party panel portraits (`F0` to `F8`). If you use several add-ons, they must not overlap. |
 | `--no-sprites` | Skip sprite rendering (faster; the UI shows a Poké Ball). |
 
+## Items and recipes
+
+In Java an item is registered in code, so the kit can't know what it
+**does**. It converts everything else, so the item exists in Bedrock with its
+icon, name and recipes; if it should do something, write that in your
+add-on's script with the [API](../docs/REFERENCE.md#actions-and-queries).
+
+- **Flat items** (`item/generated`, `item/handheld`…) are converted. Layers
+  (`layer0`, `layer1`…) are merged into one icon, and animated textures use
+  their first frame. Names come from `item.<ns>.<name>` in your lang files.
+- **3D items** (models with `elements`) and **block items** are skipped with a
+  warning; they're not supported yet.
+- **Max stack size** is in the Java code, so every item gets 64. Edit
+  `BP/items/<name>.json` if one should be different.
+- **Recipes** use the same rules as Cobblemon Bedrock's own: crafting (shaped
+  and shapeless), furnace, blast furnace, smoker, campfire, stonecutter and
+  smithing. Common tags are replaced by their item (`#c:ingots/iron` → iron
+  ingot), and your own tags in `data/<ns>/tags/item` work too. Ingredients
+  must exist in Bedrock: vanilla, Cobblemon Bedrock (`cobblemon:` ids are
+  converted) or your addon. A recipe that needs another mod's item is skipped,
+  and the warning names the ingredient.
+- **One furnace recipe per ingredient.** Bedrock allows only one recipe per
+  ingredient in each furnace-type station (furnace, blast furnace, smoker,
+  campfire). If Cobblemon Bedrock already smelts that ingredient (for example,
+  berries into dyes), or your addon has two such recipes, the extra one is
+  skipped with a warning instead of failing when the world loads.
 
 ## Afterwards
 
