@@ -1,0 +1,3 @@
+// Generado por tools/build-example-addon.ts desde las tablas de Cooblemon — no editar.
+export const BATTLE_CLIPS = {"faint":["animation.pikachu.faint",3],"recoil":["animation.pikachu.recoil",1.55,1],"cry":["animation.pikachu.battle_cry",3],"volttackle":["animation.pikachu.volttackle",3],"physical":["animation.pikachu.physical",3],"special":["animation.pikachu.special",3],"status":["animation.pikachu.status",3]};
+export const LOCATORS = {"root":[[0,0,0]],"middle":[[0,10,0]],"top":[[0,22,0]],"target":[[0,10,-6]],"special":[[-4.5,13.5,-4.75],[4.5,13.5,-4.75]],"mouth":[[0,12.75,-4.75]],"hand_primary":[[-9.25,9.75,-2.25]],"physical":[[0,16,17]],"eye":[[-2.75,15.7,-4],[2.75,15.7,-4]],"face":[[0,14.4,-4.75]],"hand_secondary":[[9.25,9.75,-2.25]]};

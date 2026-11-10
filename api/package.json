@@ -1,0 +1,13 @@
+{
+  "name": "cooblemon-api",
+  "version": "1.0.0",
+  "description": "Registro y eventos de Cooblemon para add-ons de Minecraft Bedrock.",
+  "type": "module",
+  "main": "dist/cooblemon-api.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist", "README.md"],
+  "peerDependencies": {
+    "@minecraft/server": ">=2.10.0"
+  },
+  "license": "MPL-2.0"
+}
