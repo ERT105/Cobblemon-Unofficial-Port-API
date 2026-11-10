@@ -50,7 +50,6 @@ to install on top of Cobblemon Bedrock.
 | `--glyph-page F0` | The glyph page for the party panel portraits (`F0` to `F8`). If you use several add-ons, they must not overlap. |
 | `--no-sprites` | Skip sprite rendering (faster; the UI shows a Poké Ball). |
 
-The kit's console messages are currently in Spanish.
 
 ## Afterwards
 

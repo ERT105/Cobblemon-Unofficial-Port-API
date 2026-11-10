@@ -114,8 +114,6 @@ species. Cobblemon Bedrock's evolutions and other add-ons' aren't touched.
 (a species, a spawn entry); a **warning** lets it in without the failing
 detail (an unknown move).
 
-The error and warning texts are currently in Spanish.
-
 ## Events
 
 With `onCobblemonEvent(name, (data) => …)`. All of them carry `api` and,

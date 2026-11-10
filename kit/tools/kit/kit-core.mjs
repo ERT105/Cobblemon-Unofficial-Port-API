@@ -2050,7 +2050,7 @@ async function convertJavaSpawnPools(options) {
     (r) => r.heightMin !== void 0 || r.heightMax !== void 0
   ).length;
   const ultraRareRules = Object.values(result).flatMap((s) => s.rules).filter((r) => r.bucket === "ultra-rare").length;
-  logStep(
+  if (!options?.quiet) logStep(
     `  Spawn pools: ${Object.keys(result).length} especies, ${Object.values(result).reduce((n, s) => n + s.rules.length, 0)} reglas (${caveRules} cueva, ${nightRules} noche, ${dayRules} d\xEDa, ${heightRules} altura, ${netherRules} nether, ${endRules} end, ${ultraRareRules} ultra-rare, ${filesRead} archivos, ${atmSpeciesAdded} desde AllTheMons, ${entriesSkipped} omitidas)`
   );
   return result;
@@ -2530,10 +2530,10 @@ function parseArgs() {
     return i >= 0 ? argv[i + 1] : void 0;
   };
   const input = get("--in");
-  if (!input) throw new Error("Falta --in <carpeta del addon de Cobblemon Java>");
+  if (!input) throw new Error("Missing --in <Cobblemon Java addon folder>");
   const v = (get("--version") ?? "1.0.0").split(".").map((n) => Number.parseInt(n, 10) || 0);
   const page = Number.parseInt(get("--glyph-page") ?? "F0", 16);
-  if (!(page >= 240 && page <= 248)) throw new Error("--glyph-page tiene que ser de F0 a F8 (las p\xE1ginas para add-ons)");
+  if (!(page >= 240 && page <= 248)) throw new Error("--glyph-page must be F0 to F8 (the pages reserved for add-ons)");
   return {
     sprites: !argv.includes("--no-sprites"),
     glyphPage: page,
@@ -2933,6 +2933,11 @@ function convertSpecies(ns, raw, own, extras) {
   };
 }
 var RENDERER = existsSync5(resolveFromRoot("tools/kit/render-pokemon-sprites.mjs")) ? [resolveFromRoot("tools/kit/render-pokemon-sprites.mjs")] : [resolveFromRoot("node_modules/tsx/dist/cli.mjs"), resolveFromRoot("tools/render-pokemon-sprites.ts")];
+var QUIET_RENDER = { encoding: "utf8", stdio: "pipe", maxBuffer: 64 * 1024 * 1024 };
+function showRendererOutput(r) {
+  const text = `${r.stdout ?? ""}${r.stderr ?? ""}${r.error ? String(r.error) : ""}`.trim();
+  if (text) console.error(text.split(/\r?\n/).slice(-40).join("\n"));
+}
 async function renderSprites(ns, assets, variants, rp, work, page) {
   const fileOf = (v, shiny) => `${v.name}${v.form ? `_${v.form}` : ""}${shiny ? "_shiny" : ""}`;
   const jobs = variants.flatMap(
@@ -2950,7 +2955,7 @@ async function renderSprites(ns, assets, variants, rp, work, page) {
   await mkdir(path6.join(work, "face"), { recursive: true });
   const manifest = path6.join(work, "jobs.json");
   await writeFile3(manifest, JSON.stringify(jobs), "utf8");
-  logStep(`  Sprites: ${jobs.length} variantes con el renderizador de la base\u2026`);
+  logStep(`  Sprites: rendering ${jobs.length} variants (this can take a few minutes)\u2026`);
   const run = spawnSync(
     process.execPath,
     [
@@ -2962,10 +2967,11 @@ async function renderSprites(ns, assets, variants, rp, work, page) {
       "--workers",
       "2"
     ],
-    { stdio: "inherit" }
+    QUIET_RENDER
   );
   if (run.status !== 0) {
-    logWarn("  Sprites: el renderizador fall\xF3 (\xBFhay navegador?); el add-on sale sin sprites");
+    showRendererOutput(run);
+    logWarn("  Sprites: the renderer failed (is there a browser? see SPRITE_BROWSER); the add-on is built without sprites");
     return {};
   }
   const dexDir = path6.join(work, "dex");
@@ -2998,9 +3004,12 @@ async function renderSprites(ns, assets, variants, rp, work, page) {
         "--workers",
         "2"
       ],
-      { stdio: "inherit" }
+      QUIET_RENDER
     );
-    if (r.status !== 0) logWarn(`  Sprites: la pasada ${pass} de la Pok\xE9dex fall\xF3; se usar\xE1 el del PC`);
+    if (r.status !== 0) {
+      showRendererOutput(r);
+      logWarn(`  Sprites: the Pok\xE9dex ${pass} pass failed; the PC sprite will be used`);
+    }
   }
   const sprites = {};
   const faces = [];
@@ -3044,7 +3053,7 @@ async function main() {
   const dataRoot = path6.join(args.input, "data");
   const ns = args.ns ?? (existsSync5(dataRoot) ? (await readdir5(dataRoot, { withFileTypes: true })).find((d) => d.isDirectory() && d.name !== "minecraft")?.name : void 0);
   if (!ns || !/^[a-z0-9_]+$/.test(ns) || ns === "cooblemon" || ns === "cobblemon") {
-    throw new Error(`Espacio de nombres no v\xE1lido: \xAB${ns}\xBB. P\xE1salo con --ns (min\xFAsculas, cifras y _).`);
+    throw new Error(`Invalid namespace: "${ns}". Pass it with --ns (lowercase letters, digits and _).`);
   }
   const data = path6.join(dataRoot, ns);
   const assets = path6.join(args.input, "assets", ns);
@@ -3057,7 +3066,7 @@ async function main() {
   for (const file of (await walk(path6.join(data, "species"))).filter((f) => f.endsWith(".json"))) {
     rawSpecies.push(await readJson(file));
   }
-  if (rawSpecies.length === 0) throw new Error(`No hay especies en ${path6.join(data, "species")}`);
+  if (rawSpecies.length === 0) throw new Error(`No species found in ${path6.join(data, "species")}`);
   const own = new Set(rawSpecies.map((s) => speciesName(s.name)));
   const resolved = await resolveAssets(assets, own);
   const species = [];
@@ -3069,7 +3078,7 @@ async function main() {
     const res = resolved.get(name);
     const base2 = res?.resolve([]);
     if (!res || !base2) {
-      logWarn(`${id}: sin modelo o textura en los resolvers; se omite`);
+      logWarn(`${id}: no model or texture in the resolvers; skipped`);
       continue;
     }
     const animId = (ref) => {
@@ -3093,7 +3102,7 @@ async function main() {
       const roles = rolesFromPoser(poser);
       for (const [role, info] of roles) {
         if (info.clip && !lengths.has(info.clip)) {
-          logWarn(`${id}: la pose de ${role} pide \xAB${info.clip}\xBB, que no est\xE1 en sus animaciones`);
+          logWarn(`${id}: the ${role} pose asks for "${info.clip}", which is not in its animations`);
           roles.delete(role);
         }
       }
@@ -3240,7 +3249,7 @@ async function main() {
     await writeJson(path6.join(rp, "animations", ns, `${name}.animation.json`), { format_version: "1.8.0", animations: renamed });
     species.push(converted);
     logStep(
-      `  ${id}: plantilla ${TEMPLATES[profileOf(raw)]}, ${baseRoles.roles.size} estados, ${Object.keys(battleClips).length} clips de combate` + (base2.layers.length ? `, ${base2.layers.length} capas` : "") + (ownForms.length ? `, formas con entidad: ${ownForms.join(", ")}` : "") + (rideStats ? `, montura (${Object.keys(rideStats.stats).join("/")}, ${seats?.length ?? 0} asientos)` : "") + (shoulderPose ? ", hombro" : "")
+      `  ${id}: template ${TEMPLATES[profileOf(raw)]}, ${baseRoles.roles.size} poses, ${Object.keys(battleClips).length} battle clips` + (base2.layers.length ? `, ${base2.layers.length} layer${base2.layers.length === 1 ? "" : "s"}` : "") + (ownForms.length ? `, forms with their own entity: ${ownForms.join(", ")}` : "") + (rideStats ? `, rideable (${Object.keys(rideStats.stats).join("/")}, ${seats?.length ?? 0} seat${seats?.length === 1 ? "" : "s"})` : "") + (shoulderPose ? ", shoulder" : "")
     );
   }
   const sprites = args.sprites ? await renderSprites(
@@ -3252,12 +3261,12 @@ async function main() {
     args.glyphPage
   ) : {};
   const spawnFiles = (await walk(path6.join(data, "spawn_pool_world"))).filter((f) => f.endsWith(".json"));
-  const pools = spawnFiles.length ? await convertJavaSpawnPools({ files: spawnFiles, generationOf: () => 0 }) : {};
+  const pools = spawnFiles.length ? await convertJavaSpawnPools({ files: spawnFiles, generationOf: () => 0, quiet: true }) : {};
   const entries = [];
   const levels = {};
   for (const [n, spawn] of Object.entries(pools)) {
     if (!own.has(n)) {
-      logWarn(`Aparici\xF3n de \xAB${n}\xBB, que no es una especie de este addon: se omite`);
+      logWarn(`Spawn for "${n}", which is not a species of this addon: skipped`);
       continue;
     }
     const id = `${ns}:${n}`;
@@ -3307,7 +3316,7 @@ async function main() {
   const version = args.version.join(".");
   await mkdir(path6.join(bp, "scripts"), { recursive: true });
   const apiLib = resolveFromRoot("packages/api/dist/cobblemon-bedrock-api.js");
-  if (!existsSync5(apiLib)) throw new Error("Falta packages/api/dist/cobblemon-bedrock-api.js: ejecuta antes npm run api:build");
+  if (!existsSync5(apiLib)) throw new Error("Missing packages/api/dist/cobblemon-bedrock-api.js: run npm run api:build first");
   await copyFile2(apiLib, path6.join(bp, "scripts", "cobblemon-bedrock-api.js"));
   await writeFile3(
     path6.join(bp, "scripts", "main.js"),
@@ -3373,7 +3382,7 @@ async function main() {
     archive.finalize();
   });
   logStep(
-    `Kit: ${species.length} especies, ${entries.length} apariciones, ${languages.length} idiomas, ${Object.keys(sprites).length} juegos de sprites \u2192 ${pack}`
+    `Kit: ${species.length} species, ${entries.length} spawns, ${languages.length} languages, ${Object.keys(sprites).length} sprite sets \u2192 ${pack}`
   );
 }
 main().catch((err) => {
