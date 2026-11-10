@@ -4,7 +4,7 @@
     "pbr"
   ],
   "header": {
-    "name": "Cooblemon — add-on de ejemplo (recursos)",
+    "name": "Cobblemon Bedrock — add-on de ejemplo (recursos)",
     "description": "Texturas, entidad de cliente y textos del add-on de ejemplo.",
     "uuid": "2810fe1d-9111-4889-8b1d-1c3ac0f044a1",
     "version": [

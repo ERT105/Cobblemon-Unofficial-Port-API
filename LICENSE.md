@@ -4,7 +4,7 @@ Este repositorio reúne obras con licencias distintas.
 
 ## Código: MPL-2.0
 
-`api/` (la librería `cooblemon-api`) y los scripts de `examples/` están bajo la
+`api/` (la librería `cobblemon-bedrock-api`), `kit/` y los scripts de `examples/` están bajo la
 [Mozilla Public License 2.0](https://www.mozilla.org/MPL/2.0/), como el código
 de Cobblemon.
 

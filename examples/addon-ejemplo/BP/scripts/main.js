@@ -1,5 +1,5 @@
 /**
- * Add-on de ejemplo de la API de Cooblemon (fase 1).
+ * Add-on de ejemplo de la API de Cobblemon Bedrock (fase 1).
  *
  * Registra una especie nueva, `ejemplo:pikachu_surf`, con:
  * - una forma nocturna con su propia entidad (`ejemplo:pikachu_surf_night`);
@@ -7,16 +7,16 @@
  * - sus sprites, también el retrato del panel del equipo (glifos propios);
  * - su botín y sus animaciones de combate;
  * - una evolución nueva para el Pikachu de la base: con Piedra Agua, a este;
- * - y escucha los eventos de Cooblemon (capturas, combates, niveles…) y los
+ * - y escucha los eventos de Cobblemon Bedrock (capturas, combates, niveles…) y los
  *   cuenta en el chat.
  *
- * El registro y los eventos los hace la librería `cooblemon-api`
- * (`cooblemon-api.js`, que `npm run example:addon` copia de `packages/api`):
+ * El registro y los eventos los hace la librería `cobblemon-bedrock-api`
+ * (`cobblemon-bedrock-api.js`, que `npm run example:addon` copia de `packages/api`):
  * aquí solo van los datos y lo que hacer con cada evento.
  */
 
 import { world } from "@minecraft/server";
-import { onCooblemonEvent, registerAddon } from "./cooblemon-api.js";
+import { onCobblemonEvent, registerAddon } from "./cobblemon-bedrock-api.js";
 // Animaciones de combate y puntos del modelo: los de Pikachu, que es el modelo
 // que usa. Los saca `npm run example:addon` de las tablas de la base.
 import { BATTLE_CLIPS, LOCATORS } from "./battleData.js";
@@ -158,7 +158,7 @@ const EVOLUTIONS = {
 
 registerAddon({ addon: ADDON, version: VERSION, species: [SPECIES], spawn: SPAWN, sprites: SPRITES, evolutions: EVOLUTIONS });
 
-// —— Eventos de Cooblemon (ver «Eventos» en la referencia) ——
+// —— Eventos de Cobblemon Bedrock (ver «Eventos» en la referencia) ——
 
 /** Nombre de una especie como clave de idioma: la de la base o la de un add-on. */
 function speciesName(species) {
@@ -179,7 +179,7 @@ const ON_EVENT = {
 };
 
 for (const [name, describe] of Object.entries(ON_EVENT)) {
-  onCooblemonEvent(name, (data) => {
+  onCobblemonEvent(name, (data) => {
     console.warn(`[${ADDON}] evento ${name}: ${JSON.stringify(data).slice(0, 200)}`);
     const [key, raw] = describe(data);
     // Cada parámetro de un `rawtext` tiene que ser un objeto: un texto suelto

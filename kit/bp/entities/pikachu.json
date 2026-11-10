@@ -1,0 +1,1391 @@
+{
+  "format_version": "1.21.50",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "cooblemon:pikachu",
+      "is_spawnable": true,
+      "is_summonable": true,
+      "is_experimental": false,
+      "properties": {
+        "cooblemon:level": {
+          "type": "int",
+          "range": [
+            1,
+            100
+          ],
+          "default": 5,
+          "client_sync": true
+        },
+        "cooblemon:shiny": {
+          "type": "bool",
+          "default": false,
+          "client_sync": true
+        },
+        "cooblemon:alpha": {
+          "type": "bool",
+          "default": false,
+          "client_sync": true
+        },
+        "cooblemon:is_wild": {
+          "type": "bool",
+          "default": true,
+          "client_sync": true
+        },
+        "cooblemon:in_battle": {
+          "type": "bool",
+          "default": false,
+          "client_sync": true
+        },
+        "cooblemon:attacking": {
+          "type": "bool",
+          "default": false,
+          "client_sync": true
+        },
+        "cooblemon:form": {
+          "type": "enum",
+          "values": [
+            "default",
+            "alolan",
+            "galarian",
+            "hisuian",
+            "roaming",
+            "paldean",
+            "paldean_combat",
+            "paldean_blaze",
+            "paldean_aqua",
+            "attack",
+            "defense",
+            "speed"
+          ],
+          "default": "default",
+          "client_sync": true
+        },
+        "cooblemon:gender": {
+          "type": "enum",
+          "values": [
+            "male",
+            "female",
+            "genderless"
+          ],
+          "default": "male",
+          "client_sync": true
+        },
+        "cooblemon:running": {
+          "type": "bool",
+          "default": false,
+          "client_sync": true
+        },
+        "cooblemon:on_env_blocks": {
+          "type": "bool",
+          "default": false,
+          "client_sync": true
+        },
+        "cooblemon:sleeping": {
+          "type": "bool",
+          "default": false,
+          "client_sync": true
+        },
+        "cooblemon:cosmetic": {
+          "type": "int",
+          "range": [
+            0,
+            14
+          ],
+          "default": 0,
+          "client_sync": true
+        }
+      }
+    },
+    "component_groups": {
+      "cooblemon:wild_behavior": {
+        "minecraft:movement": {
+          "value": 0.15
+        },
+        "minecraft:physics": {},
+        "minecraft:movement.basic": {},
+        "minecraft:navigation.walk": {
+          "can_path_over_water": true,
+          "avoid_water": true,
+          "can_sink": false,
+          "avoid_damage_blocks": true
+        },
+        "minecraft:jump.static": {},
+        "minecraft:can_climb": {},
+        "minecraft:pushable": {
+          "is_pushable": true,
+          "is_pushable_by_piston": true
+        },
+        "minecraft:behavior.float": {
+          "priority": 0
+        },
+        "minecraft:behavior.panic": {
+          "priority": 1,
+          "speed_multiplier": 1.4
+        },
+        "minecraft:behavior.look_at_player": {
+          "priority": 7,
+          "look_distance": 6,
+          "probability": 0.02
+        },
+        "minecraft:behavior.random_stroll": {
+          "priority": 6,
+          "speed_multiplier": 0.8
+        },
+        "minecraft:behavior.follow_mob": {
+          "priority": 2,
+          "search_range": 16,
+          "speed_multiplier": 1,
+          "stop_distance": 2,
+          "filters": {
+            "all_of": [
+              {
+                "test": "bool_property",
+                "subject": "self",
+                "domain": "cooblemon:alpha",
+                "value": false
+              },
+              {
+                "test": "is_family",
+                "subject": "other",
+                "value": "raichu"
+              }
+            ]
+          }
+        }
+      },
+      "cooblemon:herd_follow": {
+        "minecraft:behavior.follow_mob": {
+          "priority": 2,
+          "search_range": 16,
+          "speed_multiplier": 1,
+          "stop_distance": 2,
+          "filters": {
+            "all_of": [
+              {
+                "test": "bool_property",
+                "subject": "self",
+                "domain": "cooblemon:alpha",
+                "value": false
+              },
+              {
+                "test": "is_family",
+                "subject": "other",
+                "value": "raichu"
+              }
+            ]
+          }
+        }
+      },
+      "cooblemon:companion_behavior": {
+        "minecraft:movement": {
+          "value": 0.2025
+        },
+        "minecraft:physics": {},
+        "minecraft:movement.basic": {},
+        "minecraft:navigation.walk": {
+          "can_path_over_water": true,
+          "avoid_water": true,
+          "can_sink": false,
+          "avoid_damage_blocks": true
+        },
+        "minecraft:jump.static": {},
+        "minecraft:can_climb": {},
+        "minecraft:pushable": {
+          "is_pushable": true,
+          "is_pushable_by_piston": true
+        },
+        "minecraft:is_tamed": {},
+        "minecraft:tameable": {
+          "probability": 1,
+          "tame_items": [
+            "cooblemon:rare_candy"
+          ],
+          "tame_event": {
+            "event": "cooblemon:on_tame",
+            "target": "self"
+          }
+        },
+        "minecraft:behavior.teleport_to_owner": {
+          "priority": 1,
+          "cooldown": 1,
+          "filters": {
+            "all_of": [
+              {
+                "test": "owner_distance",
+                "operator": ">",
+                "value": 32
+              }
+            ]
+          }
+        },
+        "minecraft:behavior.follow_owner": {
+          "priority": 2,
+          "speed_multiplier": 1.45,
+          "start_distance": 5,
+          "stop_distance": 2,
+          "can_teleport": false
+        },
+        "minecraft:behavior.look_at_player": {
+          "priority": 7,
+          "look_distance": 6,
+          "probability": 0.02
+        },
+        "minecraft:behavior.float": {
+          "priority": 0
+        }
+      },
+      "cooblemon:pasture_wander": {
+        "minecraft:behavior.random_stroll": {
+          "priority": 6,
+          "speed_multiplier": 0.8
+        }
+      },
+      "cooblemon:owned_clock": {
+        "minecraft:timer": {
+          "looping": false,
+          "time": 30,
+          "time_down_event": {
+            "event": "cooblemon:stay_owned"
+          }
+        }
+      },
+      "cooblemon:fof_hostile": {
+        "minecraft:movement": {
+          "value": 0.2625
+        },
+        "minecraft:physics": {},
+        "minecraft:movement.basic": {},
+        "minecraft:navigation.walk": {
+          "can_path_over_water": true,
+          "avoid_water": false,
+          "can_sink": false,
+          "avoid_damage_blocks": true,
+          "can_pass_doors": true,
+          "can_breach": false
+        },
+        "minecraft:jump.static": {},
+        "minecraft:can_climb": {},
+        "minecraft:pushable": {
+          "is_pushable": true,
+          "is_pushable_by_piston": true
+        },
+        "minecraft:attack": {
+          "damage": 3
+        },
+        "minecraft:behavior.hurt_by_target": {
+          "priority": 1
+        },
+        "minecraft:behavior.nearest_attackable_target": {
+          "priority": 2,
+          "must_see": false,
+          "reselect_targets": true,
+          "within_radius": 32,
+          "entity_types": [
+            {
+              "filters": {
+                "test": "is_family",
+                "subject": "other",
+                "value": "player"
+              },
+              "max_dist": 35
+            }
+          ]
+        },
+        "minecraft:behavior.melee_attack": {
+          "priority": 3,
+          "speed_multiplier": 1.55,
+          "track_target": true,
+          "require_complete_path": false,
+          "reach_multiplier": 2,
+          "melee_fov": 360
+        },
+        "minecraft:behavior.move_towards_target": {
+          "priority": 4,
+          "speed_multiplier": 1.25,
+          "within_radius": 1.25
+        },
+        "minecraft:behavior.look_at_target": {
+          "priority": 5,
+          "look_distance": 16
+        },
+        "minecraft:behavior.float": {
+          "priority": 0
+        },
+        "minecraft:behavior.random_stroll": {
+          "priority": 7,
+          "speed_multiplier": 1
+        }
+      },
+      "cooblemon:fof_fleeing": {
+        "minecraft:movement": {
+          "value": 0.3
+        },
+        "minecraft:physics": {},
+        "minecraft:movement.basic": {},
+        "minecraft:navigation.walk": {
+          "can_path_over_water": true,
+          "avoid_water": false,
+          "can_sink": false,
+          "avoid_damage_blocks": true,
+          "can_pass_doors": true
+        },
+        "minecraft:jump.static": {},
+        "minecraft:can_climb": {},
+        "minecraft:pushable": {
+          "is_pushable": true,
+          "is_pushable_by_piston": true
+        },
+        "minecraft:behavior.avoid_mob_type": {
+          "priority": 1,
+          "entity_types": [
+            {
+              "filters": {
+                "test": "is_family",
+                "subject": "other",
+                "value": "player"
+              },
+              "max_dist": 20,
+              "walk_speed_multiplier": 1.6,
+              "sprint_speed_multiplier": 1.9
+            }
+          ]
+        },
+        "minecraft:behavior.panic": {
+          "priority": 2,
+          "speed_multiplier": 2
+        },
+        "minecraft:behavior.float": {
+          "priority": 0
+        },
+        "minecraft:behavior.random_stroll": {
+          "priority": 6,
+          "speed_multiplier": 1.4
+        }
+      },
+      "cooblemon:fof_companion_defend": {
+        "minecraft:movement": {
+          "value": 0.22499999999999998
+        },
+        "minecraft:physics": {},
+        "minecraft:movement.basic": {},
+        "minecraft:navigation.walk": {
+          "can_path_over_water": true,
+          "avoid_water": false,
+          "can_sink": false,
+          "avoid_damage_blocks": true,
+          "can_pass_doors": true
+        },
+        "minecraft:jump.static": {},
+        "minecraft:can_climb": {},
+        "minecraft:pushable": {
+          "is_pushable": true,
+          "is_pushable_by_piston": true
+        },
+        "minecraft:attack": {
+          "damage": 3
+        },
+        "minecraft:behavior.owner_hurt_by_target": {
+          "priority": 1
+        },
+        "minecraft:behavior.owner_hurt_target": {
+          "priority": 2
+        },
+        "minecraft:behavior.melee_attack": {
+          "priority": 3,
+          "speed_multiplier": 1.45,
+          "track_target": true,
+          "require_complete_path": false,
+          "reach_multiplier": 2,
+          "melee_fov": 360
+        },
+        "minecraft:behavior.nearest_attackable_target": {
+          "priority": 4,
+          "must_see": false,
+          "reselect_targets": true,
+          "within_radius": 20,
+          "entity_types": [
+            {
+              "filters": {
+                "test": "is_family",
+                "subject": "other",
+                "value": "monster"
+              },
+              "max_dist": 20
+            }
+          ]
+        },
+        "minecraft:behavior.teleport_to_owner": {
+          "priority": 1,
+          "cooldown": 1,
+          "filters": {
+            "all_of": [
+              {
+                "test": "owner_distance",
+                "operator": ">",
+                "value": 32
+              }
+            ]
+          }
+        },
+        "minecraft:behavior.follow_owner": {
+          "priority": 6,
+          "speed_multiplier": 1.45,
+          "start_distance": 5,
+          "stop_distance": 2,
+          "can_teleport": false
+        },
+        "minecraft:behavior.look_at_target": {
+          "priority": 5,
+          "look_distance": 12
+        },
+        "minecraft:behavior.float": {
+          "priority": 0
+        }
+      },
+      "cooblemon:asleep": {
+        "minecraft:movement": {
+          "value": 0
+        },
+        "minecraft:flying_speed": {
+          "value": 0
+        },
+        "minecraft:underwater_movement": {
+          "value": 0
+        }
+      },
+      "cooblemon:ride_tamed": {
+        "minecraft:is_tamed": {},
+        "minecraft:damage_sensor": {
+          "triggers": {
+            "cause": "fall",
+            "deals_damage": "no"
+          }
+        }
+      },
+      "cooblemon:battle_frozen": {
+        "minecraft:movement": {
+          "value": 0
+        },
+        "minecraft:flying_speed": {
+          "value": 0
+        },
+        "minecraft:underwater_movement": {
+          "value": 0
+        },
+        "minecraft:pushable": {
+          "is_pushable": false,
+          "is_pushable_by_piston": false
+        }
+      },
+      "cooblemon:body_scale": {
+        "minecraft:scale": {
+          "value": 0.5
+        },
+        "minecraft:collision_box": {
+          "width": 0.7,
+          "height": 1.3
+        }
+      },
+      "cooblemon:alpha_scale": {
+        "minecraft:scale": {
+          "value": 0.8049
+        },
+        "minecraft:collision_box": {
+          "width": 1.1269,
+          "height": 2.0928
+        }
+      },
+      "cooblemon:size_xs": {
+        "minecraft:scale": {
+          "value": 0.48
+        },
+        "minecraft:collision_box": {
+          "width": 0.7,
+          "height": 1.3
+        }
+      },
+      "cooblemon:size_s": {
+        "minecraft:scale": {
+          "value": 0.49
+        },
+        "minecraft:collision_box": {
+          "width": 0.7,
+          "height": 1.3
+        }
+      },
+      "cooblemon:size_l": {
+        "minecraft:scale": {
+          "value": 0.51
+        },
+        "minecraft:collision_box": {
+          "width": 0.7,
+          "height": 1.3
+        }
+      },
+      "cooblemon:size_xl": {
+        "minecraft:scale": {
+          "value": 0.52
+        },
+        "minecraft:collision_box": {
+          "width": 0.7,
+          "height": 1.3
+        }
+      },
+      "cooblemon:dynamax_scale": {
+        "minecraft:scale": {
+          "value": 1.75
+        },
+        "minecraft:collision_box": {
+          "width": 0.7,
+          "height": 1.3
+        }
+      },
+      "cooblemon:dynamax_grow_1": {
+        "minecraft:scale": {
+          "value": 0.6563
+        },
+        "minecraft:collision_box": {
+          "width": 0.7,
+          "height": 1.3
+        }
+      },
+      "cooblemon:dynamax_grow_2": {
+        "minecraft:scale": {
+          "value": 0.8125
+        },
+        "minecraft:collision_box": {
+          "width": 0.7,
+          "height": 1.3
+        }
+      },
+      "cooblemon:dynamax_grow_3": {
+        "minecraft:scale": {
+          "value": 0.9688
+        },
+        "minecraft:collision_box": {
+          "width": 0.7,
+          "height": 1.3
+        }
+      },
+      "cooblemon:dynamax_grow_4": {
+        "minecraft:scale": {
+          "value": 1.125
+        },
+        "minecraft:collision_box": {
+          "width": 0.7,
+          "height": 1.3
+        }
+      },
+      "cooblemon:dynamax_grow_5": {
+        "minecraft:scale": {
+          "value": 1.2813
+        },
+        "minecraft:collision_box": {
+          "width": 0.7,
+          "height": 1.3
+        }
+      },
+      "cooblemon:dynamax_grow_6": {
+        "minecraft:scale": {
+          "value": 1.4375
+        },
+        "minecraft:collision_box": {
+          "width": 0.7,
+          "height": 1.3
+        }
+      },
+      "cooblemon:dynamax_grow_7": {
+        "minecraft:scale": {
+          "value": 1.5938
+        },
+        "minecraft:collision_box": {
+          "width": 0.7,
+          "height": 1.3
+        }
+      },
+      "cooblemon:dynamax_grow_8": {
+        "minecraft:scale": {
+          "value": 1.75
+        },
+        "minecraft:collision_box": {
+          "width": 0.7,
+          "height": 1.3
+        }
+      },
+      "cooblemon:habitat_resident": {
+        "minecraft:timer": {
+          "looping": false,
+          "time": 30,
+          "time_down_event": {
+            "event": "cooblemon:may_despawn_habitat"
+          }
+        }
+      },
+      "cooblemon:despawn_allowed": {
+        "minecraft:despawn": {
+          "despawn_from_distance": {
+            "min_distance": 32,
+            "max_distance": 96
+          }
+        }
+      },
+      "cooblemon:despawn_allowed_habitat": {
+        "minecraft:despawn": {
+          "despawn_from_distance": {
+            "min_distance": 64,
+            "max_distance": 128
+          }
+        }
+      },
+      "cooblemon:shoulder": {
+        "minecraft:type_family": {
+          "family": [
+            "pokemon",
+            "pikachu",
+            "mob",
+            "parrot_tame"
+          ]
+        },
+        "minecraft:is_tamed": {},
+        "minecraft:damage_sensor": {
+          "triggers": {
+            "cause": "fall",
+            "deals_damage": "no"
+          }
+        }
+      }
+    },
+    "components": {
+      "minecraft:type_family": {
+        "family": [
+          "pokemon",
+          "pikachu",
+          "mob"
+        ]
+      },
+      "minecraft:health": {
+        "value": 20,
+        "max": 20
+      },
+      "minecraft:scale": {
+        "value": 0.5
+      },
+      "minecraft:movement": {
+        "value": 0.15
+      },
+      "minecraft:physics": {},
+      "minecraft:movement.basic": {},
+      "minecraft:navigation.walk": {
+        "can_path_over_water": true,
+        "avoid_water": true,
+        "can_sink": false,
+        "avoid_damage_blocks": true
+      },
+      "minecraft:jump.static": {},
+      "minecraft:can_climb": {},
+      "minecraft:collision_box": {
+        "width": 0.35,
+        "height": 0.65
+      },
+      "minecraft:pushable": {
+        "is_pushable": true,
+        "is_pushable_by_piston": true
+      },
+      "minecraft:nameable": {},
+      "minecraft:timer": {
+        "looping": false,
+        "time": 30,
+        "time_down_event": {
+          "event": "cooblemon:may_despawn"
+        }
+      }
+    },
+    "events": {
+      "minecraft:entity_spawned": {
+        "add": {
+          "component_groups": [
+            "cooblemon:wild_behavior",
+            "cooblemon:body_scale"
+          ]
+        }
+      },
+      "cooblemon:as_habitat_resident": {
+        "add": {
+          "component_groups": [
+            "cooblemon:habitat_resident"
+          ]
+        }
+      },
+      "cooblemon:may_despawn": {
+        "add": {
+          "component_groups": [
+            "cooblemon:despawn_allowed"
+          ]
+        }
+      },
+      "cooblemon:may_despawn_habitat": {
+        "add": {
+          "component_groups": [
+            "cooblemon:despawn_allowed_habitat"
+          ]
+        }
+      },
+      "cooblemon:stay_owned": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:despawn_allowed",
+            "cooblemon:despawn_allowed_habitat"
+          ]
+        }
+      },
+      "cooblemon:as_shiny": {
+        "set_property": {
+          "cooblemon:shiny": true
+        }
+      },
+      "cooblemon:size_xs": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:body_scale",
+            "cooblemon:size_xs",
+            "cooblemon:size_s",
+            "cooblemon:size_l",
+            "cooblemon:size_xl"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:size_xs"
+          ]
+        }
+      },
+      "cooblemon:size_s": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:body_scale",
+            "cooblemon:size_xs",
+            "cooblemon:size_s",
+            "cooblemon:size_l",
+            "cooblemon:size_xl"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:size_s"
+          ]
+        }
+      },
+      "cooblemon:size_l": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:body_scale",
+            "cooblemon:size_xs",
+            "cooblemon:size_s",
+            "cooblemon:size_l",
+            "cooblemon:size_xl"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:size_l"
+          ]
+        }
+      },
+      "cooblemon:size_xl": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:body_scale",
+            "cooblemon:size_xs",
+            "cooblemon:size_s",
+            "cooblemon:size_l",
+            "cooblemon:size_xl"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:size_xl"
+          ]
+        }
+      },
+      "cooblemon:size_m": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:size_xs",
+            "cooblemon:size_s",
+            "cooblemon:size_l",
+            "cooblemon:size_xl"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:body_scale"
+          ]
+        }
+      },
+      "cooblemon:as_alpha": {
+        "set_property": {
+          "cooblemon:alpha": true
+        },
+        "remove": {
+          "component_groups": [
+            "cooblemon:body_scale",
+            "cooblemon:alpha_scale",
+            "cooblemon:size_xs",
+            "cooblemon:size_s",
+            "cooblemon:size_l",
+            "cooblemon:size_xl",
+            "cooblemon:dynamax_grow_1",
+            "cooblemon:dynamax_grow_2",
+            "cooblemon:dynamax_grow_3",
+            "cooblemon:dynamax_grow_4",
+            "cooblemon:dynamax_grow_5",
+            "cooblemon:dynamax_grow_6",
+            "cooblemon:dynamax_grow_7",
+            "cooblemon:dynamax_grow_8",
+            "cooblemon:dynamax_scale"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:alpha_scale"
+          ]
+        }
+      },
+      "cooblemon:clear_alpha": {
+        "set_property": {
+          "cooblemon:alpha": false
+        },
+        "remove": {
+          "component_groups": [
+            "cooblemon:alpha_scale"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:body_scale"
+          ]
+        }
+      },
+      "cooblemon:shoulder_start": {
+        "add": {
+          "component_groups": [
+            "cooblemon:shoulder"
+          ]
+        },
+        "remove": {
+          "component_groups": [
+            "cooblemon:companion_behavior",
+            "cooblemon:wild_behavior",
+            "cooblemon:herd_follow"
+          ]
+        }
+      },
+      "cooblemon:shoulder_stop": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:shoulder"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:companion_behavior"
+          ]
+        }
+      },
+      "cooblemon:make_companion": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:wild_behavior",
+            "cooblemon:herd_follow",
+            "cooblemon:fof_hostile",
+            "cooblemon:fof_fleeing",
+            "cooblemon:fof_companion_defend",
+            "cooblemon:battle_frozen",
+            "cooblemon:alpha_scale",
+            "cooblemon:dynamax_grow_1",
+            "cooblemon:dynamax_grow_2",
+            "cooblemon:dynamax_grow_3",
+            "cooblemon:dynamax_grow_4",
+            "cooblemon:dynamax_grow_5",
+            "cooblemon:dynamax_grow_6",
+            "cooblemon:dynamax_grow_7",
+            "cooblemon:dynamax_grow_8",
+            "cooblemon:dynamax_scale",
+            "cooblemon:despawn_allowed",
+            "cooblemon:despawn_allowed_habitat",
+            "cooblemon:pasture_wander"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:companion_behavior",
+            "cooblemon:body_scale",
+            "cooblemon:owned_clock"
+          ],
+          "components": {
+            "minecraft:persistent": {}
+          }
+        },
+        "set_property": {
+          "cooblemon:is_wild": false,
+          "cooblemon:in_battle": false
+        }
+      },
+      "cooblemon:make_pastured": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:wild_behavior",
+            "cooblemon:herd_follow",
+            "cooblemon:fof_hostile",
+            "cooblemon:fof_fleeing",
+            "cooblemon:fof_companion_defend",
+            "cooblemon:battle_frozen",
+            "cooblemon:alpha_scale",
+            "cooblemon:dynamax_grow_1",
+            "cooblemon:dynamax_grow_2",
+            "cooblemon:dynamax_grow_3",
+            "cooblemon:dynamax_grow_4",
+            "cooblemon:dynamax_grow_5",
+            "cooblemon:dynamax_grow_6",
+            "cooblemon:dynamax_grow_7",
+            "cooblemon:dynamax_grow_8",
+            "cooblemon:dynamax_scale",
+            "cooblemon:despawn_allowed",
+            "cooblemon:despawn_allowed_habitat"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:companion_behavior",
+            "cooblemon:body_scale",
+            "cooblemon:owned_clock",
+            "cooblemon:pasture_wander"
+          ],
+          "components": {
+            "minecraft:persistent": {}
+          }
+        },
+        "set_property": {
+          "cooblemon:is_wild": false,
+          "cooblemon:in_battle": false
+        }
+      },
+      "cooblemon:on_tame": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:despawn_allowed",
+            "cooblemon:despawn_allowed_habitat"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:companion_behavior",
+            "cooblemon:owned_clock"
+          ],
+          "components": {
+            "minecraft:persistent": {}
+          }
+        },
+        "set_property": {
+          "cooblemon:is_wild": false
+        }
+      },
+      "cooblemon:dynamax_grow_1": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:body_scale",
+            "cooblemon:dynamax_grow_2",
+            "cooblemon:dynamax_grow_3",
+            "cooblemon:dynamax_grow_4",
+            "cooblemon:dynamax_grow_5",
+            "cooblemon:dynamax_grow_6",
+            "cooblemon:dynamax_grow_7",
+            "cooblemon:dynamax_grow_8",
+            "cooblemon:dynamax_scale"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:dynamax_grow_1"
+          ]
+        }
+      },
+      "cooblemon:dynamax_grow_2": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:body_scale",
+            "cooblemon:dynamax_grow_1",
+            "cooblemon:dynamax_grow_3",
+            "cooblemon:dynamax_grow_4",
+            "cooblemon:dynamax_grow_5",
+            "cooblemon:dynamax_grow_6",
+            "cooblemon:dynamax_grow_7",
+            "cooblemon:dynamax_grow_8",
+            "cooblemon:dynamax_scale"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:dynamax_grow_2"
+          ]
+        }
+      },
+      "cooblemon:dynamax_grow_3": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:body_scale",
+            "cooblemon:dynamax_grow_1",
+            "cooblemon:dynamax_grow_2",
+            "cooblemon:dynamax_grow_4",
+            "cooblemon:dynamax_grow_5",
+            "cooblemon:dynamax_grow_6",
+            "cooblemon:dynamax_grow_7",
+            "cooblemon:dynamax_grow_8",
+            "cooblemon:dynamax_scale"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:dynamax_grow_3"
+          ]
+        }
+      },
+      "cooblemon:dynamax_grow_4": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:body_scale",
+            "cooblemon:dynamax_grow_1",
+            "cooblemon:dynamax_grow_2",
+            "cooblemon:dynamax_grow_3",
+            "cooblemon:dynamax_grow_5",
+            "cooblemon:dynamax_grow_6",
+            "cooblemon:dynamax_grow_7",
+            "cooblemon:dynamax_grow_8",
+            "cooblemon:dynamax_scale"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:dynamax_grow_4"
+          ]
+        }
+      },
+      "cooblemon:dynamax_grow_5": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:body_scale",
+            "cooblemon:dynamax_grow_1",
+            "cooblemon:dynamax_grow_2",
+            "cooblemon:dynamax_grow_3",
+            "cooblemon:dynamax_grow_4",
+            "cooblemon:dynamax_grow_6",
+            "cooblemon:dynamax_grow_7",
+            "cooblemon:dynamax_grow_8",
+            "cooblemon:dynamax_scale"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:dynamax_grow_5"
+          ]
+        }
+      },
+      "cooblemon:dynamax_grow_6": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:body_scale",
+            "cooblemon:dynamax_grow_1",
+            "cooblemon:dynamax_grow_2",
+            "cooblemon:dynamax_grow_3",
+            "cooblemon:dynamax_grow_4",
+            "cooblemon:dynamax_grow_5",
+            "cooblemon:dynamax_grow_7",
+            "cooblemon:dynamax_grow_8",
+            "cooblemon:dynamax_scale"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:dynamax_grow_6"
+          ]
+        }
+      },
+      "cooblemon:dynamax_grow_7": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:body_scale",
+            "cooblemon:dynamax_grow_1",
+            "cooblemon:dynamax_grow_2",
+            "cooblemon:dynamax_grow_3",
+            "cooblemon:dynamax_grow_4",
+            "cooblemon:dynamax_grow_5",
+            "cooblemon:dynamax_grow_6",
+            "cooblemon:dynamax_grow_8",
+            "cooblemon:dynamax_scale"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:dynamax_grow_7"
+          ]
+        }
+      },
+      "cooblemon:dynamax_grow_8": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:body_scale",
+            "cooblemon:dynamax_grow_1",
+            "cooblemon:dynamax_grow_2",
+            "cooblemon:dynamax_grow_3",
+            "cooblemon:dynamax_grow_4",
+            "cooblemon:dynamax_grow_5",
+            "cooblemon:dynamax_grow_6",
+            "cooblemon:dynamax_grow_7",
+            "cooblemon:dynamax_scale"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:dynamax_grow_8"
+          ]
+        }
+      },
+      "cooblemon:start_dynamax": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:body_scale",
+            "cooblemon:dynamax_grow_1",
+            "cooblemon:dynamax_grow_2",
+            "cooblemon:dynamax_grow_3",
+            "cooblemon:dynamax_grow_4",
+            "cooblemon:dynamax_grow_5",
+            "cooblemon:dynamax_grow_6",
+            "cooblemon:dynamax_grow_7",
+            "cooblemon:dynamax_grow_8"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:dynamax_scale"
+          ]
+        }
+      },
+      "cooblemon:end_dynamax": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:dynamax_grow_1",
+            "cooblemon:dynamax_grow_2",
+            "cooblemon:dynamax_grow_3",
+            "cooblemon:dynamax_grow_4",
+            "cooblemon:dynamax_grow_5",
+            "cooblemon:dynamax_grow_6",
+            "cooblemon:dynamax_grow_7",
+            "cooblemon:dynamax_grow_8",
+            "cooblemon:dynamax_scale"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:body_scale"
+          ]
+        }
+      },
+      "cooblemon:as_herd_follower": {
+        "add": {
+          "component_groups": [
+            "cooblemon:herd_follow"
+          ]
+        }
+      },
+      "cooblemon:clear_herd_follow": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:herd_follow"
+          ]
+        }
+      },
+      "cooblemon:fall_asleep": {
+        "add": {
+          "component_groups": [
+            "cooblemon:asleep"
+          ]
+        },
+        "set_property": {
+          "cooblemon:sleeping": true
+        },
+        "remove": {
+          "component_groups": [
+            "cooblemon:wild_behavior"
+          ]
+        }
+      },
+      "cooblemon:wake_up": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:asleep"
+          ]
+        },
+        "set_property": {
+          "cooblemon:sleeping": false
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:wild_behavior"
+          ]
+        }
+      },
+      "cooblemon:start_battle": {
+        "add": {
+          "component_groups": [
+            "cooblemon:battle_frozen"
+          ]
+        },
+        "set_property": {
+          "cooblemon:in_battle": true,
+          "cooblemon:sleeping": false
+        },
+        "remove": {
+          "component_groups": [
+            "cooblemon:asleep",
+            "cooblemon:wild_behavior",
+            "cooblemon:fof_hostile",
+            "cooblemon:fof_fleeing",
+            "cooblemon:fof_companion_defend",
+            "cooblemon:companion_behavior",
+            "cooblemon:herd_follow"
+          ]
+        }
+      },
+      "cooblemon:end_battle": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:battle_frozen",
+            "cooblemon:dynamax_grow_1",
+            "cooblemon:dynamax_grow_2",
+            "cooblemon:dynamax_grow_3",
+            "cooblemon:dynamax_grow_4",
+            "cooblemon:dynamax_grow_5",
+            "cooblemon:dynamax_grow_6",
+            "cooblemon:dynamax_grow_7",
+            "cooblemon:dynamax_grow_8",
+            "cooblemon:dynamax_scale",
+            "cooblemon:fof_hostile",
+            "cooblemon:fof_fleeing"
+          ]
+        },
+        "set_property": {
+          "cooblemon:in_battle": false
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:wild_behavior",
+            "cooblemon:body_scale"
+          ]
+        }
+      },
+      "cooblemon:end_battle_resume_hostile": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:battle_frozen",
+            "cooblemon:dynamax_grow_1",
+            "cooblemon:dynamax_grow_2",
+            "cooblemon:dynamax_grow_3",
+            "cooblemon:dynamax_grow_4",
+            "cooblemon:dynamax_grow_5",
+            "cooblemon:dynamax_grow_6",
+            "cooblemon:dynamax_grow_7",
+            "cooblemon:dynamax_grow_8",
+            "cooblemon:dynamax_scale",
+            "cooblemon:wild_behavior",
+            "cooblemon:fof_fleeing",
+            "cooblemon:fof_hostile"
+          ]
+        },
+        "set_property": {
+          "cooblemon:in_battle": false
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:fof_hostile",
+            "cooblemon:body_scale"
+          ]
+        }
+      },
+      "cooblemon:fof_become_hostile": {
+        "set_property": {
+          "cooblemon:sleeping": false
+        },
+        "remove": {
+          "component_groups": [
+            "cooblemon:asleep",
+            "cooblemon:wild_behavior",
+            "cooblemon:battle_frozen",
+            "cooblemon:fof_fleeing",
+            "cooblemon:fof_hostile"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:fof_hostile"
+          ]
+        }
+      },
+      "cooblemon:fof_flee": {
+        "set_property": {
+          "cooblemon:sleeping": false
+        },
+        "remove": {
+          "component_groups": [
+            "cooblemon:asleep",
+            "cooblemon:wild_behavior",
+            "cooblemon:fof_hostile",
+            "cooblemon:battle_frozen"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:fof_fleeing"
+          ]
+        }
+      },
+      "cooblemon:fof_calm": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:fof_hostile",
+            "cooblemon:fof_fleeing",
+            "cooblemon:wild_behavior"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:wild_behavior"
+          ]
+        }
+      },
+      "cooblemon:fof_companion_defend_on": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:fof_companion_defend"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:fof_companion_defend"
+          ]
+        }
+      },
+      "cooblemon:fof_companion_defend_off": {
+        "remove": {
+          "component_groups": [
+            "cooblemon:fof_companion_defend"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:companion_behavior"
+          ]
+        }
+      }
+    }
+  }
+}

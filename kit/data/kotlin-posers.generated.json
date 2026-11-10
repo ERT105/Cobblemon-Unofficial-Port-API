@@ -1,0 +1,4428 @@
+{
+  "aggron": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "aggron"
+    },
+    "hidden": [],
+    "profileScale": 0.46000000834465027,
+    "profileTranslation": [
+      -0.06,
+      0.98,
+      -6.0
+    ]
+  },
+  "aipom": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "aipom"
+    },
+    "hidden": [],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.76,
+      0.0
+    ]
+  },
+  "alomomola": {
+    "animation": {
+      "name": "water_idle",
+      "species": "alomomola"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.61,
+      0.0
+    ]
+  },
+  "ambipom": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "ambipom"
+    },
+    "hidden": [],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.85,
+      0.0
+    ]
+  },
+  "ampharos": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "ampharos"
+    },
+    "hidden": [],
+    "profileScale": 0.550000011920929,
+    "profileTranslation": [
+      0.0,
+      0.9,
+      0.0
+    ]
+  },
+  "anorith": {
+    "animation": {
+      "name": "summary_idle",
+      "species": "anorith"
+    },
+    "hidden": [],
+    "profileScale": 1.0299999713897705,
+    "profileTranslation": [
+      -0.05,
+      -0.19,
+      0.0
+    ]
+  },
+  "archen": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "archen"
+    },
+    "hidden": [],
+    "profileScale": 0.5799999833106995,
+    "profileTranslation": [
+      -0.02,
+      0.87,
+      0.0
+    ]
+  },
+  "arctovish": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "arctovish"
+    },
+    "hidden": [],
+    "profileScale": 0.3499999940395355,
+    "profileTranslation": [
+      0.0,
+      1.25,
+      0.0
+    ]
+  },
+  "arctozolt": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "arctozolt"
+    },
+    "hidden": [],
+    "profileScale": 0.33000001311302185,
+    "profileTranslation": [
+      0.02,
+      1.14,
+      0.0
+    ]
+  },
+  "armaldo": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "armaldo"
+    },
+    "hidden": [],
+    "profileScale": 0.6299999952316284,
+    "profileTranslation": [
+      0.0,
+      0.77,
+      0.0
+    ]
+  },
+  "aron": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "aron"
+    },
+    "hidden": [],
+    "profileScale": 0.6600000262260437,
+    "profileTranslation": [
+      0.0,
+      0.74,
+      0.0
+    ]
+  },
+  "arrokuda": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "arrokuda"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "aurorus": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "aurorus"
+    },
+    "hidden": [],
+    "profileScale": 0.27000001072883606,
+    "profileTranslation": [
+      0.0,
+      1.41,
+      -6.1
+    ]
+  },
+  "avalugg": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "avalugg"
+    },
+    "hidden": [],
+    "profileScale": 0.27000001072883606,
+    "profileTranslation": [
+      -0.05,
+      1.2,
+      0.0
+    ]
+  },
+  "barboach": {
+    "animation": {
+      "name": "water_idle",
+      "species": "barboach"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.4,
+      0.0
+    ]
+  },
+  "barraskewda": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "barraskewda"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "bayleef": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "bayleef"
+    },
+    "hidden": [],
+    "profileScale": 0.7099999785423279,
+    "profileTranslation": [
+      0.0,
+      0.65,
+      0.0
+    ]
+  },
+  "beartic": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "beartic"
+    },
+    "hidden": [],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      0.0,
+      0.79,
+      0.0
+    ]
+  },
+  "beedrill": {
+    "animation": {
+      "name": "air_idle",
+      "species": "beedrill"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      -0.1,
+      0.9,
+      0.0
+    ]
+  },
+  "bellossom": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "bellossom"
+    },
+    "hidden": [],
+    "profileScale": 1.0,
+    "profileTranslation": [
+      0.0,
+      0.21,
+      0.0
+    ]
+  },
+  "bergmite": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "bergmite"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.4,
+      0.0
+    ]
+  },
+  "bewear": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "bewear"
+    },
+    "hidden": [],
+    "profileScale": 0.44999998807907104,
+    "profileTranslation": [
+      0.0,
+      1.1,
+      0.0
+    ]
+  },
+  "bibarel": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "bibarel"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "boldore": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "boldore"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.45,
+      0.0
+    ]
+  },
+  "boltund": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "boltund"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "bonsly": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "bonsly"
+    },
+    "hidden": [],
+    "profileScale": 0.7200000286102295,
+    "profileTranslation": [
+      0.0,
+      0.65,
+      0.0
+    ]
+  },
+  "bounsweet": {
+    "animation": null,
+    "hidden": [],
+    "profileScale": 1.2000000476837158,
+    "profileTranslation": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "breloom": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "breloom"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.6,
+      0.0
+    ]
+  },
+  "budew": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "budew"
+    },
+    "hidden": [],
+    "profileScale": 0.7099999785423279,
+    "profileTranslation": [
+      0.0,
+      0.71,
+      0.0
+    ]
+  },
+  "buizel": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "buizel"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.65,
+      0.0
+    ]
+  },
+  "buneary": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "buneary"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.67,
+      0.0
+    ]
+  },
+  "bunnelby": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "bunnelby"
+    },
+    "hidden": [],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      0.0,
+      0.81,
+      0.0
+    ]
+  },
+  "butterfree": {
+    "animation": {
+      "name": "air_idle",
+      "species": "butterfree"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.1,
+      0.8,
+      0.0
+    ]
+  },
+  "carbink": {
+    "animation": {
+      "name": "air_idle",
+      "species": "carbink"
+    },
+    "hidden": [],
+    "profileScale": 0.8500000238418579,
+    "profileTranslation": [
+      0.0,
+      0.7,
+      0.0
+    ]
+  },
+  "carnivine": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "carnivine"
+    },
+    "hidden": [],
+    "profileScale": 0.5,
+    "profileTranslation": [
+      0.0,
+      0.98,
+      0.0
+    ]
+  },
+  "caterpie": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "caterpie"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.55,
+      0.0
+    ]
+  },
+  "centiskorch": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "centiskorch"
+    },
+    "hidden": [],
+    "profileScale": 0.44999998807907104,
+    "profileTranslation": [
+      0.02,
+      0.98,
+      0.0
+    ]
+  },
+  "cetitan": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "cetitan"
+    },
+    "hidden": [],
+    "profileScale": 0.4000000059604645,
+    "profileTranslation": [
+      -0.1,
+      1.1,
+      -6.0
+    ]
+  },
+  "cetoddle": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "cetoddle"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.55,
+      0.0
+    ]
+  },
+  "charcadet": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "charcadet"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.6,
+      0.0
+    ]
+  },
+  "chesnaught": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "chesnaught"
+    },
+    "hidden": [],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      0.0,
+      0.85,
+      0.0
+    ]
+  },
+  "chespin": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "chespin"
+    },
+    "hidden": [],
+    "profileScale": 0.7699999809265137,
+    "profileTranslation": [
+      0.0,
+      0.6,
+      0.0
+    ]
+  },
+  "chikorita": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "chikorita"
+    },
+    "hidden": [],
+    "profileScale": 0.7099999785423279,
+    "profileTranslation": [
+      0.0,
+      0.67,
+      0.0
+    ]
+  },
+  "chimchar": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "chimchar"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.7,
+      0.0
+    ]
+  },
+  "clamperl": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "clamperl"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "clodsire": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "clodsire"
+    },
+    "hidden": [],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      0.0,
+      0.65,
+      0.0
+    ]
+  },
+  "combee": {
+    "animation": {
+      "name": "air_idle",
+      "species": "combee"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.35,
+      0.0
+    ]
+  },
+  "comfey": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "comfey"
+    },
+    "hidden": [],
+    "profileScale": 0.5,
+    "profileTranslation": [
+      0.1,
+      1.0,
+      0.0
+    ]
+  },
+  "conkeldurr": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "conkeldurr"
+    },
+    "hidden": [],
+    "profileScale": 0.4099999964237213,
+    "profileTranslation": [
+      -0.01,
+      0.96,
+      0.0
+    ]
+  },
+  "copperajah": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "copperajah"
+    },
+    "hidden": [],
+    "profileScale": 0.30000001192092896,
+    "profileTranslation": [
+      -0.02,
+      1.2,
+      0.0
+    ]
+  },
+  "crabominable": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "crabominable"
+    },
+    "hidden": [],
+    "profileScale": 0.30000001192092896,
+    "profileTranslation": [
+      0.0,
+      1.2,
+      0.0
+    ]
+  },
+  "crabrawler": {
+    "animation": {
+      "name": "portrait",
+      "species": "crabrawler"
+    },
+    "hidden": [],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.7,
+      0.0
+    ]
+  },
+  "cradily": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "cradily"
+    },
+    "hidden": [],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      0.0,
+      0.8,
+      0.0
+    ]
+  },
+  "crocalor": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "crocalor"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.65,
+      0.0
+    ]
+  },
+  "croconaw": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "croconaw"
+    },
+    "hidden": [],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      0.0,
+      0.76,
+      0.0
+    ]
+  },
+  "cryogonal": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "cryogonal"
+    },
+    "hidden": [],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.9,
+      0.0
+    ]
+  },
+  "cubchoo": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "cubchoo"
+    },
+    "hidden": [],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.76,
+      0.0
+    ]
+  },
+  "cubone": {
+    "animation": {
+      "name": "idle",
+      "species": "cubone"
+    },
+    "hidden": [],
+    "profileScale": 1.0,
+    "profileTranslation": [
+      0.0,
+      0.25,
+      0.0
+    ]
+  },
+  "cufant": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "cufant"
+    },
+    "hidden": [],
+    "profileScale": 0.6200000047683716,
+    "profileTranslation": [
+      0.05,
+      0.8,
+      0.0
+    ]
+  },
+  "cyndaquil": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "cyndaquil"
+    },
+    "hidden": [],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.8,
+      0.0
+    ]
+  },
+  "cyndaquilhisuibias": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "cyndaquil_hisui_bias"
+    },
+    "hidden": [],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.8,
+      0.0
+    ]
+  },
+  "dachsbun": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "dachsbun"
+    },
+    "hidden": [],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      0.0,
+      0.8,
+      0.0
+    ]
+  },
+  "dartrix": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "dartrix"
+    },
+    "hidden": [
+      "wings_open"
+    ],
+    "profileScale": 0.5500001311302185,
+    "profileTranslation": [
+      0.0,
+      0.8800000000000001,
+      0.0
+    ]
+  },
+  "dartrixhisuibias": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "dartrix_hisui_bias"
+    },
+    "hidden": [
+      "wings_open"
+    ],
+    "profileScale": 0.5500001311302185,
+    "profileTranslation": [
+      0.0,
+      0.8800000000000001,
+      0.0
+    ]
+  },
+  "decidueye": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "decidueye"
+    },
+    "hidden": [
+      "arrow",
+      "wing_open_left1",
+      "wing_open_right1"
+    ],
+    "profileScale": 0.4699999690055847,
+    "profileTranslation": [
+      0.0,
+      1.0299999999999998,
+      0.0
+    ]
+  },
+  "decidueyehisuian": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "decidueye"
+    },
+    "hidden": [
+      "arrow",
+      "wing_open_left1",
+      "wing_open_right1"
+    ],
+    "profileScale": 0.4699999690055847,
+    "profileTranslation": [
+      0.0,
+      1.0299999999999998,
+      0.0
+    ]
+  },
+  "deerling": {
+    "animation": null,
+    "hidden": [],
+    "profileScale": 1.0,
+    "profileTranslation": [
+      0.0,
+      0.25,
+      0.0
+    ]
+  },
+  "dodrio": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "dodrio"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.6,
+      0.0
+    ]
+  },
+  "doduo": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "doduo"
+    },
+    "hidden": [],
+    "profileScale": 0.8500000238418579,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "donphan": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "donphan"
+    },
+    "hidden": [],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      -0.1,
+      0.73,
+      0.0
+    ]
+  },
+  "dracovish": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "dracovish"
+    },
+    "hidden": [],
+    "profileScale": 0.30000001192092896,
+    "profileTranslation": [
+      0.0,
+      1.35,
+      0.0
+    ]
+  },
+  "dracozolt": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "dracozolt"
+    },
+    "hidden": [],
+    "profileScale": 0.44999998807907104,
+    "profileTranslation": [
+      0.08,
+      1.12,
+      0.0
+    ]
+  },
+  "dragalge": {
+    "animation": {
+      "name": "water_idle",
+      "species": "dragalge"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      1.0,
+      -6.0
+    ]
+  },
+  "drakloak": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "drakloak"
+    },
+    "hidden": [],
+    "profileScale": 0.6399999856948853,
+    "profileTranslation": [
+      0.0,
+      0.76,
+      0.0
+    ]
+  },
+  "dreepy": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "dreepy"
+    },
+    "hidden": [],
+    "profileScale": 0.8100000023841858,
+    "profileTranslation": [
+      0.0,
+      0.35,
+      0.0
+    ]
+  },
+  "drifloon": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "drifloon"
+    },
+    "hidden": [],
+    "profileScale": 0.5,
+    "profileTranslation": [
+      0.0,
+      0.9,
+      0.0
+    ]
+  },
+  "dubwool": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "dubwool"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.4,
+      0.0
+    ]
+  },
+  "durant": {
+    "animation": null,
+    "hidden": [],
+    "profileScale": 1.0,
+    "profileTranslation": [
+      0.0,
+      0.2,
+      0.0
+    ]
+  },
+  "dusclops": {
+    "animation": {
+      "name": "air_idle",
+      "species": "dusclops"
+    },
+    "hidden": [],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      0.0,
+      0.8,
+      0.0
+    ]
+  },
+  "duskull": {
+    "animation": {
+      "name": "air_idle",
+      "species": "duskull"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.35,
+      0.0
+    ]
+  },
+  "eiscue": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "eiscue_ice"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.55,
+      0.0
+    ]
+  },
+  "ekans": {
+    "animation": {
+      "name": "summary_idle",
+      "species": "ekans"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      -0.05,
+      0.6,
+      0.0
+    ]
+  },
+  "electabuzz": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "electabuzz"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.6,
+      0.0
+    ]
+  },
+  "electivire": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "electivire"
+    },
+    "hidden": [],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.75,
+      0.0
+    ]
+  },
+  "electrode": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "electrode"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "electrodehisuian": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "electrode_hisuian"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "elekid": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "elekid"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.6,
+      0.0
+    ]
+  },
+  "emolga": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "emolga"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.6,
+      0.0
+    ]
+  },
+  "exeggcute": {
+    "animation": {
+      "name": "portrait",
+      "species": "exeggcute"
+    },
+    "hidden": [],
+    "profileScale": 1.0,
+    "profileTranslation": [
+      -0.15,
+      0.0,
+      0.0
+    ]
+  },
+  "exeggutor": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "exeggutor"
+    },
+    "hidden": [],
+    "profileScale": 0.44999998807907104,
+    "profileTranslation": [
+      0.0,
+      1.1,
+      0.0
+    ]
+  },
+  "exploud": {
+    "animation": {
+      "name": "idle",
+      "species": "exploud"
+    },
+    "hidden": [],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.76,
+      0.0
+    ]
+  },
+  "farfetchd": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "farfetchd"
+    },
+    "hidden": [],
+    "profileScale": 1.100000023841858,
+    "profileTranslation": [
+      -0.1,
+      0.1,
+      0.0
+    ]
+  },
+  "farfetchdgalarian": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "farfetchd_galar"
+    },
+    "hidden": [],
+    "profileScale": 1.100000023841858,
+    "profileTranslation": [
+      -0.1,
+      0.1,
+      0.0
+    ]
+  },
+  "fidough": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "fidough"
+    },
+    "hidden": [],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      0.0,
+      0.8,
+      0.0
+    ]
+  },
+  "flaaffy": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "flaaffy"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "flittle": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "flittle"
+    },
+    "hidden": [],
+    "profileScale": 0.8500000238418579,
+    "profileTranslation": [
+      0.0,
+      0.65,
+      0.0
+    ]
+  },
+  "floatzel": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "floatzel"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.55,
+      0.0
+    ]
+  },
+  "frillish": {
+    "animation": {
+      "name": "water_idle",
+      "species": "frillish"
+    },
+    "hidden": [],
+    "profileScale": 0.7300000190734863,
+    "profileTranslation": [
+      0.0,
+      0.62,
+      0.0
+    ]
+  },
+  "froakie": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "froakie"
+    },
+    "hidden": [],
+    "profileScale": 0.75,
+    "profileTranslation": [
+      0.0,
+      0.56,
+      0.0
+    ]
+  },
+  "frogadier": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "frogadier"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.7,
+      0.0
+    ]
+  },
+  "fuecoco": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "fuecoco"
+    },
+    "hidden": [],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.75,
+      0.0
+    ]
+  },
+  "gallade": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "gallade"
+    },
+    "hidden": [],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.76,
+      0.0
+    ]
+  },
+  "gardevoir": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "gardevoir"
+    },
+    "hidden": [],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.76,
+      0.0
+    ]
+  },
+  "gengar": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "gengar"
+    },
+    "hidden": [],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      0.0,
+      0.77,
+      0.0
+    ]
+  },
+  "geodude": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "geodude"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      -0.05,
+      0.3,
+      0.0
+    ]
+  },
+  "gigalith": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "gigalith"
+    },
+    "hidden": [],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      0.0,
+      0.7,
+      0.0
+    ]
+  },
+  "gimmighoulchest": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "gimmighoul_chest"
+    },
+    "hidden": [],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.76,
+      0.0
+    ]
+  },
+  "gligar": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "gligar"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.6,
+      0.0
+    ]
+  },
+  "glimmet": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "glimmet"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.8,
+      0.0
+    ]
+  },
+  "glimmora": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "glimmora"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.8,
+      0.0
+    ]
+  },
+  "gliscor": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "gliscor"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.7,
+      0.0
+    ]
+  },
+  "gloom": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "gloom"
+    },
+    "hidden": [],
+    "profileScale": 1.0499999523162842,
+    "profileTranslation": [
+      0.0,
+      0.19,
+      0.0
+    ]
+  },
+  "golduck": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "golduck"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.54,
+      0.0
+    ]
+  },
+  "golem": {
+    "animation": {
+      "name": "test",
+      "species": "golem"
+    },
+    "hidden": [],
+    "profileScale": 0.75,
+    "profileTranslation": [
+      0.0,
+      0.55,
+      0.0
+    ]
+  },
+  "golisopod": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "golisopod"
+    },
+    "hidden": [],
+    "profileScale": 0.44999998807907104,
+    "profileTranslation": [
+      0.0,
+      1.0,
+      0.0
+    ]
+  },
+  "goomyhisuibias": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "goomy_hisui_bias"
+    },
+    "hidden": [],
+    "profileScale": 1.0,
+    "profileTranslation": [
+      -0.03,
+      0.12,
+      0.0
+    ]
+  },
+  "gorebyss": {
+    "animation": {
+      "name": "water_idle",
+      "species": "gorebyss"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.2,
+      0.0
+    ]
+  },
+  "gourgeist": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "gourgeist"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.55,
+      0.0
+    ]
+  },
+  "granbull": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "granbull"
+    },
+    "hidden": [],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.76,
+      0.0
+    ]
+  },
+  "greninja": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "greninja"
+    },
+    "hidden": [
+      "hand_shuriken_left",
+      "hand_shuriken_right"
+    ],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.7,
+      0.0
+    ]
+  },
+  "grimmsnarl": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "grimmsnarl"
+    },
+    "hidden": [],
+    "profileScale": 0.5199999809265137,
+    "profileTranslation": [
+      0.06,
+      0.97,
+      0.0
+    ]
+  },
+  "grookey": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "grookey"
+    },
+    "hidden": [
+      "stick"
+    ],
+    "profileScale": 0.75,
+    "profileTranslation": [
+      0.0,
+      0.6,
+      0.0
+    ]
+  },
+  "grotle": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "grotle"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.65,
+      0.0
+    ]
+  },
+  "gurdurr": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "gurdurr"
+    },
+    "hidden": [],
+    "profileScale": 0.4699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.98,
+      0.0
+    ]
+  },
+  "hakamoo": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "hakamo-o"
+    },
+    "hidden": [],
+    "profileScale": 0.5799999833106995,
+    "profileTranslation": [
+      0.0,
+      0.88,
+      0.0
+    ]
+  },
+  "hariyama": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "hariyama"
+    },
+    "hidden": [],
+    "profileScale": 0.5,
+    "profileTranslation": [
+      0.0,
+      0.92,
+      0.0
+    ]
+  },
+  "herdier": {
+    "animation": null,
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.65,
+      0.0
+    ]
+  },
+  "hippopotas": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "hippopotas"
+    },
+    "hidden": [],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      0.0,
+      0.85,
+      0.0
+    ]
+  },
+  "hippowdon": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "hippowdon"
+    },
+    "hidden": [
+      "redsand",
+      "sand"
+    ],
+    "profileScale": 0.4000000059604645,
+    "profileTranslation": [
+      -0.1,
+      1.0,
+      0.0
+    ]
+  },
+  "hitmonchan": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "hitmonchan"
+    },
+    "hidden": [],
+    "profileScale": 0.8199999928474426,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "hitmonlee": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "hitmonlee"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.47,
+      0.0
+    ]
+  },
+  "hitmontop": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "hitmontop"
+    },
+    "hidden": [],
+    "profileScale": 0.9100000262260437,
+    "profileTranslation": [
+      0.0,
+      0.4,
+      0.0
+    ]
+  },
+  "hoothoot": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "hoothoot"
+    },
+    "hidden": [],
+    "profileScale": 1.0,
+    "profileTranslation": [
+      0.0,
+      0.3,
+      0.0
+    ]
+  },
+  "huntail": {
+    "animation": {
+      "name": "water_idle",
+      "species": "huntail"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "illumise": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "illumise"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.3,
+      0.0
+    ]
+  },
+  "impidimp": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "impidimp"
+    },
+    "hidden": [],
+    "profileScale": 0.75,
+    "profileTranslation": [
+      0.0,
+      0.6,
+      0.0
+    ]
+  },
+  "infernape": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "infernape"
+    },
+    "hidden": [],
+    "profileScale": 0.5,
+    "profileTranslation": [
+      0.0,
+      1.0,
+      0.0
+    ]
+  },
+  "ironleaves": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "ironleaves"
+    },
+    "hidden": [
+      "neck_sword_left",
+      "neck_sword_right",
+      "sword_head"
+    ],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.8,
+      0.0
+    ]
+  },
+  "jangmoo": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "jangmo-o"
+    },
+    "hidden": [],
+    "profileScale": 0.6399999856948853,
+    "profileTranslation": [
+      0.0,
+      0.77,
+      0.0
+    ]
+  },
+  "jellicent": {
+    "animation": {
+      "name": "render",
+      "species": "jellicent"
+    },
+    "hidden": [],
+    "profileScale": 0.5099999904632568,
+    "profileTranslation": [
+      0.0,
+      1.05,
+      0.0
+    ]
+  },
+  "kabuto": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "kabuto"
+    },
+    "hidden": [],
+    "profileScale": 1.600000023841858,
+    "profileTranslation": [
+      0.0,
+      -0.6,
+      0.0
+    ]
+  },
+  "kabutops": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "kabutops"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.6,
+      0.0
+    ]
+  },
+  "kirlia": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "kirlia"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.6,
+      0.0
+    ]
+  },
+  "klang": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "klang"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "kleavor": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "kleavor"
+    },
+    "hidden": [],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      -0.1,
+      0.8,
+      0.0
+    ]
+  },
+  "klefki": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "klefki"
+    },
+    "hidden": [],
+    "profileScale": 0.5899999737739563,
+    "profileTranslation": [
+      0.0,
+      0.95,
+      0.0
+    ]
+  },
+  "klink": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "klink"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "klinklang": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "klinklang"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "koffing": {
+    "animation": {
+      "name": "air_idle",
+      "species": "koffing"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.6,
+      0.0
+    ]
+  },
+  "komala": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "komala"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "kommoo": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "kommo-o"
+    },
+    "hidden": [],
+    "profileScale": 0.38999998569488525,
+    "profileTranslation": [
+      0.0,
+      1.16,
+      -6.0
+    ]
+  },
+  "krabby": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "krabby"
+    },
+    "hidden": [],
+    "profileScale": 1.0,
+    "profileTranslation": [
+      0.0,
+      0.2,
+      0.0
+    ]
+  },
+  "kricketot": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "kricketot"
+    },
+    "hidden": [],
+    "profileScale": 1.0,
+    "profileTranslation": [
+      0.0,
+      0.25,
+      0.0
+    ]
+  },
+  "kricketune": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "kricketune"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.6,
+      0.0
+    ]
+  },
+  "lairon": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "lairon"
+    },
+    "hidden": [],
+    "profileScale": 0.7200000286102295,
+    "profileTranslation": [
+      0.0,
+      0.59,
+      0.0
+    ]
+  },
+  "larvitar": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "larvitar"
+    },
+    "hidden": [],
+    "profileScale": 1.0499999523162842,
+    "profileTranslation": [
+      0.04,
+      0.22,
+      0.0
+    ]
+  },
+  "lickitung": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "lickitung"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.55,
+      0.0
+    ]
+  },
+  "lileep": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "lileep"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.55,
+      0.0
+    ]
+  },
+  "lilligant": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "lilligant"
+    },
+    "hidden": [],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      0.0,
+      0.8,
+      0.0
+    ]
+  },
+  "lilliganthisuian": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "lilligant_hisuian"
+    },
+    "hidden": [],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.76,
+      0.0
+    ]
+  },
+  "lillipup": {
+    "animation": null,
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.52,
+      0.0
+    ]
+  },
+  "linoone": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "linoone"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.38,
+      0.0
+    ]
+  },
+  "linoonegalarian": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "linoone_galarian"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.38,
+      0.0
+    ]
+  },
+  "lombre": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "lombre"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.44,
+      0.0
+    ]
+  },
+  "lopunny": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "lopunny"
+    },
+    "hidden": [],
+    "profileScale": 0.5,
+    "profileTranslation": [
+      0.0,
+      1.0,
+      0.0
+    ]
+  },
+  "lotad": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "lotad"
+    },
+    "hidden": [],
+    "profileScale": 1.0,
+    "profileTranslation": [
+      0.0,
+      0.25,
+      0.0
+    ]
+  },
+  "loudred": {
+    "animation": {
+      "name": "idle",
+      "species": "loudred"
+    },
+    "hidden": [],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.76,
+      0.0
+    ]
+  },
+  "ludicolo": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "ludicolo"
+    },
+    "hidden": [],
+    "profileScale": 0.75,
+    "profileTranslation": [
+      0.0,
+      0.6,
+      0.0
+    ]
+  },
+  "luxio": {
+    "animation": {
+      "name": "idle",
+      "species": "luxio"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.7,
+      0.0
+    ]
+  },
+  "luxray": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "luxray"
+    },
+    "hidden": [],
+    "profileScale": 0.6600000262260437,
+    "profileTranslation": [
+      0.0,
+      0.7,
+      0.0
+    ]
+  },
+  "mabosstiff": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "mabosstiff"
+    },
+    "hidden": [],
+    "profileScale": 0.550000011920929,
+    "profileTranslation": [
+      0.0,
+      0.85,
+      0.0
+    ]
+  },
+  "machamp": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "machamp"
+    },
+    "hidden": [],
+    "profileScale": 0.75,
+    "profileTranslation": [
+      -0.1,
+      0.66,
+      0.0
+    ]
+  },
+  "machoke": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "machoke"
+    },
+    "hidden": [],
+    "profileScale": 0.7099999785423279,
+    "profileTranslation": [
+      0.0,
+      0.69,
+      0.0
+    ]
+  },
+  "machop": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "machop"
+    },
+    "hidden": [],
+    "profileScale": 0.7300000190734863,
+    "profileTranslation": [
+      -0.03,
+      0.64,
+      0.0
+    ]
+  },
+  "magcargo": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "magcargo"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "magcargoshiny": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "magcargo_shiny"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "makuhita": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "makuhita"
+    },
+    "hidden": [],
+    "profileScale": 0.6800000071525574,
+    "profileTranslation": [
+      0.0,
+      0.69,
+      0.0
+    ]
+  },
+  "mamoswine": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "mamoswine"
+    },
+    "hidden": [],
+    "profileScale": 0.3499999940395355,
+    "profileTranslation": [
+      -0.07,
+      1.1,
+      0.0
+    ]
+  },
+  "mankey": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "mankey"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      -0.03,
+      0.4,
+      0.0
+    ]
+  },
+  "mareep": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "mareep"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.4,
+      0.0
+    ]
+  },
+  "marowak": {
+    "animation": {
+      "name": "idle",
+      "species": "marowak"
+    },
+    "hidden": [],
+    "profileScale": 0.8500000238418579,
+    "profileTranslation": [
+      0.0,
+      0.48,
+      0.0
+    ]
+  },
+  "maschiff": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "maschiff"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.65,
+      0.0
+    ]
+  },
+  "masquerain": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "masquerain"
+    },
+    "hidden": [],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      0.0,
+      0.7,
+      0.0
+    ]
+  },
+  "meganium": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "meganium"
+    },
+    "hidden": [],
+    "profileScale": 0.4300000071525574,
+    "profileTranslation": [
+      0.0,
+      1.12,
+      0.0
+    ]
+  },
+  "meowth": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "meowth"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.54,
+      0.0
+    ]
+  },
+  "meowthalolan": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "meowth_alolan"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.54,
+      0.0
+    ]
+  },
+  "meowthgalarian": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "meowth_galarian"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.54,
+      0.0
+    ]
+  },
+  "metapod": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "metapod"
+    },
+    "hidden": [],
+    "profileScale": 1.100000023841858,
+    "profileTranslation": [
+      0.0,
+      0.1,
+      0.0
+    ]
+  },
+  "mightyena": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "mightyena"
+    },
+    "hidden": [],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      0.0,
+      0.8,
+      0.0
+    ]
+  },
+  "milcery": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "milcery"
+    },
+    "hidden": [],
+    "profileScale": 1.0,
+    "profileTranslation": [
+      0.0,
+      0.2,
+      0.0
+    ]
+  },
+  "miltank": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "miltank"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.7,
+      0.0
+    ]
+  },
+  "misdreavus": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "misdreavus"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.7,
+      0.0
+    ]
+  },
+  "mismagius": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "mismagius"
+    },
+    "hidden": [],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      0.0,
+      0.9,
+      0.0
+    ]
+  },
+  "monferno": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "monferno"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.6,
+      0.0
+    ]
+  },
+  "morelull": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "morelull"
+    },
+    "hidden": [],
+    "profileScale": 1.0,
+    "profileTranslation": [
+      0.0,
+      0.25,
+      0.0
+    ]
+  },
+  "morgrem": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "morgrem"
+    },
+    "hidden": [],
+    "profileScale": 0.6899999976158142,
+    "profileTranslation": [
+      0.04,
+      0.71,
+      0.0
+    ]
+  },
+  "mudbray": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "mudbray"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.4,
+      0.0
+    ]
+  },
+  "munchlax": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "munchlax"
+    },
+    "hidden": [],
+    "profileScale": 0.8500000238418579,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "naganadel": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "naganadel"
+    },
+    "hidden": [],
+    "profileScale": 0.4000000059604645,
+    "profileTranslation": [
+      0.05,
+      1.3,
+      0.0
+    ]
+  },
+  "natu": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "natu"
+    },
+    "hidden": [],
+    "profileScale": 1.090000033378601,
+    "profileTranslation": [
+      0.0,
+      0.03,
+      0.0
+    ]
+  },
+  "nidoqueen": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "nidoqueen"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "nidorino": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "nidorino"
+    },
+    "hidden": [],
+    "profileScale": 1.0,
+    "profileTranslation": [
+      -0.1,
+      0.21,
+      0.0
+    ]
+  },
+  "ninetales": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "ninetales"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.67,
+      0.0
+    ]
+  },
+  "numel": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "numel"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.35,
+      0.0
+    ]
+  },
+  "obstagoon": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "obstagoon"
+    },
+    "hidden": [],
+    "profileScale": 0.5,
+    "profileTranslation": [
+      0.0,
+      0.9,
+      0.0
+    ]
+  },
+  "oddish": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "oddish"
+    },
+    "hidden": [],
+    "profileScale": 0.8500000238418579,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "overqwil": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "overqwil"
+    },
+    "hidden": [],
+    "profileScale": 0.6200000047683716,
+    "profileTranslation": [
+      -0.02,
+      0.95,
+      0.0
+    ]
+  },
+  "paras": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "paras"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.6,
+      0.0
+    ]
+  },
+  "patrat": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "patrat"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.7,
+      0.0
+    ]
+  },
+  "pelipper": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "pelipper"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.3,
+      0.0
+    ]
+  },
+  "perrserker": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "perrserker"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.54,
+      0.0
+    ]
+  },
+  "persian": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "persian"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.38,
+      0.0
+    ]
+  },
+  "persianalolan": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "persian_alolan"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.38,
+      0.0
+    ]
+  },
+  "petilil": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "petilil"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "petililhisuibias": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "petilil"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "phanpy": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "phanpy"
+    },
+    "hidden": [],
+    "profileScale": 0.8500000238418579,
+    "profileTranslation": [
+      0.0,
+      0.4,
+      0.0
+    ]
+  },
+  "phantump": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "phantump"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "pidove": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "pidove"
+    },
+    "hidden": [],
+    "profileScale": 1.0,
+    "profileTranslation": [
+      0.0,
+      0.3,
+      0.0
+    ]
+  },
+  "piloswine": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "piloswine"
+    },
+    "hidden": [],
+    "profileScale": 0.7799999713897705,
+    "profileTranslation": [
+      0.0,
+      0.49,
+      0.0
+    ]
+  },
+  "pineco": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "pineco"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.58,
+      0.0
+    ]
+  },
+  "pinsir": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "pinsir"
+    },
+    "hidden": [],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.75,
+      0.0
+    ]
+  },
+  "piplup": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "piplup"
+    },
+    "hidden": [],
+    "profileScale": 0.8500000238418579,
+    "profileTranslation": [
+      0.0,
+      0.48,
+      0.0
+    ]
+  },
+  "poipole": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "poipole"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.6,
+      0.0
+    ]
+  },
+  "politoed": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "politoed"
+    },
+    "hidden": [],
+    "profileScale": 1.100000023841858,
+    "profileTranslation": [
+      0.0,
+      0.1,
+      0.0
+    ]
+  },
+  "poliwag": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "poliwag"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.38,
+      0.0
+    ]
+  },
+  "ponyta": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "ponyta"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.43,
+      0.0
+    ]
+  },
+  "ponytagalarian": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "ponyta_galar"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.43,
+      0.0
+    ]
+  },
+  "poochyena": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "poochyena"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.55,
+      0.0
+    ]
+  },
+  "primeape": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "primeape"
+    },
+    "hidden": [],
+    "profileScale": 1.0,
+    "profileTranslation": [
+      0.0,
+      0.3,
+      0.0
+    ]
+  },
+  "psyduck": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "psyduck"
+    },
+    "hidden": [],
+    "profileScale": 0.949999988079071,
+    "profileTranslation": [
+      0.0,
+      0.32,
+      0.0
+    ]
+  },
+  "pumpkaboo": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "pumpkaboo"
+    },
+    "hidden": [],
+    "profileScale": 1.0,
+    "profileTranslation": [
+      0.0,
+      0.25,
+      0.0
+    ]
+  },
+  "pupitar": {
+    "animation": null,
+    "hidden": [],
+    "profileScale": 0.7400000095367432,
+    "profileTranslation": [
+      0.09,
+      0.7,
+      0.0
+    ]
+  },
+  "pyukumuku": {
+    "animation": null,
+    "hidden": [],
+    "profileScale": 1.0,
+    "profileTranslation": [
+      0.0,
+      0.2,
+      0.0
+    ]
+  },
+  "quagsire": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "quagsire"
+    },
+    "hidden": [],
+    "profileScale": 0.9200000166893005,
+    "profileTranslation": [
+      0.0,
+      0.35,
+      0.0
+    ]
+  },
+  "quaquaval": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "quaquaval"
+    },
+    "hidden": [
+      "water_feathers"
+    ],
+    "profileScale": 0.3199999928474426,
+    "profileTranslation": [
+      0.0,
+      1.24,
+      0.0
+    ]
+  },
+  "quaxwell": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "quaxwell"
+    },
+    "hidden": [],
+    "profileScale": 0.5,
+    "profileTranslation": [
+      0.0,
+      1.0,
+      0.0
+    ]
+  },
+  "quilava": {
+    "animation": {
+      "name": "fire_idle",
+      "species": "quilava"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.65,
+      0.0
+    ]
+  },
+  "quilavahisuibias": {
+    "animation": {
+      "name": "fire_idle",
+      "species": "quilava_hisui_bias"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.65,
+      0.0
+    ]
+  },
+  "quilladin": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "quilladin"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.7,
+      0.0
+    ]
+  },
+  "qwilfish": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "qwilfish"
+    },
+    "hidden": [],
+    "profileScale": 0.8399999737739563,
+    "profileTranslation": [
+      0.02,
+      0.54,
+      0.0
+    ]
+  },
+  "qwilfishhisuian": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "qwilfish_hisuian"
+    },
+    "hidden": [],
+    "profileScale": 0.8399999737739563,
+    "profileTranslation": [
+      0.02,
+      0.54,
+      0.0
+    ]
+  },
+  "ralts": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "ralts"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.6,
+      0.0
+    ]
+  },
+  "rapidash": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "rapidash"
+    },
+    "hidden": [],
+    "profileScale": 0.75,
+    "profileTranslation": [
+      0.0,
+      0.65,
+      0.0
+    ]
+  },
+  "rapidashgalarian": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "rapidash_galar"
+    },
+    "hidden": [],
+    "profileScale": 0.6700000166893005,
+    "profileTranslation": [
+      0.0,
+      0.72,
+      0.0
+    ]
+  },
+  "raticate": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "raticate"
+    },
+    "hidden": [],
+    "profileScale": 1.0,
+    "profileTranslation": [
+      0.0,
+      0.22,
+      0.0
+    ]
+  },
+  "raticatealolan": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "raticate_alolan"
+    },
+    "hidden": [],
+    "profileScale": 1.0,
+    "profileTranslation": [
+      0.0,
+      0.22,
+      0.0
+    ]
+  },
+  "rillaboom": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "rillaboom"
+    },
+    "hidden": [
+      "drum"
+    ],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.76,
+      0.0
+    ]
+  },
+  "roggenrola": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "roggenrola"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "roselia": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "roselia"
+    },
+    "hidden": [],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      0.0,
+      0.82,
+      0.0
+    ]
+  },
+  "roserade": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "roserade"
+    },
+    "hidden": [],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.76,
+      0.0
+    ]
+  },
+  "rowlet": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "rowlet"
+    },
+    "hidden": [
+      "wings_open"
+    ],
+    "profileScale": 0.7599999904632568,
+    "profileTranslation": [
+      -0.04,
+      0.58,
+      0.0
+    ]
+  },
+  "rowlethisuibias": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "rowlet_hisui_bias"
+    },
+    "hidden": [
+      "wings_open"
+    ],
+    "profileScale": 0.7599999904632568,
+    "profileTranslation": [
+      -0.04,
+      0.58,
+      0.0
+    ]
+  },
+  "salandit": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "salandit"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.46,
+      -6.0
+    ]
+  },
+  "salazzle": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "salazzle"
+    },
+    "hidden": [],
+    "profileScale": 0.6100000143051147,
+    "profileTranslation": [
+      0.0,
+      0.89,
+      -6.0
+    ]
+  },
+  "samurott": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "samurott"
+    },
+    "hidden": [
+      "seamitar_hand_left",
+      "seamitar_hand_right"
+    ],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      0.0,
+      0.8,
+      0.0
+    ]
+  },
+  "samurotthisuian": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "samurott_hisuian"
+    },
+    "hidden": [
+      "seamitar_hand_left",
+      "seamitar_hand_right"
+    ],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      0.0,
+      0.8,
+      0.0
+    ]
+  },
+  "sandslash": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "sandslash"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.55,
+      0.0
+    ]
+  },
+  "sawsbuck": {
+    "animation": null,
+    "hidden": [],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.75,
+      0.0
+    ]
+  },
+  "scatterbug": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "scatterbug"
+    },
+    "hidden": [],
+    "profileScale": 1.2000000476837158,
+    "profileTranslation": [
+      0.0,
+      0.05,
+      0.0
+    ]
+  },
+  "sentret": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "sentret"
+    },
+    "hidden": [],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.76,
+      0.0
+    ]
+  },
+  "serperior": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "serperior"
+    },
+    "hidden": [],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      0.0,
+      0.8,
+      0.0
+    ]
+  },
+  "servine": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "servine"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.55,
+      0.0
+    ]
+  },
+  "shieldon": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "shieldon"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "shiinotic": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "shiinotic"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.4,
+      0.0
+    ]
+  },
+  "shinx": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "shinx"
+    },
+    "hidden": [],
+    "profileScale": 0.6600000262260437,
+    "profileTranslation": [
+      0.0,
+      0.7,
+      0.0
+    ]
+  },
+  "shroomish": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "shroomish"
+    },
+    "hidden": [],
+    "profileScale": 1.0,
+    "profileTranslation": [
+      0.0,
+      0.3,
+      0.0
+    ]
+  },
+  "shuckle": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "shuckle"
+    },
+    "hidden": [],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      0.0,
+      0.8,
+      0.0
+    ]
+  },
+  "sirfetchd": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "sirfetchd"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      -0.1,
+      0.42,
+      0.0
+    ]
+  },
+  "sizzlipede": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "sizzlipede"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.07,
+      0.21,
+      0.0
+    ]
+  },
+  "skeledirge": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "skeledirge"
+    },
+    "hidden": [],
+    "profileScale": 0.4000000059604645,
+    "profileTranslation": [
+      0.0,
+      1.0,
+      0.0
+    ]
+  },
+  "skrelp": {
+    "animation": {
+      "name": "water_idle",
+      "species": "skrelp"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.6,
+      0.0
+    ]
+  },
+  "slugma": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "slugma"
+    },
+    "hidden": [],
+    "profileScale": 0.75,
+    "profileTranslation": [
+      0.0,
+      0.575,
+      0.0
+    ]
+  },
+  "slugmashiny": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "slugma_shiny"
+    },
+    "hidden": [],
+    "profileScale": 0.75,
+    "profileTranslation": [
+      0.0,
+      0.575,
+      0.0
+    ]
+  },
+  "snivy": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "snivy"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.55,
+      0.0
+    ]
+  },
+  "snubbull": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "snubbull"
+    },
+    "hidden": [],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.76,
+      0.0
+    ]
+  },
+  "spewpa": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "spewpa"
+    },
+    "hidden": [],
+    "profileScale": 1.2000000476837158,
+    "profileTranslation": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "spiritomb": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "spiritomb"
+    },
+    "hidden": [],
+    "profileScale": 0.75,
+    "profileTranslation": [
+      -0.2,
+      0.6,
+      0.0
+    ]
+  },
+  "squawkabilly": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "squawkabilly"
+    },
+    "hidden": [],
+    "profileScale": 0.8500000238418579,
+    "profileTranslation": [
+      0.0,
+      0.51,
+      0.0
+    ]
+  },
+  "squirtle": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "squirtle"
+    },
+    "hidden": [],
+    "profileScale": 0.7799999713897705,
+    "profileTranslation": [
+      0.0,
+      0.57,
+      0.0
+    ]
+  },
+  "stantler": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "stantler"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.43,
+      0.0
+    ]
+  },
+  "steenee": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "steenee"
+    },
+    "hidden": [],
+    "profileScale": 0.949999988079071,
+    "profileTranslation": [
+      0.0,
+      0.4,
+      0.0
+    ]
+  },
+  "stoutland": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "stoutland"
+    },
+    "hidden": [],
+    "profileScale": 0.6600000262260437,
+    "profileTranslation": [
+      0.0,
+      0.7,
+      0.0
+    ]
+  },
+  "stufful": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "stufful"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      -0.1,
+      0.43,
+      0.0
+    ]
+  },
+  "sudowoodo": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "sudowoodo"
+    },
+    "hidden": [],
+    "profileScale": 0.5,
+    "profileTranslation": [
+      -0.1,
+      0.95,
+      0.0
+    ]
+  },
+  "surskit": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "surskit"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.6,
+      0.0
+    ]
+  },
+  "swinub": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "swinub"
+    },
+    "hidden": [],
+    "profileScale": 1.2300002574920654,
+    "profileTranslation": [
+      0.0,
+      -0.13999999999999968,
+      0.0
+    ]
+  },
+  "swoobat": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "swoobat"
+    },
+    "hidden": [],
+    "profileScale": 0.6299999952316284,
+    "profileTranslation": [
+      -0.05,
+      0.75,
+      0.0
+    ]
+  },
+  "tandemaus": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "tandemaus"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.4,
+      0.0
+    ]
+  },
+  "tangela": {
+    "animation": null,
+    "hidden": [],
+    "profileScale": 1.2000000476837158,
+    "profileTranslation": [
+      0.0,
+      -0.09,
+      0.0
+    ]
+  },
+  "tangrowth": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "tangrowth"
+    },
+    "hidden": [],
+    "profileScale": 1.0,
+    "profileTranslation": [
+      0.0,
+      0.25,
+      0.0
+    ]
+  },
+  "thwackey": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "thwackey"
+    },
+    "hidden": [
+      "hair_stick_left",
+      "hair_stick_right"
+    ],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.76,
+      0.0
+    ]
+  },
+  "timburr": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "timburr"
+    },
+    "hidden": [],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.76,
+      0.0
+    ]
+  },
+  "tirtouga": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "tirtouga"
+    },
+    "hidden": [],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      0.0,
+      0.65,
+      0.0
+    ]
+  },
+  "torterra": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "torterra"
+    },
+    "hidden": [],
+    "profileScale": 0.4000000059604645,
+    "profileTranslation": [
+      0.0,
+      1.1,
+      0.0
+    ]
+  },
+  "torterracherry": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "torterra_cherry"
+    },
+    "hidden": [],
+    "profileScale": 0.4000000059604645,
+    "profileTranslation": [
+      0.0,
+      1.1,
+      0.0
+    ]
+  },
+  "totodile": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "totodile"
+    },
+    "hidden": [],
+    "profileScale": 0.6499999761581421,
+    "profileTranslation": [
+      0.0,
+      0.71,
+      0.0
+    ]
+  },
+  "tranquill": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "tranquill"
+    },
+    "hidden": [],
+    "profileScale": 1.0,
+    "profileTranslation": [
+      0.0,
+      0.3,
+      0.0
+    ]
+  },
+  "trapinch": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "trapinch"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.12,
+      0.33,
+      0.0
+    ]
+  },
+  "tsareena": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "tsareena"
+    },
+    "hidden": [],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      0.0,
+      0.9,
+      0.0
+    ]
+  },
+  "turtwig": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "turtwig"
+    },
+    "hidden": [],
+    "profileScale": 0.8500000238418579,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "typhlosion": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "typhlosion"
+    },
+    "hidden": [],
+    "profileScale": 0.5,
+    "profileTranslation": [
+      0.0,
+      1.0,
+      0.0
+    ]
+  },
+  "typhlosionhisuian": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "typhlosion_hisuian"
+    },
+    "hidden": [
+      "fire_main",
+      "fire_orb_left1",
+      "fire_orb_middle1",
+      "fire_orb_right1"
+    ],
+    "profileScale": 0.5,
+    "profileTranslation": [
+      0.0,
+      1.0,
+      0.0
+    ]
+  },
+  "tyrunt": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "tyrunt"
+    },
+    "hidden": [],
+    "profileScale": 0.5600000023841858,
+    "profileTranslation": [
+      -0.03,
+      0.89,
+      0.0
+    ]
+  },
+  "unfezant": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "unfezant"
+    },
+    "hidden": [
+      "open_left",
+      "open_right"
+    ],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.7,
+      0.0
+    ]
+  },
+  "venomoth": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "venomoth"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.6,
+      0.0
+    ]
+  },
+  "venonat": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "venonat"
+    },
+    "hidden": [],
+    "profileScale": 0.8600000143051147,
+    "profileTranslation": [
+      0.0,
+      0.43,
+      0.0
+    ]
+  },
+  "vespiquen": {
+    "animation": {
+      "name": "air_idle",
+      "species": "vespiquen"
+    },
+    "hidden": [],
+    "profileScale": 0.75,
+    "profileTranslation": [
+      0.0,
+      0.6,
+      0.0
+    ]
+  },
+  "vibrava": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "vibrava"
+    },
+    "hidden": [],
+    "profileScale": 0.5400000214576721,
+    "profileTranslation": [
+      -0.01,
+      0.71,
+      0.0
+    ]
+  },
+  "vileplume": {
+    "animation": {
+      "name": "idle",
+      "species": "vileplume"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.53,
+      0.0
+    ]
+  },
+  "vivillon": {
+    "animation": {
+      "name": "air_idle",
+      "species": "vivillon"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.1,
+      0.8,
+      0.0
+    ]
+  },
+  "volbeat": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "volbeat"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.3,
+      0.0
+    ]
+  },
+  "voltorb": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "voltorb"
+    },
+    "hidden": [],
+    "profileScale": 1.100000023841858,
+    "profileTranslation": [
+      0.0,
+      0.1,
+      0.0
+    ]
+  },
+  "voltorbhisuian": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "voltorb_hisuian"
+    },
+    "hidden": [],
+    "profileScale": 1.100000023841858,
+    "profileTranslation": [
+      0.0,
+      0.1,
+      0.0
+    ]
+  },
+  "vulpix": {
+    "animation": null,
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.7,
+      0.0
+    ]
+  },
+  "walkingwake": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "walkingwake"
+    },
+    "hidden": [],
+    "profileScale": 0.3499999940395355,
+    "profileTranslation": [
+      0.0,
+      1.2,
+      -6.0
+    ]
+  },
+  "wartortle": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "wartortle"
+    },
+    "hidden": [],
+    "profileScale": 0.6899999976158142,
+    "profileTranslation": [
+      0.0,
+      0.69,
+      0.0
+    ]
+  },
+  "watchog": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "watchog"
+    },
+    "hidden": [],
+    "profileScale": 0.550000011920929,
+    "profileTranslation": [
+      0.0,
+      0.87,
+      0.0
+    ]
+  },
+  "weedle": {
+    "animation": {
+      "name": "ground_idle2",
+      "species": "weedle"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.1,
+      0.6,
+      0.0
+    ]
+  },
+  "whiscash": {
+    "animation": {
+      "name": "water_idle",
+      "species": "whiscash"
+    },
+    "hidden": [],
+    "profileScale": 0.6000000238418579,
+    "profileTranslation": [
+      -0.1,
+      0.6,
+      0.0
+    ]
+  },
+  "whismur": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "whismur"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.45,
+      0.0
+    ]
+  },
+  "wimpod": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "wimpod"
+    },
+    "hidden": [],
+    "profileScale": 0.699999988079071,
+    "profileTranslation": [
+      0.0,
+      0.71,
+      0.0
+    ]
+  },
+  "wingull": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "wingull"
+    },
+    "hidden": [],
+    "profileScale": 0.8500000238418579,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "wishiwashischooling": {
+    "animation": {
+      "name": "water_idle",
+      "species": "wishiwashi_school"
+    },
+    "hidden": [],
+    "profileScale": 0.20000000298023224,
+    "profileTranslation": [
+      0.0,
+      1.0,
+      0.0
+    ]
+  },
+  "wishiwashisolo": {
+    "animation": {
+      "name": "water_idle",
+      "species": "wishiwashi_solo"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.2,
+      0.0
+    ]
+  },
+  "woobat": {
+    "animation": {
+      "name": "air_idle",
+      "species": "woobat"
+    },
+    "hidden": [],
+    "profileScale": 0.75,
+    "profileTranslation": [
+      0.0,
+      0.57,
+      0.0
+    ]
+  },
+  "wooloo": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "wooloo"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.4,
+      0.0
+    ]
+  },
+  "wooper": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "wooper"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.4,
+      0.0
+    ]
+  },
+  "wooperpaldean": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "wooper_paldean"
+    },
+    "hidden": [],
+    "profileScale": 0.8999999761581421,
+    "profileTranslation": [
+      0.0,
+      0.4,
+      0.0
+    ]
+  },
+  "xatu": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "xatu"
+    },
+    "hidden": [],
+    "profileScale": 0.6899999976158142,
+    "profileTranslation": [
+      0.0,
+      0.75,
+      0.0
+    ]
+  },
+  "xerneas": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "xerneas"
+    },
+    "hidden": [],
+    "profileScale": 0.3499999940395355,
+    "profileTranslation": [
+      0.0,
+      1.2,
+      0.0
+    ]
+  },
+  "yamper": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "yamper"
+    },
+    "hidden": [],
+    "profileScale": 0.800000011920929,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "yanma": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "yanma"
+    },
+    "hidden": [],
+    "profileScale": 0.75,
+    "profileTranslation": [
+      0.0,
+      0.5,
+      0.0
+    ]
+  },
+  "yanmega": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "yanmega"
+    },
+    "hidden": [],
+    "profileScale": 0.6100000143051147,
+    "profileTranslation": [
+      0.0,
+      0.8,
+      0.0
+    ]
+  },
+  "zigzagoon": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "zigzagoon"
+    },
+    "hidden": [],
+    "profileScale": 1.0,
+    "profileTranslation": [
+      0.0,
+      0.2,
+      0.0
+    ]
+  },
+  "zigzagoongalarian": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "zigzagoon_galarian"
+    },
+    "hidden": [],
+    "profileScale": 1.0,
+    "profileTranslation": [
+      0.0,
+      0.2,
+      0.0
+    ]
+  },
+  "zoroark": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "zoroark"
+    },
+    "hidden": [],
+    "profileScale": 0.4399999976158142,
+    "profileTranslation": [
+      0.0,
+      1.08,
+      -6.0
+    ]
+  },
+  "zoroarkhisuian": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "zoroark_hisuian"
+    },
+    "hidden": [],
+    "profileScale": 0.46000000834465027,
+    "profileTranslation": [
+      -0.05,
+      1.06,
+      0.0
+    ]
+  },
+  "zorua": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "zorua"
+    },
+    "hidden": [],
+    "profileScale": 0.8100000023841858,
+    "profileTranslation": [
+      0.0,
+      0.54,
+      0.0
+    ]
+  },
+  "zoruahisuian": {
+    "animation": {
+      "name": "ground_idle",
+      "species": "zorua_hisuian"
+    },
+    "hidden": [],
+    "profileScale": 0.8199999928474426,
+    "profileTranslation": [
+      0.0,
+      0.62,
+      -6.0
+    ]
+  }
+}

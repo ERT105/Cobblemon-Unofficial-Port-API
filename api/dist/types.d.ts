@@ -1,5 +1,5 @@
 /**
- * Los tipos públicos de la API de Cooblemon: lo que un add-on envía y lo que
+ * Los tipos públicos de la API de Cobblemon Bedrock: lo que un add-on envía y lo que
  * recibe. Son el contrato de `docs/REFERENCIA.md`; cambiarlos
  * de forma incompatible sube la versión mayor de la API.
  */
@@ -70,7 +70,7 @@ export interface Species {
     maleRatio?: number | null;
     eggGroups?: string[];
     preEvolution?: string | null;
-    /** Solo movimientos que el motor de Cooblemon conoce; los demás se omiten con aviso. */
+    /** Solo movimientos que el motor de Cobblemon Bedrock conoce; los demás se omiten con aviso. */
     moves: {
         levelUp: Array<{
             level: number;
@@ -156,10 +156,10 @@ export interface AddonDefinition {
     sprites?: Record<string, SpriteSet>;
     /** Evoluciones nuevas para especies que no son del add-on: `{ "pikachu": [ … ] }`. */
     evolutions?: Record<string, Evolution[]>;
-    /** Qué hacer con la respuesta de Cooblemon. Por defecto, al registro de contenido. */
+    /** Qué hacer con la respuesta de Cobblemon Bedrock. Por defecto, al registro de contenido. */
     onAck?: (ack: Ack) => void;
 }
-/** La respuesta de Cooblemon a un registro. */
+/** La respuesta de Cobblemon Bedrock a un registro. */
 export interface Ack {
     addon: string;
     api: number;
@@ -191,7 +191,7 @@ interface BattleInfo {
     raidTier?: number;
     trainerName?: string | null;
 }
-export interface CooblemonEvents {
+export interface CobblemonEvents {
     captured: {
         api: number;
         player: PlayerRef;

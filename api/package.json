@@ -1,9 +1,9 @@
 {
-  "name": "cooblemon-api",
+  "name": "cobblemon-bedrock-api",
   "version": "1.0.0",
-  "description": "Registro y eventos de Cooblemon para add-ons de Minecraft Bedrock.",
+  "description": "Registro y eventos de Cobblemon Bedrock para add-ons de Minecraft Bedrock.",
   "type": "module",
-  "main": "dist/cooblemon-api.js",
+  "main": "dist/cobblemon-bedrock-api.js",
   "types": "dist/index.d.ts",
   "files": ["dist", "README.md"],
   "peerDependencies": {

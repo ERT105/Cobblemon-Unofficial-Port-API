@@ -1,6 +1,6 @@
 entity.ejemplo:pikachu_surf.name=Pikachu Surfista
 item.spawn_egg.entity.ejemplo:pikachu_surf.name=Generar Pikachu Surfista
-cooblemon.species.ejemplo:pikachu_surf.desc=Ejemplo de la API de Cooblemon: un Pikachu que aprendió a surfear. Aparece en las playas.
+cooblemon.species.ejemplo:pikachu_surf.desc=Ejemplo de la API de Cobblemon Bedrock: un Pikachu que aprendió a surfear. Aparece en las playas.
 ejemplo.event.captured=Evento: has capturado a %s (nivel %s).
 ejemplo.event.level_up=Evento: %s ha subido al nivel %s.
 ejemplo.event.evolved=Evento: %s ha evolucionado a %s.

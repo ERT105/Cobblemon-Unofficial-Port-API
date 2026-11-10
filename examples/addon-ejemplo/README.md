@@ -1,6 +1,6 @@
 # Add-on de ejemplo: Pikachu Surfista
 
-Un add-on completo para Cooblemon con una especie nueva,
+Un add-on completo para Cobblemon Bedrock con una especie nueva,
 **Pikachu Surfista** (`ejemplo:pikachu_surf`). Sirve para ver cómo se hace
 cada cosa de la [guía](../../docs/README.md) y para copiarlo como punto de
 partida.
@@ -9,20 +9,20 @@ partida.
 
 | Dónde | Qué |
 | --- | --- |
-| `BP/scripts/main.js` | El registro con `registerAddon`: especie, forma nocturna, aparición, sprites, botín, animaciones de combate y una evolución nueva para el Pikachu de Cooblemon. Y los eventos con `onCooblemonEvent`. |
-| `BP/scripts/cooblemon-api.js` | La librería, copiada de `api/dist/`. |
+| `BP/scripts/main.js` | El registro con `registerAddon`: especie, forma nocturna, aparición, sprites, botín, animaciones de combate y una evolución nueva para el Pikachu de Cobblemon Bedrock. Y los eventos con `onCobblemonEvent`. |
+| `BP/scripts/cobblemon-bedrock-api.js` | La librería, copiada de `api/dist/`. |
 | `BP/entities/` | Las entidades (`pikachu_surf` y su forma `pikachu_surf_night`). |
-| `RP/entity/`, `RP/textures/` | Entidades de cliente (con el modelo y las animaciones de Pikachu de Cooblemon) y sus texturas. |
+| `RP/entity/`, `RP/textures/` | Entidades de cliente (con el modelo y las animaciones de Pikachu de Cobblemon Bedrock) y sus texturas. |
 | `RP/font/glyph_F0.png` | Los retratos del panel del equipo. |
 | `RP/texts/` | Nombre y descripción, y los textos de los eventos. |
-| `BP/manifest.json`, `RP/manifest.json` | Dependencias de Cooblemon y `pbr` (Vibrant Visuals). |
+| `BP/manifest.json`, `RP/manifest.json` | Dependencias de Cobblemon Bedrock y `pbr` (Vibrant Visuals). |
 
 ## Probarlo
 
 1. Comprime `BP` y `RP` en un `.mcaddon` (o cópialos a las carpetas de
    desarrollo del juego).
-2. Actívalo en un mundo con Cooblemon, **encima** de Cooblemon.
-3. En el registro de contenido: `[ejemplo] registrado en Cooblemon (API 1)`.
+2. Actívalo en un mundo con Cobblemon Bedrock, **encima** de Cobblemon Bedrock.
+3. En el registro de contenido: `[ejemplo] registrado en Cobblemon Bedrock (API 1)`.
 4. `/scriptevent cooblemon:debug.registry` para ver el estado.
 
 Lo que tiene que pasar:

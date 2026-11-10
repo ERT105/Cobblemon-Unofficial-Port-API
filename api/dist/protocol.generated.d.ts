@@ -1,7 +1,7 @@
 /**
- * El protocolo con el que los add-ons hablan con Cooblemon
+ * El protocolo con el que los add-ons hablan con Cobblemon Bedrock
  * (`docs/REFERENCIA.md`). Lo comparten el registro de la base y, más
- * adelante, la librería `cooblemon-api` que usan los creadores: cualquier
+ * adelante, la librería `cobblemon-bedrock-api` que usan los creadores: cualquier
  * cambio aquí es un cambio de la API.
  */
 /** Versión de la API. Sube solo si un cambio rompe a los add-ons (§7.3). */

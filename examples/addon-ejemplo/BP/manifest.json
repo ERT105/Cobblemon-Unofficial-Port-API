@@ -1,8 +1,8 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Cooblemon — add-on de ejemplo",
-    "description": "Ejemplo mínimo de la API de Cooblemon: una especie nueva registrada desde otro pack.",
+    "name": "Cobblemon Bedrock — add-on de ejemplo",
+    "description": "Ejemplo mínimo de la API de Cobblemon Bedrock: una especie nueva registrada desde otro pack.",
     "uuid": "b8986002-1f69-43bb-a7db-24cc25724c86",
     "version": [
       1,

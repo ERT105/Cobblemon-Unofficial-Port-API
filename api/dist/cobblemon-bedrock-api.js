@@ -29,7 +29,7 @@ function send(id, payload) {
 }
 function registerAddon(def) {
   if (!/^[a-z0-9_]+$/.test(def.addon) || def.addon === "cooblemon" || def.addon === "minecraft") {
-    throw new Error(`cooblemon-api: \xAB${def.addon}\xBB no vale como espacio de nombres (min\xFAsculas, cifras y _)`);
+    throw new Error(`cobblemon-bedrock-api: \xAB${def.addon}\xBB no vale como espacio de nombres (min\xFAsculas, cifras y _)`);
   }
   let chunk = DEFAULT_CHUNK;
   const sendPacket = (kind, key, data) => {
@@ -71,14 +71,14 @@ function registerAddon(def) {
         def.onAck(ack);
         return;
       }
-      if (ack.ok) console.warn(`[${def.addon}] registrado en Cooblemon (API ${ack.api}): ${def.species?.length ?? 0} especies`);
+      if (ack.ok) console.warn(`[${def.addon}] registrado en Cobblemon Bedrock (API ${ack.api}): ${def.species?.length ?? 0} especies`);
       for (const e of ack.errors) console.warn(`[${def.addon}] error: ${e}`);
       for (const w of ack.warnings) console.warn(`[${def.addon}] aviso: ${w}`);
     }
   });
   world.afterEvents.worldLoad.subscribe(() => system.run(register));
 }
-function onCooblemonEvent(name, handler) {
+function onCobblemonEvent(name, handler) {
   const id = `${EVENT_PREFIX}${name}`;
   const callback = system.afterEvents.scriptEventReceive.subscribe((event) => {
     if (event.id !== id) return;
@@ -94,6 +94,6 @@ function onCooblemonEvent(name, handler) {
 }
 export {
   API_VERSION,
-  onCooblemonEvent,
+  onCobblemonEvent,
   registerAddon
 };

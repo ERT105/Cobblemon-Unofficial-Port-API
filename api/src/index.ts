@@ -1,26 +1,26 @@
 /**
- * `cooblemon-api`: lo que un add-on necesita para registrarse en Cooblemon y
+ * `cobblemon-bedrock-api`: lo que un add-on necesita para registrarse en Cobblemon Bedrock y
  * escuchar sus eventos (guía en `docs/README.md`, formatos en `docs/REFERENCIA.md`).
  *
  * ```js
- * import { registerAddon, onCooblemonEvent } from "./cooblemon-api.js";
+ * import { registerAddon, onCobblemonEvent } from "./cobblemon-bedrock-api.js";
  *
  * registerAddon({ addon: "miaddon", version: "1.0.0", species: [...], spawn: {...} });
- * onCooblemonEvent("captured", (e) => console.warn(`${e.player.name} capturó ${e.pokemon.species}`));
+ * onCobblemonEvent("captured", (e) => console.warn(`${e.player.name} capturó ${e.pokemon.species}`));
  * ```
  *
  * Se incluye en el script del add-on (no hay nada que instalar en el mundo
- * aparte de Cooblemon). Solo depende de `@minecraft/server`.
+ * aparte de Cobblemon Bedrock). Solo depende de `@minecraft/server`.
  */
 
 import { system, world } from "@minecraft/server";
 import { API_VERSION, ApiEvents, EVENT_PREFIX } from "./protocol.generated.js";
-import type { Ack, AddonDefinition, CooblemonEvents } from "./types.js";
+import type { Ack, AddonDefinition, CobblemonEvents } from "./types.js";
 
 export * from "./types.js";
 export { API_VERSION };
 
-/** Trozo por defecto, hasta que Cooblemon diga cuánto cabe en un mensaje. */
+/** Trozo por defecto, hasta que Cobblemon Bedrock diga cuánto cabe en un mensaje. */
 const DEFAULT_CHUNK = 1500;
 
 function send(id: string, payload: unknown): void {
@@ -28,16 +28,16 @@ function send(id: string, payload: unknown): void {
 }
 
 /**
- * Registra el add-on en Cooblemon.
+ * Registra el add-on en Cobblemon Bedrock.
  *
- * Envía al cargar el mundo y cada vez que Cooblemon pregunta (`ping`), así da
+ * Envía al cargar el mundo y cada vez que Cobblemon Bedrock pregunta (`ping`), así da
  * igual qué script arranque antes. Cada paquete se parte al tamaño de mensaje
- * que Cooblemon mide y anuncia. La respuesta (`ack`), con los errores y avisos
+ * que Cobblemon Bedrock mide y anuncia. La respuesta (`ack`), con los errores y avisos
  * de la validación, va al registro de contenido salvo que se pase `onAck`.
  */
 export function registerAddon(def: AddonDefinition): void {
   if (!/^[a-z0-9_]+$/.test(def.addon) || def.addon === "cooblemon" || def.addon === "minecraft") {
-    throw new Error(`cooblemon-api: «${def.addon}» no vale como espacio de nombres (minúsculas, cifras y _)`);
+    throw new Error(`cobblemon-bedrock-api: «${def.addon}» no vale como espacio de nombres (minúsculas, cifras y _)`);
   }
   let chunk = DEFAULT_CHUNK;
 
@@ -55,7 +55,7 @@ export function registerAddon(def: AddonDefinition): void {
 
   const register = () => {
     send(ApiEvents.HELLO, { addon: def.addon, api: API_VERSION, version: def.version });
-    // Las especies antes que sus apariciones y evoluciones: Cooblemon comprueba que existan.
+    // Las especies antes que sus apariciones y evoluciones: Cobblemon Bedrock comprueba que existan.
     for (const species of def.species ?? []) sendPacket("species", species.id, species);
     if (def.spawn?.entries.length) sendPacket("spawn", "spawn", def.spawn);
     if (def.sprites && Object.keys(def.sprites).length) sendPacket("sprites", "sprites", def.sprites);
@@ -88,34 +88,34 @@ export function registerAddon(def: AddonDefinition): void {
         def.onAck(ack);
         return;
       }
-      if (ack.ok) console.warn(`[${def.addon}] registrado en Cooblemon (API ${ack.api}): ${def.species?.length ?? 0} especies`);
+      if (ack.ok) console.warn(`[${def.addon}] registrado en Cobblemon Bedrock (API ${ack.api}): ${def.species?.length ?? 0} especies`);
       for (const e of ack.errors) console.warn(`[${def.addon}] error: ${e}`);
       for (const w of ack.warnings) console.warn(`[${def.addon}] aviso: ${w}`);
     }
   });
 
-  // Por si Cooblemon ya estaba escuchando cuando arrancamos.
+  // Por si Cobblemon Bedrock ya estaba escuchando cuando arrancamos.
   world.afterEvents.worldLoad.subscribe(() => system.run(register));
 }
 
 /**
- * Escucha un evento de Cooblemon (§9). Devuelve una función que deja de
+ * Escucha un evento de Cobblemon Bedrock (§9). Devuelve una función que deja de
  * escucharlo.
  *
  * Los datos son un resumen, no la ficha guardada. Si los pones en un mensaje
  * del chat, cada parámetro de un `rawtext` tiene que ser un objeto: un número
  * suelto (el nivel) va como `{ text: "10" }`.
  */
-export function onCooblemonEvent<K extends keyof CooblemonEvents>(
+export function onCobblemonEvent<K extends keyof CobblemonEvents>(
   name: K,
-  handler: (event: CooblemonEvents[K]) => void
+  handler: (event: CobblemonEvents[K]) => void
 ): () => void {
   const id = `${EVENT_PREFIX}${name}`;
   const callback = system.afterEvents.scriptEventReceive.subscribe((event) => {
     if (event.id !== id) return;
-    let data: CooblemonEvents[K];
+    let data: CobblemonEvents[K];
     try {
-      data = JSON.parse(event.message) as CooblemonEvents[K];
+      data = JSON.parse(event.message) as CobblemonEvents[K];
     } catch {
       return;
     }

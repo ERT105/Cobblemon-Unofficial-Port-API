@@ -1,4 +1,4 @@
-# Referencia de la API de Cooblemon
+# Referencia de la API de Cobblemon Bedrock
 
 > API **1**. Los tipos de TypeScript están en `api/dist/types.d.ts`.
 
@@ -14,8 +14,8 @@
 | `evolutions` | Evoluciones nuevas para especies que no son tuyas. |
 | `onAck` | Qué hacer con la respuesta. Por defecto, al registro de contenido. |
 
-Se envía al cargar el mundo y cada vez que Cooblemon lo pide, troceado al
-tamaño de mensaje que Cooblemon mide. Volver a enviarlo sustituye lo anterior.
+Se envía al cargar el mundo y cada vez que Cobblemon Bedrock lo pide, troceado al
+tamaño de mensaje que Cobblemon Bedrock mide. Volver a enviarlo sustituye lo anterior.
 
 ## Especie
 
@@ -33,11 +33,11 @@ Obligatorios: `id`, `name`, `nationalPokedexNumber`, `primaryType`,
 | `abilities`, `hiddenAbility` | Ids del mod. Una sin efecto en combate da un aviso. |
 | `maleRatio` | 0–1, o `null` sin sexo. |
 | `moves` | `levelUp: [{ level, move }]`, y `egg`, `tm`, `tutor`. Solo los que conoce el motor. |
-| `evolutions` | Formato de Cobblemon (`variant`, `result`, `requiredContext`, `requirements`). `result` puede ser tuyo (`miaddon:x`) o de Cooblemon (`raichu`). |
+| `evolutions` | Formato de Cobblemon (`variant`, `result`, `requiredContext`, `requirements`). `result` puede ser tuyo (`miaddon:x`) o de Cobblemon Bedrock (`raichu`). |
 | `preEvolution` | Igual que `result`. |
 | `forms` | Ver [Formas](#formas). |
 | `baseScale`, `hitbox` | Como en Cobblemon. |
-| `drops` | `{ amount, entries: [{ item, percentage?, quantityRange?, rarity? }] }`. Objetos de Cooblemon con `cooblemon:`. |
+| `drops` | `{ amount, entries: [{ item, percentage?, quantityRange?, rarity? }] }`. Objetos de Cobblemon Bedrock con `cooblemon:`. |
 | `battleClips` | Nombre → `[id de animación, segundos, 1 si va en bucle]`: `physical`, `special`, `status`, `cry`, `faint`, `recoil`… |
 | `locators` | Nombre → lista de `[x, y, z]` en píxeles de modelo (`root`, `middle`, `mouth`, `special`…): de ahí salen las partículas. |
 | `riding` | `{ stats: { LAND|AIR|LIQUID: { SPEED: [mín, máx], … } }, keys }`. La entidad tiene que traer el grupo `cooblemon:ride_on`. |
@@ -73,7 +73,7 @@ spawn: {
 | `bucket` | `common`, `uncommon`, `rare`, `ultra-rare`. |
 | `form` | Una forma de la propia especie, por su id. |
 
-Tus especies no aparecen hasta que Cooblemon cierra el registro (cuando todos
+Tus especies no aparecen hasta que Cobblemon Bedrock cierra el registro (cuando todos
 los add-ons han terminado de enviar).
 
 ## Sprites
@@ -105,7 +105,7 @@ evolutions: {
 ```
 
 Añade evoluciones a especies que no son tuyas. El resultado tiene que ser una
-especie tuya. Las de Cooblemon y las de otros add-ons no se tocan.
+especie tuya. Las de Cobblemon Bedrock y las de otros add-ons no se tocan.
 
 ## Respuesta (`ack`)
 
@@ -115,7 +115,7 @@ detalle que falla (un movimiento desconocido).
 
 ## Eventos
 
-Con `onCooblemonEvent(nombre, (datos) => …)`. Todos traen `api` y, salvo los
+Con `onCobblemonEvent(nombre, (datos) => …)`. Todos traen `api` y, salvo los
 de combate, `player` (`{ id, name }`). `pokemon` es un resumen:
 `{ uuid, species, form, level, shiny, gender, nickname, ball }`.
 
@@ -137,6 +137,6 @@ objeto: el nivel va como `{ text: "10" }`. Un número suelto hace fallar
 ## Depuración
 
 - Registro de contenido: `[miaddon] registrado…`, `[miaddon] error: …`,
-  `[miaddon] aviso: …`, y los de Cooblemon con `[cooblemon/api]`.
+  `[miaddon] aviso: …`, y los de Cobblemon Bedrock con `[cooblemon/api]`.
 - `/scriptevent cooblemon:debug.registry`: el estado del registro, cada
   add-on con sus especies, errores y avisos, y el tamaño máximo de mensaje.
