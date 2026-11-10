@@ -1,27 +1,27 @@
-# Cobblemon Bedrock — API para add-ons
+# Cobblemon Bedrock — Add-on API
 
-Herramientas y documentación para crear add-ons de Minecraft Bedrock que
-añadan Pokémon a **Cobblemon Bedrock**, el port no oficial de
-[Cobblemon](https://cobblemon.com/) a Bedrock.
+Tools and documentation for making Minecraft Bedrock add-ons that add Pokémon
+to **Cobblemon Bedrock**, the unofficial port of
+[Cobblemon](https://cobblemon.com/) to Bedrock.
 
-| Carpeta | Qué hay |
+| Folder | What's inside |
 | --- | --- |
-| [`docs/`](docs/README.md) | La guía «Tu primer add-on» y la [referencia](docs/REFERENCIA.md). |
-| [`api/`](api/README.md) | La librería `cobblemon-bedrock-api`: registro y eventos. |
-| [`examples/addon-ejemplo/`](examples/addon-ejemplo/README.md) | Un add-on completo con una especie nueva, listo para probar. |
-| [`kit/`](kit/README.md) | El kit de creador: convierte un addon de Cobblemon Java en uno para Cobblemon Bedrock. |
+| [`docs/`](docs/README.md) | The "Your first add-on" guide and the [reference](docs/REFERENCE.md). |
+| [`api/`](api/README.md) | The `cobblemon-bedrock-api` library: registration and events. |
+| [`examples/example-addon/`](examples/example-addon/README.md) | A complete add-on with a new species, ready to try. |
+| [`kit/`](kit/README.md) | The creator kit: converts a Cobblemon Java addon into a Cobblemon Bedrock add-on. |
 
-Versiones en [`VERSION.json`](VERSION.json): la de la API y la mínima de
-Cobblemon Bedrock que la trae.
+Versions in [`VERSION.json`](VERSION.json): the API version and the minimum
+Cobblemon Bedrock version that ships it.
 
-## Aviso
+## Disclaimer
 
-Cobblemon Bedrock **no es oficial** ni está respaldado por Cobblemon, The Pokémon
-Company, Nintendo, Game Freak ni Creatures Inc.
+Cobblemon Bedrock is **not official** and is not endorsed by Cobblemon, The
+Pokémon Company, Nintendo, Game Freak or Creatures Inc.
 
-- La librería `cobblemon-bedrock-api` es **MPL-2.0**.
-- El add-on de ejemplo usa modelos y texturas de Cobblemon, que son
-  **CC BY-NC** (sin fines comerciales, con atribución): lo mismo vale para lo
-  que hagas a partir de ellos.
+- The `cobblemon-bedrock-api` library is **MPL-2.0**.
+- The example add-on uses Cobblemon models and textures, which are
+  **CC BY-NC** (non-commercial, with attribution): the same applies to
+  anything you make from them.
 
-Más en [`LICENSE.md`](LICENSE.md).
+More in [`LICENSE.md`](LICENSE.md).

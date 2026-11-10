@@ -1,10 +1,10 @@
 /**
- * Los tipos públicos de la API de Cobblemon Bedrock: lo que un add-on envía y lo que
- * recibe. Son el contrato de `docs/REFERENCIA.md`; cambiarlos
- * de forma incompatible sube la versión mayor de la API.
+ * Public types of the Cobblemon Bedrock API: what an add-on sends and what it
+ * receives. They are the contract described in `docs/REFERENCE.md`; changing
+ * them incompatibly bumps the API's major version.
  */
 
-/** Las seis estadísticas, con los nombres del port (`defence`, no `defense`). */
+/** The six stats, with the port's names (`defence`, not `defense`). */
 export interface Stats {
   hp: number;
   attack: number;
@@ -20,12 +20,12 @@ export type ElementalType =
 
 export type ExperienceGroup = "fast" | "medium_fast" | "medium_slow" | "slow" | "erratic" | "fluctuating";
 
-/** Una evolución, en el formato de Cobblemon. `requirements` puede faltar. */
+/** An evolution, in Cobblemon's format. `requirements` may be omitted. */
 export interface Evolution {
   id?: string;
-  /** `item_interact`, `level_up`, `trade`… como en el mod. */
+  /** `item_interact`, `level_up`, `trade`… as in the mod. */
   variant: string;
-  /** Especie resultante: `miaddon:especie` o una de la base (`raichu`). */
+  /** Resulting species: `myaddon:species` or a Cobblemon Bedrock one (`raichu`). */
   result: string;
   requiredContext?: string;
   consumeHeldItem?: boolean;
@@ -34,7 +34,7 @@ export interface Evolution {
   [key: string]: unknown;
 }
 
-/** Una forma de la especie. Su `name` es su id: el aspecto (`alolan`), en minúsculas y con `_`. */
+/** A form of the species. Its `name` is its id: the aspect (`alolan`), lowercase and with `_`. */
 export interface SpeciesForm {
   name: string;
   aspects?: string[];
@@ -43,18 +43,18 @@ export interface SpeciesForm {
   baseStats?: Stats;
   abilities?: string[];
   evolutions?: Evolution[];
-  /** Movimientos por nivel de la forma, como en el mod: `"10:confusion"`. */
+  /** The form's level-up moves, as in the mod: `"10:confusion"`. */
   moves?: string[];
   battleOnly?: boolean;
 }
 
-/** El botín al derrotarla, en el formato de Cobblemon. */
+/** What it drops when defeated, in Cobblemon's format. */
 export interface Drops {
   amount: number;
   entries: Array<{ item: string; percentage?: number; quantityRange?: string; rarity?: "common" | "rare" }>;
 }
 
-/** Una especie (§5.4). Su `id` es también el de su entidad: `miaddon:especie`. */
+/** A species. Its `id` is also its entity's id: `myaddon:species`. */
 export interface Species {
   id: string;
   name: string;
@@ -67,14 +67,14 @@ export interface Species {
   catchRate: number;
   baseExperienceYield: number;
   experienceGroup: ExperienceGroup;
-  /** Al menos una. La oculta va aparte. */
+  /** At least one. The hidden ability goes separately. */
   abilities: string[];
   hiddenAbility?: string | null;
-  /** Proporción de machos (0–1), o `null` si no tiene sexo. */
+  /** Male ratio (0–1), or `null` if genderless. */
   maleRatio?: number | null;
   eggGroups?: string[];
   preEvolution?: string | null;
-  /** Solo movimientos que el motor de Cobblemon Bedrock conoce; los demás se omiten con aviso. */
+  /** Only moves Cobblemon Bedrock's engine knows; others are skipped with a warning. */
   moves: {
     levelUp: Array<{ level: number; move: string }>;
     egg?: string[];
@@ -88,22 +88,22 @@ export interface Species {
   height?: number | null;
   weight?: number | null;
   drops?: Drops;
-  /** Animaciones de combate: nombre → `[id de animación, segundos, 1 si va en bucle]`. */
+  /** Battle animations: name → `[animation id, seconds, 1 if it loops]`. */
   battleClips?: Record<string, [string, number, number?]>;
-  /** Puntos del modelo para las partículas: nombre → lista de `[x, y, z]` en píxeles de modelo. */
+  /** Model points for particles: name → list of `[x, y, z]` in model pixels. */
   locators?: Record<string, number[][]>;
-  /** Monta: estilo (`LAND`, `AIR`, `LIQUID`) → estadística → `[mín, máx]`, y el tipo de cada estilo. */
+  /** Riding: style (`LAND`, `AIR`, `LIQUID`) → stat → `[min, max]`, and each style's kind. */
   riding?: { stats: Record<string, Record<string, [number, number]>>; keys?: Record<string, string> };
-  /** Hombro: el clip de cada lado. */
+  /** Shoulder: the clip for each side. */
   shoulder?: { left: string | null; right: string | null };
 }
 
-/** Una entrada de aparición (§5.4), con las etiquetas de bioma del mod. */
+/** A spawn entry, using the mod's biome tags. */
 export interface SpawnEntry {
   species: string;
-  /** Una forma de la propia especie, por su id (`alolan`). */
+  /** A form of the same species, by its id (`alolan`). */
   form?: string;
-  /** Etiqueta de bioma (`forest`, `beach`, `taiga`…). */
+  /** Biome tag (`forest`, `beach`, `taiga`…). */
   biome: string;
   biomeTag?: string;
   biomeAny?: string[];
@@ -123,37 +123,37 @@ export interface SpawnEntry {
 
 export interface Spawns {
   entries: SpawnEntry[];
-  /** Rango de niveles por especie. */
+  /** Level range per species. */
   levels?: Record<string, { min: number; max: number }>;
 }
 
-/** Las texturas de UI de una variante (§6.3), rutas del resource pack del add-on. */
+/** A variant's UI textures: paths in the add-on's resource pack. */
 export interface SpriteSet {
   pc?: string;
   face?: string;
   dex?: string;
   portrait?: string;
   size?: string;
-  /** Retrato del panel del equipo: un carácter de U+F000 a U+F8FF de la página de glifos del add-on. */
+  /** Party panel portrait: a character from U+F000 to U+F8FF in the add-on's glyph page. */
   glyph?: string;
 }
 
-/** Todo lo que registra un add-on. */
+/** Everything an add-on registers. */
 export interface AddonDefinition {
-  /** El espacio de nombres del add-on: el de sus entidades y especies. */
+  /** The add-on's namespace: that of its entities and species. */
   addon: string;
   version?: string;
   species?: Species[];
   spawn?: Spawns;
-  /** Por `especie|forma|shiny`: `"miaddon:especie||0"`, `"miaddon:especie|alolan|1"`. */
+  /** Keyed by `species|form|shiny`: `"myaddon:species||0"`, `"myaddon:species|alolan|1"`. */
   sprites?: Record<string, SpriteSet>;
-  /** Evoluciones nuevas para especies que no son del add-on: `{ "pikachu": [ … ] }`. */
+  /** New evolutions for species that aren't the add-on's: `{ "pikachu": [ … ] }`. */
   evolutions?: Record<string, Evolution[]>;
-  /** Qué hacer con la respuesta de Cobblemon Bedrock. Por defecto, al registro de contenido. */
+  /** What to do with Cobblemon Bedrock's reply. By default, it goes to the content log. */
   onAck?: (ack: Ack) => void;
 }
 
-/** La respuesta de Cobblemon Bedrock a un registro. */
+/** Cobblemon Bedrock's reply to a registration. */
 export interface Ack {
   addon: string;
   api: number;
@@ -162,14 +162,14 @@ export interface Ack {
   warnings: string[];
 }
 
-// —— Eventos (§9) ——
+// —— Events ——
 
 export interface PlayerRef {
   id: string;
   name: string;
 }
 
-/** Un Pokémon en los eventos: un resumen, no la ficha guardada. */
+/** A Pokémon in events: a summary, not the saved record. */
 export interface PokemonSummary {
   uuid: string;
   species: string;

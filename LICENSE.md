@@ -1,23 +1,24 @@
-# Licencias
+# Licenses
 
-Este repositorio reúne obras con licencias distintas.
+This repository contains works under different licenses.
 
-## Código: MPL-2.0
+## Code: MPL-2.0
 
-`api/` (la librería `cobblemon-bedrock-api`), `kit/` y los scripts de `examples/` están bajo la
-[Mozilla Public License 2.0](https://www.mozilla.org/MPL/2.0/), como el código
-de Cobblemon.
+`api/` (the `cobblemon-bedrock-api` library), `kit/` and the scripts in
+`examples/` are under the
+[Mozilla Public License 2.0](https://www.mozilla.org/MPL/2.0/), like
+Cobblemon's code.
 
-## Recursos de Cobblemon: CC BY-NC 4.0
+## Cobblemon assets: CC BY-NC 4.0
 
-Los modelos, animaciones, texturas y datos de `examples/addon-ejemplo/` derivan
-de los de [Cobblemon](https://cobblemon.com/) y siguen bajo
-[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/): uso **no
-comercial** y con **atribución** a Cobblemon. Las texturas del ejemplo están
-teñidas a partir de las originales.
+The models, animations, textures and data in `examples/example-addon/` are
+derived from [Cobblemon](https://cobblemon.com/)'s and remain under
+[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/):
+**non-commercial** use with **attribution** to Cobblemon. The example's
+textures are tinted from the originals.
 
-## Marcas
+## Trademarks
 
-Pokémon y sus nombres son marcas de Nintendo, Game Freak, Creatures Inc. y
-The Pokémon Company. Este proyecto no es oficial ni está respaldado por ellos
-ni por el equipo de Cobblemon.
+Pokémon and its names are trademarks of Nintendo, Game Freak, Creatures Inc.
+and The Pokémon Company. This project is not official and is not endorsed by
+them or by the Cobblemon team.

@@ -1,25 +1,25 @@
 # cobblemon-bedrock-api
 
-Registro y eventos de [Cobblemon Bedrock](../docs/README.md) para add-ons de Minecraft
-Bedrock. API **1**.
+Registration and events of [Cobblemon Bedrock](../docs/README.md) for
+Minecraft Bedrock add-ons. API **1**.
 
-## Uso
+## Usage
 
-Copia `dist/cobblemon-bedrock-api.js` en `scripts/` de tu BP:
+Copy `dist/cobblemon-bedrock-api.js` into your BP's `scripts/`:
 
 ```js
 import { registerAddon, onCobblemonEvent } from "./cobblemon-bedrock-api.js";
 
-registerAddon({ addon: "miaddon", version: "1.0.0", species: [/* … */], spawn: { entries: [/* … */] } });
+registerAddon({ addon: "myaddon", version: "1.0.0", species: [/* … */], spawn: { entries: [/* … */] } });
 
-onCobblemonEvent("captured", (e) => console.warn(`${e.player.name} capturó ${e.pokemon.species}`));
+onCobblemonEvent("captured", (e) => console.warn(`${e.player.name} caught ${e.pokemon.species}`));
 ```
 
-En TypeScript, los tipos están en `dist/index.d.ts`.
+For TypeScript, the types are in `dist/index.d.ts`.
 
-- [Guía: tu primer add-on](../docs/README.md)
-- [Referencia de formatos y eventos](../docs/REFERENCIA.md)
+- [Guide: your first add-on](../docs/README.md)
+- [Format and event reference](../docs/REFERENCE.md)
 
-Solo depende de `@minecraft/server` (2.10.0 o posterior).
+Its only dependency is `@minecraft/server` (2.10.0 or later).
 
-Licencia: MPL-2.0.
+License: MPL-2.0.

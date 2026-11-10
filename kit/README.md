@@ -1,35 +1,35 @@
-# Kit de creador de Cobblemon Bedrock
+# Cobblemon Bedrock creator kit
 
-Convierte un addon de **Cobblemon Java** en un add-on para **Cobblemon
-Bedrock**, con las mismas reglas que Cobblemon Bedrock usa con los Pokémon del
-mod: especie, apariciones, botín, idiomas, modelo, animaciones, estados
-(reposo, andar, correr, volar, nadar, combate, dormir), sprites, formas,
-hembra, montura y hombro.
+Converts a **Cobblemon Java** addon into an add-on for **Cobblemon Bedrock**,
+using the same rules Cobblemon Bedrock applies to the mod's own Pokémon:
+species, spawns, drops, languages, model, animations, poses (idle, walk, run,
+fly, swim, battle, sleep), sprites, forms, female variants, riding and
+shoulder.
 
-## Lo que necesitas
+## Requirements
 
-- [Node.js](https://nodejs.org/) 20 o posterior.
-- **El `.jar` de Cobblemon 1.8 extraído** (es un `.zip`): la carpeta que
-  tiene dentro `assets/` y `data/`. El kit lee de ahí lo que necesita del mod
-  (presets de aparición, etiquetas de bloques…); no viene incluido.
-- Para los sprites, un navegador basado en Chromium: **Microsoft Edge** en
-  Windows sirve tal cual. En otro sistema, indica uno con la variable
-  `SPRITE_BROWSER` (la ruta del ejecutable de Chrome o Chromium).
+- [Node.js](https://nodejs.org/) 20 or later.
+- **The Cobblemon 1.8 `.jar`, extracted** (it is a `.zip`): the folder that
+  contains `assets/` and `data/`. The kit reads what it needs from the mod
+  there (spawn presets, block tags…); it is not included.
+- For sprites, a Chromium-based browser: **Microsoft Edge** on Windows works
+  as is. On other systems, point to one with the `SPRITE_BROWSER` environment
+  variable (the path to the Chrome or Chromium executable).
 
-## Instalación
+## Installation
 
 ```
 cd kit
 npm install
 ```
 
-## Uso
+## Usage
 
 ```
-npm run kit -- --in <tu addon> --cobblemon <jar extraído>
+npm run kit -- --in <your addon> --cobblemon <extracted jar>
 ```
 
-`<tu addon>` es la carpeta de tu addon de Java, con su estructura de siempre:
+`<your addon>` is your Java addon folder, with its usual layout:
 
 ```
 data/<ns>/species/**/*.json
@@ -39,24 +39,26 @@ assets/<ns>/textures/pokemon/…
 assets/<ns>/lang/*.json
 ```
 
-Sale en `dist/kit/<ns>/`: `BP/`, `RP/` y `<ns>.mcaddon`, listo para
-instalar encima de Cobblemon Bedrock.
+The output goes to `dist/kit/<ns>/`: `BP/`, `RP/` and `<ns>.mcaddon`, ready
+to install on top of Cobblemon Bedrock.
 
-| Opción | Qué hace |
+| Option | What it does |
 | --- | --- |
-| `--ns <espacio>` | El espacio de nombres, si no se deduce de `data/`. |
-| `--out <carpeta>` | Dónde dejar el resultado. |
-| `--version 1.0.0` | La versión de tu add-on. **Súbela en cada entrega**: el juego guarda la anterior si coincide. |
-| `--glyph-page F0` | La página de glifos para los retratos del panel del equipo (`F0` a `F8`). Si usas varios add-ons, que no coincidan. |
-| `--no-sprites` | No renderiza los sprites (más rápido; la interfaz enseña una Poké Ball). |
+| `--ns <namespace>` | The namespace, if it can't be inferred from `data/`. |
+| `--out <folder>` | Where to write the output. |
+| `--version 1.0.0` | Your add-on's version. **Bump it on every release**: the game keeps the old one if the version matches. |
+| `--glyph-page F0` | The glyph page for the party panel portraits (`F0` to `F8`). If you use several add-ons, they must not overlap. |
+| `--no-sprites` | Skip sprite rendering (faster; the UI shows a Poké Ball). |
 
-## Después
+The kit's console messages are currently in Spanish.
 
-- Mira el registro de contenido al cargar el mundo: `[<ns>] registrado en
-  Cobblemon Bedrock`, y los errores o avisos si los hay.
-- `/scriptevent cooblemon:debug.registry` lo enseña en el chat.
-- Lo que el kit no puede hacer: arreglos que un modelo concreto necesite
-  (Cobblemon Bedrock los hace especie a especie con los suyos). Si algo se ve
-  mal, el `BP/` y el `RP/` generados se pueden retocar a mano.
+## Afterwards
 
-Más en la [guía](../docs/README.md) y la [referencia](../docs/REFERENCIA.md).
+- Check the content log when loading the world: `[<ns>] registered in
+  Cobblemon Bedrock`, followed by any errors or warnings.
+- `/scriptevent cooblemon:debug.registry` shows it in chat.
+- What the kit can't do: fixes a specific model needs (Cobblemon Bedrock
+  applies them species by species to its own). If something looks wrong, the
+  generated `BP/` and `RP/` can be edited by hand.
+
+More in the [guide](../docs/README.md) and the [reference](../docs/REFERENCE.md).

@@ -1,36 +1,36 @@
 /**
- * Add-on de ejemplo de la API de Cobblemon Bedrock (fase 1).
+ * Example add-on for the Cobblemon Bedrock API.
  *
- * Registra una especie nueva, `ejemplo:pikachu_surf`, con:
- * - una forma nocturna con su propia entidad (`ejemplo:pikachu_surf_night`);
- * - su aparición en las playas (la normal de día, la nocturna de noche);
- * - sus sprites, también el retrato del panel del equipo (glifos propios);
- * - su botín y sus animaciones de combate;
- * - una evolución nueva para el Pikachu de la base: con Piedra Agua, a este;
- * - y escucha los eventos de Cobblemon Bedrock (capturas, combates, niveles…) y los
- *   cuenta en el chat.
+ * Registers a new species, `ejemplo:pikachu_surf`, with:
+ * - a night form with its own entity (`ejemplo:pikachu_surf_night`);
+ * - its spawns on beaches (the normal one by day, the night form by night);
+ * - its sprites, including the party panel portrait (its own glyphs);
+ * - its drops and its battle animations;
+ * - a new evolution for Cobblemon Bedrock's Pikachu: with a Water Stone, into this one;
+ * - and it listens to Cobblemon Bedrock's events (captures, battles, levels…)
+ *   and reports them in chat.
  *
- * El registro y los eventos los hace la librería `cobblemon-bedrock-api`
- * (`cobblemon-bedrock-api.js`, que `npm run example:addon` copia de `packages/api`):
- * aquí solo van los datos y lo que hacer con cada evento.
+ * Registration and events are handled by the `cobblemon-bedrock-api` library
+ * (`cobblemon-bedrock-api.js`, copied from `api/dist/`): this file only holds
+ * the data and what to do with each event.
  */
 
 import { world } from "@minecraft/server";
 import { onCobblemonEvent, registerAddon } from "./cobblemon-bedrock-api.js";
-// Animaciones de combate y puntos del modelo: los de Pikachu, que es el modelo
-// que usa. Los saca `npm run example:addon` de las tablas de la base.
+// Battle animations and model points: Pikachu's, since that's the model this
+// species uses.
 import { BATTLE_CLIPS, LOCATORS } from "./battleData.js";
 
-// —— Lo de este add-on ——
+// —— This add-on ——
 
-/** Tu espacio de nombres: el de tus entidades y tus especies. */
+/** Your namespace: the one of your entities and your species. */
 const ADDON = "ejemplo";
-const VERSION = "1.3.0";
+const VERSION = "1.3.1";
 
 const SPECIES = {
   id: "ejemplo:pikachu_surf",
   name: "Surfing Pikachu",
-  // Fuera de la numeración oficial: la Pokédex lo pone al final.
+  // Outside the official numbering: the Pokédex puts it at the end.
   nationalPokedexNumber: 2001,
   generation: 0,
   primaryType: "electric",
@@ -62,19 +62,19 @@ const SPECIES = {
     tutor: [],
   },
   evolutions: [],
-  // La forma nocturna: otro tipo y otras estadísticas, y su propia entidad
-  // (`ejemplo:pikachu_surf_night`, en el BP de este add-on).
+  // The night form: different type and stats, and its own entity
+  // (`ejemplo:pikachu_surf_night`, in this add-on's BP).
   forms: [
     {
       name: "night",
       primaryType: "electric",
       secondaryType: "dark",
       baseStats: { hp: 45, attack: 70, defence: 45, specialAttack: 60, specialDefence: 55, speed: 100 },
-      // Movimientos por nivel propios, en el formato del mod: "nivel:movimiento".
+      // Its own level-up moves, in the mod's format: "level:move".
       moves: ["1:thundershock", "1:tailwhip", "5:quickattack", "10:bite", "18:spark", "26:crunch", "36:thunderbolt"],
     },
   ],
-  // El botín, en el formato de Cobblemon.
+  // Drops, in Cobblemon's format.
   drops: {
     amount: 2,
     entries: [
@@ -95,7 +95,7 @@ const SPAWN = {
   entries: [
     {
       species: "ejemplo:pikachu_surf",
-      // Etiqueta de bioma, como en el mod: `beach` es cualquier playa.
+      // Biome tag, as in the mod: `beach` is any beach.
       biome: "beach",
       biomeTag: "is_beach",
       habitat: "land",
@@ -120,26 +120,26 @@ const SPAWN = {
 };
 
 /**
- * Rutas en el resource pack de este add-on (las genera `npm run example:addon`).
- * `glyph`: el retrato del panel del equipo, un carácter de nuestra página de
- * glifos `font/glyph_F0.png` (U+F000 en adelante).
+ * Paths in this add-on's resource pack.
+ * `glyph`: the party panel portrait, a character from our glyph page
+ * `font/glyph_F0.png` (U+F000 onwards).
  */
 const SPRITES = {
   "ejemplo:pikachu_surf||0": {
     pc: "textures/ejemplo/sprites/pc/pikachu_surf",
     face: "textures/ejemplo/sprites/face/pikachu_surf",
     dex: "textures/ejemplo/sprites/dex/pikachu_surf",
-    glyph: "",
+    glyph: "",
   },
   "ejemplo:pikachu_surf|night|0": {
     pc: "textures/ejemplo/sprites/pc/pikachu_surf_night",
     face: "textures/ejemplo/sprites/face/pikachu_surf_night",
     dex: "textures/ejemplo/sprites/dex/pikachu_surf_night",
-    glyph: "",
+    glyph: "",
   },
 };
 
-/** Pikachu de la base evoluciona a este con una Piedra Agua. */
+/** Cobblemon Bedrock's Pikachu evolves into this one with a Water Stone. */
 const EVOLUTIONS = {
   pikachu: [
     {
@@ -154,19 +154,19 @@ const EVOLUTIONS = {
   ],
 };
 
-// —— Registro ——
+// —— Registration ——
 
 registerAddon({ addon: ADDON, version: VERSION, species: [SPECIES], spawn: SPAWN, sprites: SPRITES, evolutions: EVOLUTIONS });
 
-// —— Eventos de Cobblemon Bedrock (ver «Eventos» en la referencia) ——
+// —— Cobblemon Bedrock events (see "Events" in the reference) ——
 
-/** Nombre de una especie como clave de idioma: la de la base o la de un add-on. */
+/** A species name as a language key: Cobblemon Bedrock's or an add-on's. */
 function speciesName(species) {
   const id = String(species).toLowerCase();
   return { translate: id.includes(":") ? `entity.${id}.name` : `entity.cooblemon:${id}.name` };
 }
 
-/** Lo que este ejemplo cuenta en el chat de cada evento. */
+/** What this example reports in chat for each event. */
 const ON_EVENT = {
   captured: (e) => ["ejemplo.event.captured", [speciesName(e.pokemon.species), String(e.pokemon.level)]],
   level_up: (e) => ["ejemplo.event.level_up", [speciesName(e.pokemon.species), String(e.pokemon.level)]],
@@ -180,17 +180,17 @@ const ON_EVENT = {
 
 for (const [name, describe] of Object.entries(ON_EVENT)) {
   onCobblemonEvent(name, (data) => {
-    console.warn(`[${ADDON}] evento ${name}: ${JSON.stringify(data).slice(0, 200)}`);
+    console.warn(`[${ADDON}] event ${name}: ${JSON.stringify(data).slice(0, 200)}`);
     const [key, raw] = describe(data);
-    // Cada parámetro de un `rawtext` tiene que ser un objeto: un texto suelto
-    // (el nivel, "10") hace fallar `sendMessage` con «Native variant type
-    // conversion failed». Lo que ya es `{ translate }` pasa tal cual.
+    // Every parameter of a `rawtext` must be an object: a bare string
+    // (the level, "10") makes `sendMessage` fail with "Native variant type
+    // conversion failed". Anything already `{ translate }` passes as is.
     const params = raw.map((p) => (typeof p === "string" ? { text: p } : p));
-    // A los jugadores del evento: el del equipo o los dos de un duelo.
+    // To the players involved: the party owner, or both sides of a duel.
     const ids = new Set([data.player?.id, ...(data.players ?? []).map((p) => p.id)].filter(Boolean));
     for (const player of world.getAllPlayers()) {
       if (!ids.has(player.id)) continue;
-      player.sendMessage({ rawtext: [{ text: "§b[Ejemplo]§r " }, { translate: key, with: { rawtext: params } }] });
+      player.sendMessage({ rawtext: [{ text: "§b[Example]§r " }, { translate: key, with: { rawtext: params } }] });
     }
   });
 }

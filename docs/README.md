@@ -1,95 +1,101 @@
-# Tu primer add-on para Cobblemon Bedrock
+# Your first add-on for Cobblemon Bedrock
 
-Cobblemon Bedrock es un port no oficial de [Cobblemon](https://cobblemon.com/) a
-Minecraft Bedrock. Esta guía explica cómo hacer un add-on que **añada
-Pokémon a Cobblemon Bedrock sin tocarlo**: especies nuevas, sus formas, dónde
-aparecen, qué sueltan, cómo combaten, si se montan… y cómo reaccionar a lo que
-pasa en la partida (capturas, combates, evoluciones).
+Cobblemon Bedrock is an unofficial port of [Cobblemon](https://cobblemon.com/)
+to Minecraft Bedrock. This guide explains how to make an add-on that **adds
+Pokémon to Cobblemon Bedrock without modifying it**: new species, their forms,
+where they spawn, what they drop, how they battle, whether they can be
+ridden… and how to react to what happens in the game (captures, battles,
+evolutions).
 
-> API **1** · Cobblemon Bedrock **1.8.12** o posterior.
+> API **1** · Cobblemon Bedrock **1.8.12** or later.
 
-## Cómo funciona
+## How it works
 
-Tu add-on son dos paquetes, como cualquier add-on de Bedrock:
+Your add-on is two packs, like any Bedrock add-on:
 
-- **BP** (comportamiento): las entidades de tus Pokémon y un script.
-- **RP** (recursos): modelos, animaciones, texturas, sprites y textos.
+- **BP** (behavior): your Pokémon's entities and a script.
+- **RP** (resources): models, animations, textures, sprites and texts.
 
-Al cargar el mundo, tu script **le envía a Cobblemon Bedrock los datos** de tus
-especies con la librería `cobblemon-bedrock-api`. Cobblemon Bedrock los comprueba, los añade a
-los suyos y te contesta con los errores y avisos que encuentre. A partir de
-ahí tus Pokémon aparecen, se capturan, combaten, suben de nivel, salen en la
-Pokédex y en el PC como cualquiera de Cobblemon Bedrock.
+When the world loads, your script **sends your species' data to Cobblemon
+Bedrock** with the `cobblemon-bedrock-api` library. Cobblemon Bedrock
+validates it, merges it with its own and replies with any errors and warnings
+it finds. From then on your Pokémon spawn, get caught, battle, level up and
+show up in the Pokédex and the PC like any other.
 
-El jugador solo instala Cobblemon Bedrock y tu add-on, con el tuyo **por encima** en
-la lista de paquetes del mundo.
+Players only install Cobblemon Bedrock and your add-on, with yours **above**
+it in the world's pack list.
 
-## Lo que necesitas
+## What you need
 
-1. **Cobblemon Bedrock** instalado en el mundo.
-2. **`cobblemon-bedrock-api.js`**, de la carpeta `api/dist/` de este repositorio: se
-   copia tal cual en `scripts/` de tu BP.
-3. Para cada especie, una **entidad** en tu BP y su **entidad de cliente**,
-   modelo, animaciones y texturas en tu RP.
+1. **Cobblemon Bedrock** installed in the world.
+2. **`cobblemon-bedrock-api.js`**, from this repository's `api/dist/` folder:
+   copy it as is into your BP's `scripts/`.
+3. For each species, an **entity** in your BP and its **client entity**,
+   model, animations and textures in your RP.
 
-¿Tienes ya tu Pokémon hecho para Cobblemon Java (especie, modelo, poser,
-resolver)? El **kit de creador** lo convierte todo de una vez; ver
-[El kit](#el-kit).
+Already have your Pokémon made for Cobblemon Java (species, model, poser,
+resolver)? The **creator kit** converts all of it in one go; see
+[The kit](#the-kit).
 
-## Paso 1: los manifiestos
+## Step 1: the manifests
 
-Tu BP depende de Cobblemon Bedrock y de tu RP; tu RP depende del de Cobblemon Bedrock.
+Your BP depends on Cobblemon Bedrock and on your RP; your RP depends on
+Cobblemon Bedrock's RP.
 
 ```json
 {
   "format_version": 2,
-  "header": { "name": "Mi add-on", "uuid": "<tuyo>", "version": [1, 0, 0], "min_engine_version": [1, 26, 50] },
+  "header": { "name": "My add-on", "uuid": "<yours>", "version": [1, 0, 0], "min_engine_version": [1, 26, 50] },
   "modules": [
-    { "type": "data", "uuid": "<tuyo>", "version": [1, 0, 0] },
-    { "type": "script", "language": "javascript", "uuid": "<tuyo>", "version": [1, 0, 0], "entry": "scripts/main.js" }
+    { "type": "data", "uuid": "<yours>", "version": [1, 0, 0] },
+    { "type": "script", "language": "javascript", "uuid": "<yours>", "version": [1, 0, 0], "entry": "scripts/main.js" }
   ],
   "dependencies": [
     { "uuid": "a1b2c3d4-e5f6-4789-a012-3456789abcde", "version": [1, 8, 12] },
-    { "uuid": "<uuid de tu RP>", "version": [1, 0, 0] },
+    { "uuid": "<your RP's uuid>", "version": [1, 0, 0] },
     { "module_name": "@minecraft/server", "version": "2.10.0" }
   ]
 }
 ```
 
-En el del RP, **`"capabilities": ["pbr"]`** y la dependencia del RP de
-Cobblemon Bedrock (`d4e5f6a7-b8c9-4012-d345-6789abcdef01`). Sin `pbr`, activar tu
-add-on **apaga Vibrant Visuals** en el mundo: el juego solo los permite si
-todos los paquetes de recursos los declaran.
+In the RP manifest, add **`"capabilities": ["pbr"]`** and the dependency on
+Cobblemon Bedrock's RP (`d4e5f6a7-b8c9-4012-d345-6789abcdef01`). Without
+`pbr`, enabling your add-on **turns off Vibrant Visuals** in the world: the
+game only allows them if every resource pack declares it.
 
-## Paso 2: la entidad
+## Step 2: the entity
 
-**El id de tu especie es el de su entidad.** Si tu Pokémon es
-`miaddon:voltrix`, su entidad se llama `miaddon:voltrix`.
+**Your species id is its entity id.** If your Pokémon is `myaddon:voltrix`,
+its entity is called `myaddon:voltrix`.
 
-- `miaddon` es tu **espacio de nombres**: minúsculas, cifras y `_`.
-  `cooblemon` y `minecraft` están reservados.
-- La entidad tiene que llevar las **propiedades** que usa Cobblemon Bedrock
+- `myaddon` is your **namespace**: lowercase letters, digits and `_`.
+  `cooblemon` and `minecraft` are reserved.
+- The entity must have the **properties** Cobblemon Bedrock uses
   (`cooblemon:level`, `cooblemon:shiny`, `cooblemon:is_wild`,
-  `cooblemon:in_battle`, `cooblemon:sleeping`…) y los grupos y eventos de
-  comportamiento de sus Pokémon. Lo más sencillo es partir de una entidad de
-  Cobblemon Bedrock y cambiarle el `identifier`, la escala y la caja: es lo que hacen el
-  ejemplo y el kit.
-- Una **forma con modelo propio** es otra entidad: `miaddon:voltrix_<forma>`.
+  `cooblemon:in_battle`, `cooblemon:sleeping`…) and the component groups and
+  events of its Pokémon. The easiest way is to start from a Cobblemon Bedrock
+  entity and change its `identifier`, scale and collision box: that's what the
+  example and the kit do.
+- A **form with its own model** is another entity: `myaddon:voltrix_<form>`.
 
-Tu entidad de cliente puede usar modelos y animaciones de Cobblemon Bedrock (el
-ejemplo usa los de Pikachu) o los tuyos.
+Your client entity can use Cobblemon Bedrock's models and animations (the
+example uses Pikachu's) or your own.
 
-## Paso 3: el script
+> Technical ids keep the `cooblemon` spelling (`cooblemon:level`,
+> `cooblemon:event.captured`…). Saved worlds and existing add-ons depend on
+> them, so they won't change.
+
+## Step 3: the script
 
 ```js
 import { registerAddon } from "./cobblemon-bedrock-api.js";
 
 registerAddon({
-  addon: "miaddon",
+  addon: "myaddon",
   version: "1.0.0",
   species: [
     {
-      id: "miaddon:voltrix",
+      id: "myaddon:voltrix",
       name: "Voltrix",
       nationalPokedexNumber: 2001,
       primaryType: "electric",
@@ -102,94 +108,95 @@ registerAddon({
     },
   ],
   spawn: {
-    entries: [{ species: "miaddon:voltrix", biome: "beach", light: "day", bucket: "common", entryWeight: 10 }],
-    levels: { "miaddon:voltrix": { min: 5, max: 30 } },
+    entries: [{ species: "myaddon:voltrix", biome: "beach", light: "day", bucket: "common", entryWeight: 10 }],
+    levels: { "myaddon:voltrix": { min: 5, max: 30 } },
   },
 });
 ```
 
-Con esto basta para que aparezca en las playas, se capture y combata. Lo
-demás —sprites, formas, botín, animaciones de combate, montura, hombro,
-evoluciones desde especies de Cobblemon Bedrock— está en la
-[referencia](REFERENCIA.md).
+That's enough for it to spawn on beaches, be caught and battle. The rest
+(sprites, forms, drops, battle animations, riding, shoulder, evolutions from
+Cobblemon Bedrock species) is in the [reference](REFERENCE.md).
 
-**Los movimientos y habilidades tienen que ser de los que Cobblemon Bedrock conoce**
-(los del mod, por su id de Showdown: `thundershock`, `watergun`). Uno
-desconocido se omite con un aviso.
+**Moves and abilities must be ones Cobblemon Bedrock knows** (the mod's, by
+their Showdown id: `thundershock`, `watergun`). An unknown one is skipped with
+a warning.
 
-## Paso 4: los textos
+## Step 4: the texts
 
-En `texts/<idioma>.lang` de tu RP:
+In your RP's `texts/<language>.lang`:
 
 ```
-entity.miaddon:voltrix.name=Voltrix
-item.spawn_egg.entity.miaddon:voltrix.name=Generar Voltrix
-cooblemon.species.miaddon:voltrix.desc=La descripción de la Pokédex.
+entity.myaddon:voltrix.name=Voltrix
+item.spawn_egg.entity.myaddon:voltrix.name=Spawn Voltrix
+cooblemon.species.myaddon:voltrix.desc=The Pokédex description.
 ```
 
-**Pon todas las variantes de cada idioma** que quieras cubrir: el juego busca
-el archivo exacto y, si falta, cae al inglés. Con `es_ES.lang` solo, un jugador
-en español de México lo verá en inglés; copia también `es_MX.lang`.
+**Include every variant of each language** you want to cover: the game looks
+for the exact file and falls back to English if it's missing. With only
+`es_ES.lang`, a player using Mexican Spanish sees English; copy it to
+`es_MX.lang` too.
 
-## Paso 5: probarlo
+## Step 5: testing
 
-1. Activa Cobblemon Bedrock y tu add-on en un mundo, el tuyo encima.
-2. En el **registro de contenido** debe salir
-   `[miaddon] registrado en Cobblemon Bedrock (API 1): 1 especies`, y debajo los
-   errores y avisos si los hay.
-3. `/scriptevent cooblemon:debug.registry` enseña en el chat lo registrado y
-   lo que falló.
-4. `/summon miaddon:voltrix` para verlo sin buscarlo.
+1. Enable Cobblemon Bedrock and your add-on in a world, yours on top.
+2. The **content log** should show
+   `[myaddon] registered in Cobblemon Bedrock (API 1): 1 species`, followed by
+   any errors and warnings.
+3. `/scriptevent cooblemon:debug.registry` shows in chat what was registered
+   and what failed.
+4. `/summon myaddon:voltrix` to see it without searching.
 
-Si quitas tu add-on, los Pokémon suyos que tenga el jugador **no se pierden**:
-se quedan en el equipo y el PC, sin poder sacarse, y vuelven al reinstalarlo.
+If you remove your add-on, the player's Pokémon from it **are not lost**:
+they stay in the party and the PC, can't be sent out, and come back when the
+add-on is reinstalled.
 
-## Eventos
+## Events
 
-Para misiones, logros, economía o gimnasios, escucha lo que pasa:
+For quests, achievements, economy or gyms, listen to what happens:
 
 ```js
 import { onCobblemonEvent } from "./cobblemon-bedrock-api.js";
 
 onCobblemonEvent("captured", (e) => {
-  console.warn(`${e.player.name} capturó ${e.pokemon.species} (nivel ${e.pokemon.level})`);
+  console.warn(`${e.player.name} caught ${e.pokemon.species} (level ${e.pokemon.level})`);
 });
 ```
 
-Eventos: `captured`, `battle_start`, `battle_end`, `level_up`, `evolved`,
-`released`, `starter_chosen`, `pokedex_registered`. Sus datos, en la
-[referencia](REFERENCIA.md#eventos).
+Events: `captured`, `battle_start`, `battle_end`, `level_up`, `evolved`,
+`released`, `starter_chosen`, `pokedex_registered`. Their data is in the
+[reference](REFERENCE.md#events).
 
-## El kit
+## The kit
 
-Si tu Pokémon ya existe como addon de **Cobblemon Java**, el kit de creador lo
-convierte entero: especie, apariciones, botín, idiomas, modelo, animaciones,
-estados (reposo, andar, volar, nadar, combate, dormir), sprites, formas,
-hembra, montura y hombro, con las mismas reglas que usa Cobblemon Bedrock con los
-Pokémon del mod.
+If your Pokémon already exists as a **Cobblemon Java** addon, the creator kit
+converts all of it: species, spawns, drops, languages, model, animations,
+poses (idle, walk, fly, swim, battle, sleep), sprites, forms, female variants,
+riding and shoulder, with the same rules Cobblemon Bedrock applies to the
+mod's Pokémon.
 
-Está en la carpeta [`kit/`](../kit/README.md) de este repositorio. Necesita
-Node.js y el `.jar` de Cobblemon extraído:
+It's in this repository's [`kit/`](../kit/README.md) folder. It needs
+Node.js and the extracted Cobblemon `.jar`:
 
 ```
 cd kit
 npm install
-npm run kit -- --in <tu addon> --cobblemon <jar extraído>
+npm run kit -- --in <your addon> --cobblemon <extracted jar>
 ```
 
-## Licencias
+## Licenses
 
-- `cobblemon-bedrock-api` es **MPL-2.0**.
-- Los modelos, texturas y animaciones de Cobblemon son **CC BY-NC**: si tu
-  add-on usa o deriva de ellos (como el ejemplo), es **sin fines comerciales**
-  y con atribución.
-- Cobblemon Bedrock **no es oficial** ni está respaldado por Cobblemon, The Pokémon
-  Company, Nintendo, Game Freak ni Creatures Inc. Tu add-on tampoco puede
-  presentarse como oficial.
+- `cobblemon-bedrock-api` is **MPL-2.0**.
+- Cobblemon's models, textures and animations are **CC BY-NC**: if your
+  add-on uses or derives from them (like the example), it must be
+  **non-commercial** and give attribution.
+- Cobblemon Bedrock is **not official** and is not endorsed by Cobblemon, The
+  Pokémon Company, Nintendo, Game Freak or Creatures Inc. Your add-on can't
+  present itself as official either.
 
-## Versiones
+## Versions
 
-La API lleva su propia versión (`1`), aparte de la de Cobblemon Bedrock (`1.8.12`).
-Si tu add-on pide una API más nueva que la del Cobblemon Bedrock instalado, Cobblemon Bedrock
-lo rechaza con un error claro. Los cambios que rompan los add-ons suben la
-versión mayor y se anuncian con una versión de antelación.
+The API has its own version (`1`), separate from Cobblemon Bedrock's
+(`1.8.12`). If your add-on requires a newer API than the installed Cobblemon
+Bedrock provides, Cobblemon Bedrock rejects it with a clear error. Breaking
+changes bump the major version and are announced one version in advance.

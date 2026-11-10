@@ -4,20 +4,11 @@ import { system, world } from "@minecraft/server";
 // packages/api/src/protocol.generated.ts
 var API_VERSION = 1;
 var ApiEvents = {
-  /** Add-on → base: `{ addon, api, version }`. */
   HELLO: "cooblemon:api.hello",
-  /** Add-on → base: un trozo de un paquete de datos (`ApiPart`). */
   PART: "cooblemon:api.part",
-  /** Add-on → base: `{ addon }`, terminó de enviar. */
   DONE: "cooblemon:api.done",
-  /**
-   * Base → add-ons: «quién hay»; cada uno vuelve a presentarse y enviar.
-   * `{ api, maxMessage? }`: el mensaje más largo que llega entero, para trocear.
-   */
   PING: "cooblemon:api.ping",
-  /** Base → add-on: `{ addon, api, ok, errors, warnings }`. */
   ACK: "cooblemon:api.ack",
-  /** Base → base: mensajes de prueba para medir el tamaño máximo. Los demás lo ignoran. */
   PROBE: "cooblemon:api.probe"
 };
 var EVENT_PREFIX = "cooblemon:event.";
@@ -29,7 +20,7 @@ function send(id, payload) {
 }
 function registerAddon(def) {
   if (!/^[a-z0-9_]+$/.test(def.addon) || def.addon === "cooblemon" || def.addon === "minecraft") {
-    throw new Error(`cobblemon-bedrock-api: \xAB${def.addon}\xBB no vale como espacio de nombres (min\xFAsculas, cifras y _)`);
+    throw new Error(`cobblemon-bedrock-api: "${def.addon}" is not a valid namespace (lowercase letters, digits and _)`);
   }
   let chunk = DEFAULT_CHUNK;
   const sendPacket = (kind, key, data) => {
@@ -71,9 +62,9 @@ function registerAddon(def) {
         def.onAck(ack);
         return;
       }
-      if (ack.ok) console.warn(`[${def.addon}] registrado en Cobblemon Bedrock (API ${ack.api}): ${def.species?.length ?? 0} especies`);
+      if (ack.ok) console.warn(`[${def.addon}] registered in Cobblemon Bedrock (API ${ack.api}): ${def.species?.length ?? 0} species`);
       for (const e of ack.errors) console.warn(`[${def.addon}] error: ${e}`);
-      for (const w of ack.warnings) console.warn(`[${def.addon}] aviso: ${w}`);
+      for (const w of ack.warnings) console.warn(`[${def.addon}] warning: ${w}`);
     }
   });
   world.afterEvents.worldLoad.subscribe(() => system.run(register));
