@@ -37,10 +37,22 @@ Already have your Pokémon made for Cobblemon Java (species, model, poser,
 resolver)? The **creator kit** converts all of it in one go; see
 [The kit](#the-kit).
 
+Starting from scratch? `kit init` writes an empty add-on that already
+works, with everything in this guide in place:
+
+```
+npm run kit -- init --ns myaddon --name mymon
+```
+
+It registers one species that spawns in plains with Pikachu's model, and its
+`README.md` tells you what to change to make it yours.
+
 ## Step 1: the manifests
 
 Your BP depends on Cobblemon Bedrock and on your RP; your RP depends on
-Cobblemon Bedrock's RP.
+Cobblemon Bedrock's RP **and on your BP**. With both dependencies, enabling
+either pack enables the other: players can't end up with the models but
+without the Pokémon, or the other way round.
 
 ```json
 {
@@ -58,8 +70,9 @@ Cobblemon Bedrock's RP.
 }
 ```
 
-In the RP manifest, add **`"capabilities": ["pbr"]`** and the dependency on
-Cobblemon Bedrock's RP (`d4e5f6a7-b8c9-4012-d345-6789abcdef01`). Without
+In the RP manifest, add **`"capabilities": ["pbr"]`**, the dependency on
+Cobblemon Bedrock's RP (`d4e5f6a7-b8c9-4012-d345-6789abcdef01`) and the one
+on your BP. Without
 `pbr`, enabling your add-on **turns off Vibrant Visuals** in the world: the
 game only allows them if every resource pack declares it.
 

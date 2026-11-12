@@ -55,6 +55,59 @@ to install on top of Cobblemon Bedrock.
 | `--glyph-page F0` | The glyph page for the party panel portraits (`F0` to `F8`). If you use several add-ons, they must not overlap. |
 | `--no-sprites` | Skip sprite rendering (faster; the UI shows a Poké Ball). |
 
+## Starting an add-on from scratch
+
+```
+npm run kit -- init --ns <namespace> [--name <species>] [--out <folder>] [--force]
+```
+
+Writes an empty add-on that already works (it doesn't need `--cobblemon`):
+
+- both manifests, with new UUIDs, depending on Cobblemon Bedrock **and on
+  each other**, so enabling either pack enables both;
+- one species, `<namespace>:<species>`, registered and spawning in plains,
+  with Pikachu's model, animations and battle clips (by their ids: Cobblemon
+  Bedrock's resource pack already has them);
+- its server and client entities, render controller, texts and the library;
+- a `README.md` with what each file is, what to change to make it yours, and
+  a checklist for releases.
+
+By default it goes to `<namespace>-addon/`. It won't overwrite a folder
+with files in it unless you pass `--force`.
+
+Packs made by the kit from a Java addon also depend on each other the same way.
+
+## Addons that change Cobblemon species
+
+Some addons don't add species: they give Cobblemon's own species a new look
+or new forms (for example, a resource pack whose resolvers change the model
+of Cyndaquil's `region-bias-hisui` form). The kit converts both:
+
+- **Resolvers for a Cobblemon species** (`"species": "cobblemon:cyndaquil"`),
+  in `assets/<ns>/` or `assets/cobblemon/`. Each aspect they change becomes a
+  form with its own entity, `<ns>:cyndaquil_hisui_bias`, built on top of the
+  mod's files: the poser and animations usually come from Cobblemon, the
+  model and textures from your addon.
+- **`data/<ns>/species_additions/*.json`**: their `forms` become new forms of
+  that species. Other fields are skipped with a warning.
+
+They are registered with `additions` (see the API reference). Cobblemon
+Bedrock then uses your model for that form everywhere.
+
+A resource pack without `data/` has no namespace to infer: pass `--ns`.
+
+```
+npm run kit -- --in hisui-starters --ns hisuistarters --cobblemon <extracted jar>
+```
+
+Not supported: changing a species' **default** look (only forms can be
+changed), and variations that combine several forms.
+
+Many of Cobblemon's posers are written in Kotlin, which the `.jar` only has
+compiled. For those, the kit builds the poses from the clip names
+(`ground_idle`, `ground_walk`, `battle_idle`, `sleep`…), which follow the
+same convention across the mod.
+
 ## Items and recipes
 
 In Java an item is registered in code, so the kit can't know what it

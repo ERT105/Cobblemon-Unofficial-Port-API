@@ -93,6 +93,15 @@
           ],
           "default": 0,
           "client_sync": true
+        },
+        "cooblemon:beam": {
+          "type": "int",
+          "range": [
+            0,
+            3
+          ],
+          "default": 0,
+          "client_sync": true
         }
       }
     },

@@ -14,7 +14,9 @@
  *   and reports them in chat;
  * - and it has test commands that ask Cobblemon Bedrock to do things
  *   (actions and queries), run with `/scriptevent ejemplo:<command>`:
- *   `altar`, `boss`, `gift`, `heal`, `info` and `mega`.
+ *   `altar`, `boss`, `gift`, `heal`, `info`, `mega` and `items`;
+ * - two items used on a party Pokémon (`ejemplo:surf_soda`, `ejemplo:surf_charm`):
+ *   Cobblemon Bedrock picks the Pokémon and this add-on applies the effect.
  *
  * Registration and events are handled by the `cobblemon-bedrock-api` library
  * (`cobblemon-bedrock-api.js`, copied from `api/dist/`): this file only holds
@@ -31,7 +33,7 @@ import { BATTLE_CLIPS, LOCATORS } from "./battleData.js";
 
 /** Your namespace: the one of your entities and your species. */
 const ADDON = "ejemplo";
-const VERSION = "1.5.1";
+const VERSION = "1.6.0";
 
 const SPECIES = {
   id: "ejemplo:pikachu_surf",
@@ -208,6 +210,18 @@ const EVOLUTIONS = {
   ],
 };
 
+// —— Items used on a party Pokémon ——
+//
+// Cobblemon Bedrock picks the Pokémon (the one you look at, or the party
+// selector, with those that can't use it greyed out), spends one and sends
+// `item_used`. The effect is ours: below, with `updatePokemon`.
+const PARTY_ITEMS = [
+  // Only Pokémon missing HP: like a potion.
+  { id: "ejemplo:surf_soda", hurt: true },
+  // Only this add-on's species.
+  { id: "ejemplo:surf_charm", species: ["ejemplo:pikachu_surf"] },
+];
+
 // —— Registration ——
 
 // `registerAddon` returns the client for actions and queries (see "Test commands").
@@ -220,6 +234,27 @@ const cobblemon = registerAddon({
   evolutions: EVOLUTIONS,
   megas: MEGAS,
   megaAccessories: MEGA_ACCESSORIES,
+  partyItems: PARTY_ITEMS,
+});
+
+// The effect of each item: what to change in the Pokémon, and what to say.
+const ITEM_EFFECTS = {
+  "ejemplo:surf_soda": { changes: { heal: 40 }, say: (before, after) => ["ejemplo.item.healed", [String(after.hp - before.hp)]] },
+  "ejemplo:surf_charm": { changes: { levels: 1 }, say: (_before, after) => ["ejemplo.item.level", [String(after.level)]] },
+};
+
+onCobblemonEvent("item_used", (e) => {
+  const effect = ITEM_EFFECTS[e.item];
+  if (!effect) return;
+  cobblemon
+    .updatePokemon(e.player.id, e.pokemon.uuid, effect.changes)
+    .then(({ pokemon }) => {
+      const player = world.getAllPlayers().find((p) => p.id === e.player.id);
+      if (!player) return;
+      const [key, params] = effect.say(e.pokemon, pokemon);
+      say(player, key, [speciesName(pokemon.species), ...params]);
+    })
+    .catch((err) => console.warn(`[${ADDON}] item ${e.item}: ${err.message}`));
 });
 
 // —— Cobblemon Bedrock events (see "Events" in the reference) ——
@@ -270,6 +305,7 @@ for (const [name, describe] of Object.entries(ON_EVENT)) {
 // `/scriptevent ejemplo:heal`   Heals your party.
 // `/scriptevent ejemplo:info`   Your party, your Pokédex and the wild Pokémon around you.
 // `/scriptevent ejemplo:mega`   The test Key Stone, a Surfite, and a Surfing Pikachu already holding one.
+// `/scriptevent ejemplo:items`  Surf Sodas and Surf Charms, items used on a party Pokémon.
 
 /** Sends a chat line to one player with this example's prefix. */
 function say(player, key, params = []) {
@@ -336,6 +372,14 @@ const COMMANDS = {
     });
     say(player, `ejemplo.cmd.gift_${result.destination}`, [speciesName(result.pokemon.species)]);
     say(player, "ejemplo.cmd.mega");
+  },
+  async items(player) {
+    // The items used on a party Pokémon (PARTY_ITEMS): use one while looking
+    // at your Pokémon, or anywhere else to choose it from your party.
+    const inventory = player.getComponent("minecraft:inventory")?.container;
+    inventory?.addItem(new ItemStack("ejemplo:surf_soda", 5));
+    inventory?.addItem(new ItemStack("ejemplo:surf_charm", 5));
+    say(player, "ejemplo.cmd.items");
   },
 };
 

@@ -7,6 +7,12 @@
     },
     "ejemplo_key_stone": {
       "textures": "textures/items/shiny_stone"
+    },
+    "ejemplo_surf_soda": {
+      "textures": "textures/items/super_potion"
+    },
+    "ejemplo_surf_charm": {
+      "textures": "textures/items/rare_candy"
     }
   }
 }

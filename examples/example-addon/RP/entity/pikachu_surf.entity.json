@@ -79,10 +79,12 @@
         "pikachu.volttackle": "animation.pikachu.volttackle",
         "pikachu.status": "animation.pikachu.status",
         "pikachu.sleep_state": "animation.pikachu.sleep",
-        "pikachu.shoulder": "animation.pikachu.shoulder_seat"
+        "pikachu.shoulder": "animation.pikachu.shoulder_seat",
+        "cooblemon_beam": "controller.animation.cooblemon.beam"
       },
       "scripts": {
         "animate": [
+          "cooblemon_beam",
           {
             "pikachu.locomotion_idle": "(query.property('cooblemon:form') == 'default' || query.property('cooblemon:form') == '') && (((!query.is_in_water && query.is_on_ground) && !(query.ground_speed > 0.08)) && !query.property('cooblemon:in_battle') && !query.property('cooblemon:sleeping') && !query.is_riding)"
           },
@@ -116,7 +118,13 @@
           {
             "pikachu.shoulder": "(query.property('cooblemon:form') == 'default' || query.property('cooblemon:form') == '') && (query.is_riding)"
           }
-        ]
+        ],
+        "pre_animation": [
+          "v.beam_t = (v.beam_mode ?? 0) > 0 ? q.life_time - (v.beam_start ?? 0) : 0;",
+          "v.beam_scale = (v.beam_mode ?? 0) == 1 ? math.clamp(v.beam_t / 0.4, 0, 1) : ((v.beam_mode ?? 0) == 3 ? 1 - math.clamp((v.beam_t - 0.2) / 0.4, 0, 1) : 1);",
+          "v.beam_red = (v.beam_mode ?? 0) == 3 ? math.clamp((v.beam_t - 0.2) / 0.4, 0, 1) * 0.6 : 0;"
+        ],
+        "scale": "(v.beam_scale ?? 1)"
       }
     }
   }

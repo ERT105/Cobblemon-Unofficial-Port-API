@@ -9,10 +9,12 @@
 | `addon` | Your namespace (lowercase letters, digits and `_`). |
 | `version` | Your add-on's version, shown in the content log. |
 | `species` | List of species (below). |
+| `additions` | Forms and looks for Cobblemon Bedrock species. See [Additions](#additions-to-cobblemon-bedrock-species). |
 | `spawn` | `{ entries, levels }`: where and at what level they spawn. |
 | `sprites` | UI textures per variant. |
 | `evolutions` | New evolutions for species that aren't yours. |
-| `megas`, `megaAccessories` | Mega evolutions for your species, and the items that work as a Key Stone. See [Megas](#megas). |
+| `megas`, `megaAccessories` | Mega evolutions for your species (or for Cobblemon Bedrock ones, through `additions`), and the items that work as a Key Stone. See [Megas](#megas). |
+| `partyItems` | Your items that are used on a party Pokémon. See [Items used on a Pokémon](#items-used-on-a-pokémon). |
 | `onAck` | What to do with the reply. By default, it goes to the content log. |
 
 It's sent when the world loads and whenever Cobblemon Bedrock asks for it,
@@ -98,6 +100,48 @@ Poké Ball.
 centered. U+F000 is the first cell of `glyph_F0`. Two add-ons using the same
 page overwrite each other: pick one and mention it in your description.
 
+## Additions to Cobblemon Bedrock species
+
+Like Cobblemon's `species_additions` and resolvers: you can give a
+Cobblemon Bedrock species **a new form**, or **a new look for a form it
+already has**, without registering a new species.
+
+```js
+additions: [
+  {
+    target: "cyndaquil",
+    forms: [
+      // An existing form: only its model changes.
+      { name: "hisui_bias", entity: "myaddon:cyndaquil_hisui_bias" },
+    ],
+  },
+  {
+    target: "pikachu",
+    forms: [
+      // A new form: its data, its model and the name shown after "Pikachu".
+      { name: "surfing", entity: "myaddon:pikachu_surfing", label: "myaddon.form.surfing",
+        primaryType: "electric", secondaryType: "water" },
+    ],
+  },
+],
+```
+
+| Field | Notes |
+| --- | --- |
+| `target` | A Cobblemon Bedrock species: `cyndaquil`. Your own species use `forms` instead. |
+| `forms[].name` | The form id. If the species already has it (`hisui_bias`, `alolan`…), only its look changes and data fields are ignored with a warning. |
+| `forms[].entity` | **Your** entity (`myaddon:…`) with the form's model. From then on that form uses it everywhere: wild spawns, sending it out, evolving, the PC. |
+| `forms[].label` | Lang key in your RP for the form's name, for new forms. |
+| `forms[].battleClips`, `forms[].locators` | As in a species, for your entity. Clips it doesn't have fall back to the species' (useful when your model keeps the same bones). |
+| Other fields | As in [Forms](#forms), for new forms. |
+
+- Only one add-on can change a given form. A second one gets an error.
+- Spawns can use a Cobblemon Bedrock species **with a form you added**:
+  `{ species: "cyndaquil", form: "hisui_bias", … }`. Levels stay the species'.
+- Sprites for those forms go without namespace: `"cyndaquil|hisui_bias|0"`.
+- Your entity's behavior file is a full Pokémon entity, like your species'.
+  The kit builds it for you from the mod's files.
+
 ## Evolutions into your species
 
 ```js
@@ -111,8 +155,9 @@ species. Cobblemon Bedrock's evolutions and other add-ons' aren't touched.
 
 ## Megas
 
-Mega evolutions for your own species. The mega is a **form** you register in
-the species' `forms`, usually with `battleOnly: true`:
+Mega evolutions for your own species, or for Cobblemon Bedrock ones. The
+mega is a **form** you register in the species' `forms` (or, for a
+Cobblemon Bedrock species, in `additions`), usually with `battleOnly: true`:
 
 - its types, base stats and abilities are used after mega evolving;
 - its entity, `myaddon:species_<form>`, is the model shown.
@@ -130,7 +175,7 @@ registerAddon({
 
 | Field | Notes |
 | --- | --- |
-| `species` | One of your species. Megas for other species aren't supported yet. |
+| `species` | One of your species, or a Cobblemon Bedrock one whose mega form you added with `additions`. |
 | `form` | The id of the mega form. |
 | `stones` | Item ids that trigger it, held by the Pokémon. They become holdable items. |
 | `ability` | Ability while mega evolved. Defaults to the form's first ability. |
@@ -142,6 +187,40 @@ Pokémon holding the stone is out.
 
 Sprites for the mega form use its id like any other form:
 `"myaddon:voltrix|mega|0"`.
+
+## Items used on a Pokémon
+
+Potions, vitamins, candies… Cobblemon Bedrock does the hard part, choosing
+the Pokémon the same way as with its own items:
+
+- looking at one of your Pokémon that's out: that one;
+- anywhere else: the party selector, with those that can't use it greyed out;
+- in battle, nothing (items in battle go through the Bag).
+
+Then it spends one and sends you `item_used`; **you apply the effect** with
+`updatePokemon`.
+
+```js
+const cobblemon = registerAddon({
+  addon: "myaddon",
+  partyItems: [{ id: "myaddon:super_soda", hurt: true }],
+});
+
+onCobblemonEvent("item_used", (e) => {
+  if (e.item === "myaddon:super_soda") cobblemon.updatePokemon(e.player.id, e.pokemon.uuid, { heal: 50 });
+});
+```
+
+| Field | Notes |
+| --- | --- |
+| `id` | One of your items. Nothing needs to be added to its JSON. |
+| `consume` | Spend one when used. Default `true`. With `false` nothing is spent: remove it yourself if your effect applies. |
+| `species` | Only these species. |
+| `fainted` | `true`: only fainted Pokémon (a revive). `false`: only those that aren't. |
+| `hurt` | Only Pokémon missing HP (a potion). |
+
+If the Pokémon you're looking at can't use it, nothing happens, as in
+Cobblemon.
 
 ## Reply (`ack`)
 
@@ -166,6 +245,7 @@ except battle events, `player` (`{ id, name }`). `pokemon` is a summary:
 | `released` | `player`, `pokemon`, `from` (`pc`, `party`) | Is released. |
 | `starter_chosen` | `player`, `pokemon` | The starter is chosen. |
 | `pokedex_registered` | `player`, `species`, `status` (`seen`, `caught`) | First time seen or caught. |
+| `item_used` | `player`, `item`, `slot`, `pokemon` (with `hp`, `maxHp` and `status`) | One of your `partyItems` was used on a party Pokémon. |
 
 **In a chat message**, every parameter of a `rawtext` must be an object: the
 level goes as `{ text: "10" }`. A bare number makes `sendMessage` fail with
@@ -230,6 +310,7 @@ made.
 | `give({ player, pokemon, destination? })` | Gives a Pokémon to a player. `destination`: `party` (default, the PC if the party is full) or `pc`. `pokemon.ball`: the Poké Ball it comes in (`cooblemon:ultra_ball`…). It's registered in their Pokédex as caught. | `{ destination, pokemon }` |
 | `startBattle(player, entityId)` | A battle against a wild Pokémon already in the world. | `{ battle }` |
 | `heal(player)` | Heals the whole party, like a healing machine. | — |
+| `updatePokemon(player, uuid, changes)` | Changes a Pokémon in the party (not in battle). `changes`: `heal` (HP, or `"full"`; also revives), `cure` (status), `levels` (like a Rare Candy: moves and evolution included), and `nature`, `ivs`, `evs`, `ability`, `moves`, `heldItem`, `friendship`, `nickname`, `tag` as above. HP isn't refilled by the other fields. | `{ pokemon, evolved }` |
 
 ### Queries
 

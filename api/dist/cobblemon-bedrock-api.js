@@ -41,10 +41,12 @@ function registerAddon(def) {
   const register = () => {
     send(ApiEvents.HELLO, { addon: def.addon, api: API_VERSION, version: def.version });
     for (const species of def.species ?? []) sendPacket("species", species.id, species);
+    for (const addition of def.additions ?? []) sendPacket("additions", addition.target, addition);
     if (def.spawn?.entries.length) sendPacket("spawn", "spawn", def.spawn);
     if (def.sprites && Object.keys(def.sprites).length) sendPacket("sprites", "sprites", def.sprites);
     if (def.evolutions && Object.keys(def.evolutions).length) sendPacket("evolutions", "evolutions", def.evolutions);
     if (def.megas?.length) sendPacket("megas", "megas", { entries: def.megas, accessories: def.megaAccessories ?? [] });
+    if (def.partyItems?.length) sendPacket("party_items", "party_items", { items: def.partyItems });
     send(ApiEvents.DONE, { addon: def.addon });
   };
   let registered = false;
@@ -119,6 +121,7 @@ function registerAddon(def) {
     give: (req) => action("give", { player: playerId(req.player), pokemon: req.pokemon, destination: req.destination }),
     startBattle: (player, entityId) => action("start_battle", { player: playerId(player), entity: entityId }),
     heal: (player) => action("heal", { player: playerId(player) }).then(() => void 0),
+    updatePokemon: (player, uuid, changes) => action("update_pokemon", { ...changes, player: playerId(player), uuid }),
     party: (player) => query("party", { player: playerId(player) }),
     pokedex: (player, species) => query("pokedex", { player: playerId(player), species }),
     nearby: (req) => query("nearby", { player: playerId(req.player), at: req.at, radius: req.radius }),

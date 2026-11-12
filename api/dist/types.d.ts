@@ -105,8 +105,35 @@ export interface Species {
         right: string | null;
     };
 }
+/**
+ * A form you add to a Cobblemon Bedrock species, like Cobblemon's
+ * `species_additions` and resolvers.
+ *
+ * - **A form the species already has** (`hisui_bias` on `cyndaquil`): only its
+ *   look changes. Give it `entity`, and from then on that form uses your model
+ *   everywhere: spawns, sending it out, evolving. Data fields are ignored.
+ * - **A new form**: its data as in `SpeciesForm` (anything missing is taken
+ *   from the species), plus `entity` if it has its own model.
+ */
+export interface AddedForm extends SpeciesForm {
+    /** Your entity with this form's model: `myaddon:cyndaquil_hisui_bias`. */
+    entity?: string;
+    /** Lang key (in your resource pack) for the form's name, shown after the species name. */
+    label?: string;
+    /** Battle animations of your entity; the species' are used for any it doesn't have. */
+    battleClips?: Record<string, [string, number, number?]>;
+    /** Model points of your entity, for particles. */
+    locators?: Record<string, number[][]>;
+}
+/** Forms (and looks) for a Cobblemon Bedrock species. */
+export interface SpeciesAddition {
+    /** The Cobblemon Bedrock species: `cyndaquil`. */
+    target: string;
+    forms: AddedForm[];
+}
 /** A spawn entry, using the mod's biome tags. */
 export interface SpawnEntry {
+    /** One of your species, or a Cobblemon Bedrock one with a `form` you added. */
     species: string;
     /** A form of the same species, by its id (`alolan`). */
     form?: string;
@@ -152,7 +179,10 @@ export interface SpriteSet {
  * after mega evolving.
  */
 export interface MegaDefinition {
-    /** One of your species: `myaddon:species`. */
+    /**
+     * One of your species (`myaddon:species`), or a Cobblemon Bedrock one
+     * (`pikachu`) whose mega form you added with `additions`.
+     */
     species: string;
     /** The form id of the mega: `mega`, `mega_x`… */
     form: string;
@@ -167,20 +197,44 @@ export interface AddonDefinition {
     addon: string;
     version?: string;
     species?: Species[];
+    /** Forms and looks for Cobblemon Bedrock species. */
+    additions?: SpeciesAddition[];
     spawn?: Spawns;
-    /** Keyed by `species|form|shiny`: `"myaddon:species||0"`, `"myaddon:species|alolan|1"`. */
+    /**
+     * Keyed by `species|form|shiny`: `"myaddon:species||0"`, `"myaddon:species|alolan|1"`.
+     * For a form you added to a Cobblemon Bedrock species: `"cyndaquil|hisui_bias|0"`.
+     */
     sprites?: Record<string, SpriteSet>;
     /** New evolutions for species that aren't the add-on's: `{ "pikachu": [ … ] }`. */
     evolutions?: Record<string, Evolution[]>;
-    /** Mega evolutions for your own species. */
+    /** Mega evolutions for your species, or for Cobblemon Bedrock ones with a mega form you added. */
     megas?: MegaDefinition[];
     /**
      * Item ids that work as a Key Stone (held in the offhand) for your megas.
      * Cobblemon Bedrock doesn't provide one, so your add-on must.
      */
     megaAccessories?: string[];
+    /** Items used on a party Pokémon: you get `item_used` and apply the effect. */
+    partyItems?: PartyItemDefinition[];
     /** What to do with Cobblemon Bedrock's reply. By default, it goes to the content log. */
     onAck?: (ack: Ack) => void;
+}
+/**
+ * An item used on a party Pokémon, like Cobblemon's potions or vitamins.
+ * Cobblemon Bedrock picks the Pokémon the same way as with its own items
+ * (the one you're looking at, or the party selector) and sends `item_used`.
+ */
+export interface PartyItemDefinition {
+    /** One of your items: `myaddon:super_potion`. */
+    id: string;
+    /** Spend one when used. Default `true`; with `false`, remove it yourself if you want to. */
+    consume?: boolean;
+    /** Only these species. Others show greyed out in the selector. */
+    species?: string[];
+    /** `true`: only fainted Pokémon (revives). `false`: only those that aren't. */
+    fainted?: boolean;
+    /** Only Pokémon missing HP (potions). */
+    hurt?: boolean;
 }
 /** Cobblemon Bedrock's reply to a registration. */
 export interface Ack {
@@ -258,6 +312,25 @@ export interface CobblemonEvents {
         species: string;
         status: "seen" | "caught";
     };
+    /**
+     * One of your `partyItems` was used on a party Pokémon. Cobblemon Bedrock
+     * already picked the Pokémon (and spent the item, unless `consume: false`):
+     * apply the effect with `updatePokemon`.
+     */
+    item_used: {
+        api: number;
+        player: PlayerRef;
+        item: string;
+        slot: number;
+        pokemon: PartyPokemon;
+    };
+}
+/** A party Pokémon, with what you need to decide an item's effect. */
+export interface PartyPokemon extends PokemonSummary {
+    hp: number;
+    maxHp: number;
+    /** Status condition (`poison`, `paralysis`…), or `null`. */
+    status: string | null;
 }
 /** A player: their id, their name, or the `Player` object itself. */
 export type PlayerLike = string | {
@@ -298,6 +371,31 @@ export interface PokemonRequest {
     friendship?: number;
     nickname?: string;
     /** Up to 64 characters. It travels with the Pokémon and shows up in every event about it. */
+    tag?: string;
+}
+/**
+ * Changes for `updatePokemon`. All optional; HP is **not** refilled by the
+ * other fields (raising an EV doesn't heal).
+ */
+export interface PokemonUpdate {
+    /** HP to restore, or `"full"`. Also revives a fainted Pokémon. */
+    heal?: number | "full";
+    /** Removes its status condition. */
+    cure?: boolean;
+    /** Levels to gain, like a Rare Candy: new moves and evolution included. */
+    levels?: number;
+    nature?: string;
+    /** Each 0–31. Stats left out don't change. */
+    ivs?: Partial<Stats>;
+    /** Each 0–252, 510 in total. Stats left out don't change. */
+    evs?: Partial<Stats>;
+    ability?: string;
+    /** 1 to 4 move ids: they replace its moves. */
+    moves?: string[];
+    heldItem?: string;
+    /** 0–255. */
+    friendship?: number;
+    nickname?: string;
     tag?: string;
 }
 export interface SpawnRequest {
@@ -392,6 +490,14 @@ export interface CobblemonClient {
     }>;
     /** Heals the player's whole party, like a healing machine. */
     heal(player: PlayerLike): Promise<void>;
+    /**
+     * Changes a Pokémon in a player's party (not in battle). Use it to apply
+     * an item's effect from `item_used`, or as a reward.
+     */
+    updatePokemon(player: PlayerLike, uuid: string, changes: PokemonUpdate): Promise<{
+        pokemon: PartyPokemon;
+        evolved: boolean;
+    }>;
     party(player: PlayerLike): Promise<{
         pokemon: PokemonSummary[];
     }>;
