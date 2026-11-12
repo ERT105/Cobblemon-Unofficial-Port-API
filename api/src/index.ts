@@ -69,7 +69,9 @@ export function registerAddon(def: AddonDefinition): CobblemonClient {
 
   const register = () => {
     send(ApiEvents.HELLO, { addon: def.addon, api: API_VERSION, version: def.version });
-    // Species before their spawns and evolutions: Cobblemon Bedrock checks that they exist.
+    // Moves first: species can learn them. Then species before their spawns and
+    // evolutions: Cobblemon Bedrock checks that they exist.
+    if (def.moves?.length) sendPacket("moves", "moves", { moves: def.moves });
     for (const species of def.species ?? []) sendPacket("species", species.id, species);
     // Additions before spawns, sprites and megas: those can refer to the forms they add.
     for (const addition of def.additions ?? []) sendPacket("additions", addition.target, addition);

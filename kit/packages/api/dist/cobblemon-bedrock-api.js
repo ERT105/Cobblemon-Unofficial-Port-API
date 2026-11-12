@@ -40,6 +40,7 @@ function registerAddon(def) {
   };
   const register = () => {
     send(ApiEvents.HELLO, { addon: def.addon, api: API_VERSION, version: def.version });
+    if (def.moves?.length) sendPacket("moves", "moves", { moves: def.moves });
     for (const species of def.species ?? []) sendPacket("species", species.id, species);
     for (const addition of def.additions ?? []) sendPacket("additions", addition.target, addition);
     if (def.spawn?.entries.length) sendPacket("spawn", "spawn", def.spawn);

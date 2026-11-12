@@ -8,6 +8,7 @@
 | --- | --- |
 | `addon` | Your namespace (lowercase letters, digits and `_`). |
 | `version` | Your add-on's version, shown in the content log. |
+| `moves` | New moves, based on Cobblemon Bedrock's. See [Moves](#moves). |
 | `species` | List of species (below). |
 | `additions` | Forms and looks for Cobblemon Bedrock species. See [Additions](#additions-to-cobblemon-bedrock-species). |
 | `spawn` | `{ entries, levels }`: where and at what level they spawn. |
@@ -36,7 +37,7 @@ one) and `moves.levelUp`.
 | `experienceGroup` | `fast`, `medium_fast`, `medium_slow`, `slow`, `erratic`, `fluctuating`. |
 | `abilities`, `hiddenAbility` | The mod's ids. One with no battle effect gives a warning. |
 | `maleRatio` | 0–1, or `null` for genderless. |
-| `moves` | `levelUp: [{ level, move }]`, plus `egg`, `tm`, `tutor`. Only moves the engine knows. |
+| `moves` | `levelUp: [{ level, move }]`, plus `egg`, `tm`, `tutor`. Only moves the engine knows, or [yours](#moves). |
 | `evolutions` | Cobblemon format (`variant`, `result`, `requiredContext`, `requirements`). `result` can be yours (`myaddon:x`) or Cobblemon Bedrock's (`raichu`). |
 | `preEvolution` | Same as `result`. |
 | `forms` | See [Forms](#forms). |
@@ -99,6 +100,40 @@ Poké Ball.
 `font/glyph_F0.png`…`glyph_F8.png` in your RP: 256×256, 16×16 cells, the face
 centered. U+F000 is the first cell of `glyph_F0`. Two add-ons using the same
 page overwrite each other: pick one and mention it in your description.
+
+## Moves
+
+New moves are **based on one of Cobblemon Bedrock's**: yours copies all of
+its data (target, flags, secondary effects…) and its battle animation, and
+changes what you set.
+
+```js
+moves: [
+  // Surf (the wave, both foes, its animation) turned Electric, with a 20% chance to paralyze.
+  { id: "myaddon:surf_shock", basedOn: "surf", name: "Surf Shock", type: "electric", power: 75, effect: "paralyze", effectChance: 20 },
+],
+```
+
+| Field | Notes |
+| --- | --- |
+| `id` | Yours: `myaddon:move`. Use it in your species' move lists like any other. |
+| `basedOn` | The Cobblemon Bedrock move it copies (`surf`, `swordsdance`…). |
+| `name` | Fallback name. Put the real one in your RP: `move.myaddon:move=…` and `move.myaddon:move.desc=…`. |
+| `type`, `category`, `power`, `accuracy`, `pp`, `priority` | As in the games. |
+| `effect`, `effectChance` | A secondary effect some Cobblemon Bedrock move uses (`paralyze`, `burn`, `poison`, `flinch`, `confusion`…) and its chance; `effect: null` removes the base move's. |
+| `boosts`, `selfBoosts` | Stat changes to the target and to the user: `{ atk: -1 }`, with `atk`, `def`, `spa`, `spd`, `spe`, `accuracy`, `evasion` (-6 to 6). `null` removes them. |
+| `drainFraction`, `recoilFraction`, `healFraction` | 0–1: share of damage healed, share taken as recoil, share of max HP healed. |
+| `critRatio`, `multiHit`, `flags` | Extra crit stages; hits per use (`2` or `[2, 5]`); Showdown flags (`contact`, `sound`…). |
+
+**What isn't copied.** A few moves also have behavior written in code for
+their id: Sucker Punch only works if the target is attacking, Counter
+returns damage, Protect-like moves… A move based on one of those keeps only
+its data part. Base yours on moves whose effect is data (damage, secondary
+effects, stat changes, draining, recoil, healing, multi-hit) and it behaves
+fully.
+
+Without your add-on, Pokémon that learned your moves keep them saved, but
+can't use them until it's installed again.
 
 ## Additions to Cobblemon Bedrock species
 

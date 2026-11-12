@@ -36,6 +36,10 @@ What should happen:
   panel.
 - When you catch, level up, evolve or battle, the chat reports it prefixed
   with `[Example]` (those are the events).
+- Surfing Pikachu learns **Surf Shock** at level 20, the add-on's own move
+  (`ejemplo:surf_shock`): Surf turned Electric, 75 power, 20% paralysis,
+  with Surf's animation. The one from `/scriptevent ejemplo:mega` already
+  knows it.
 
 ## Test commands (actions and queries)
 

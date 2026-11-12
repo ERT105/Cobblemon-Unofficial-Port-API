@@ -15,6 +15,7 @@
  * - and it has test commands that ask Cobblemon Bedrock to do things
  *   (actions and queries), run with `/scriptevent ejemplo:<command>`:
  *   `altar`, `boss`, `gift`, `heal`, `info`, `mega` and `items`;
+ * - its own move, Surf Shock (`ejemplo:surf_shock`), based on Surf;
  * - two items used on a party Pokémon (`ejemplo:surf_soda`, `ejemplo:surf_charm`):
  *   Cobblemon Bedrock picks the Pokémon and this add-on applies the effect.
  *
@@ -33,7 +34,7 @@ import { BATTLE_CLIPS, LOCATORS } from "./battleData.js";
 
 /** Your namespace: the one of your entities and your species. */
 const ADDON = "ejemplo";
-const VERSION = "1.6.0";
+const VERSION = "1.7.0";
 
 const SPECIES = {
   id: "ejemplo:pikachu_surf",
@@ -61,12 +62,14 @@ const SPECIES = {
       { level: 8, move: "watergun" },
       { level: 12, move: "thunderwave" },
       { level: 18, move: "bubblebeam" },
+      // This add-on's own move (MOVES below).
+      { level: 20, move: "ejemplo:surf_shock" },
       { level: 24, move: "spark" },
       { level: 32, move: "surf" },
       { level: 40, move: "thunderbolt" },
     ],
     egg: [],
-    tm: ["surf", "thunderbolt"],
+    tm: ["surf", "thunderbolt", "ejemplo:surf_shock"],
     tutor: [],
   },
   evolutions: [],
@@ -210,6 +213,23 @@ const EVOLUTIONS = {
   ],
 };
 
+// —— Moves ——
+//
+// A new move is based on one of Cobblemon Bedrock's: it copies its data and
+// its animation, and changes what we set. This one is Surf (the wave, both
+// foes, its animation) turned Electric, with a 20% chance to paralyze.
+const MOVES = [
+  {
+    id: "ejemplo:surf_shock",
+    basedOn: "surf",
+    name: "Surf Shock",
+    type: "electric",
+    power: 75,
+    effect: "paralyze",
+    effectChance: 20,
+  },
+];
+
 // —— Items used on a party Pokémon ——
 //
 // Cobblemon Bedrock picks the Pokémon (the one you look at, or the party
@@ -228,6 +248,7 @@ const PARTY_ITEMS = [
 const cobblemon = registerAddon({
   addon: ADDON,
   version: VERSION,
+  moves: MOVES,
   species: [SPECIES],
   spawn: SPAWN,
   sprites: SPRITES,

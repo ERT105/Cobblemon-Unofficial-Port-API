@@ -74,7 +74,7 @@ export interface Species {
   maleRatio?: number | null;
   eggGroups?: string[];
   preEvolution?: string | null;
-  /** Only moves Cobblemon Bedrock's engine knows; others are skipped with a warning. */
+  /** Only moves Cobblemon Bedrock's engine knows (or yours, from `moves`); others are skipped with a warning. */
   moves: {
     levelUp: Array<{ level: number; move: string }>;
     egg?: string[];
@@ -187,11 +187,65 @@ export interface MegaDefinition {
   ability?: string;
 }
 
+/** Stat changes with Showdown's keys, from -6 to 6: `{ atk: 1, spe: -1 }`. */
+export type Boosts = Partial<Record<"atk" | "def" | "spa" | "spd" | "spe" | "accuracy" | "evasion", number>>;
+
+/**
+ * A new move, **based on one of Cobblemon Bedrock's**: it copies all of its
+ * data (target, flags, secondary effects…) and its animation, and changes
+ * what you set here.
+ *
+ * Some moves also have behavior written in code for their id (Sucker Punch's
+ * condition, Counter…); that part isn't copied. Base yours on moves whose
+ * effect is data: damage, secondary effects, stat changes, draining, recoil,
+ * healing, multi-hit.
+ */
+export interface MoveDefinition {
+  /** Yours: `myaddon:surf_shock`. */
+  id: string;
+  /** The Cobblemon Bedrock move it copies: `surf`. */
+  basedOn: string;
+  /** Shown if your RP has no `move.<id>` lang key (and `move.<id>.desc` for its description). */
+  name: string;
+  type?: ElementalType;
+  category?: "physical" | "special" | "status";
+  /** 0–250. */
+  power?: number;
+  /** 0–100. */
+  accuracy?: number;
+  /** 1–64. */
+  pp?: number;
+  /** -7 to 5. */
+  priority?: number;
+  /** A secondary effect a Cobblemon Bedrock move uses (`paralyze`, `burn`, `flinch`…), or `null` for none. */
+  effect?: string | null;
+  /** 0–100: the chance of `effect`. */
+  effectChance?: number;
+  /** 0–1: the share of damage dealt that heals the user. */
+  drainFraction?: number;
+  /** 0–1: the share of damage dealt the user takes as recoil. */
+  recoilFraction?: number;
+  /** 0–1: the share of max HP it heals (status moves). */
+  healFraction?: number;
+  /** Extra critical-hit stages, 0–4. */
+  critRatio?: number;
+  /** Stat changes to the target, or `null` for none. */
+  boosts?: Boosts | null;
+  /** Stat changes to the user, or `null` for none. */
+  selfBoosts?: Boosts | null;
+  /** Hits per use: a number, or `[min, max]` (1–10), or `null` for one. */
+  multiHit?: number | [number, number] | null;
+  /** Showdown flags the engine checks: `contact`, `sound`, `punch`, `bite`… */
+  flags?: string[];
+}
+
 /** Everything an add-on registers. */
 export interface AddonDefinition {
   /** The add-on's namespace: that of its entities and species. */
   addon: string;
   version?: string;
+  /** New moves, based on Cobblemon Bedrock's. Your species (and any form) can learn them. */
+  moves?: MoveDefinition[];
   species?: Species[];
   /** Forms and looks for Cobblemon Bedrock species. */
   additions?: SpeciesAddition[];

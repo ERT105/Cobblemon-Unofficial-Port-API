@@ -37,3 +37,5 @@ item.ejemplo.surf_charm=Amuleto Surf (+1 nivel, Pikachu Surfista)
 ejemplo.item.healed=%s recuperó %s PS.
 ejemplo.item.level=%s sube al nivel %s.
 ejemplo.cmd.items=Úsalos mirando a tu Pokémon, o en cualquier sitio para elegirlo del equipo. El refresco solo vale si está herido; el amuleto, en Pikachu Surfista.
+move.ejemplo:surf_shock=Choque Surf
+move.ejemplo:surf_shock.desc=Una ola electrificada que alcanza a todos los rivales. Puede paralizarlos.

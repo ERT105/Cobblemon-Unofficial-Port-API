@@ -37,3 +37,5 @@ item.ejemplo.surf_charm=Surf Charm (+1 level, Surfing Pikachu)
 ejemplo.item.healed=%s recovered %s HP.
 ejemplo.item.level=%s is now level %s.
 ejemplo.cmd.items=Use them looking at your Pokémon, or anywhere to choose from your party. The soda only works if it's hurt; the charm, on Surfing Pikachu.
+move.ejemplo:surf_shock=Surf Shock
+move.ejemplo:surf_shock.desc=An electrified wave that hits all foes. It may paralyze them.
