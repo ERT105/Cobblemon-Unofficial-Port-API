@@ -1,6 +1,6 @@
 {
   "name": "cobblemon-bedrock-api",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Registro y eventos de Cobblemon Bedrock para add-ons de Minecraft Bedrock.",
   "type": "module",
   "main": "dist/cobblemon-bedrock-api.js",

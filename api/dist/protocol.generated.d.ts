@@ -3,7 +3,7 @@
  * Message ids and API version shared by Cobblemon Bedrock and this library
  * (`docs/REFERENCE.md`).
  */
-export declare const API_VERSION = 1;
+export declare const API_VERSION = 2;
 export declare const ApiEvents: {
     readonly HELLO: "cooblemon:api.hello";
     readonly PART: "cooblemon:api.part";
@@ -30,7 +30,7 @@ export interface ApiResult {
     data?: unknown;
 }
 export declare const EVENT_PREFIX = "cooblemon:event.";
-export type ApiKind = "moves" | "species" | "additions" | "spawn" | "sprites" | "evolutions" | "megas" | "party_items";
+export type ApiKind = "moves" | "species" | "additions" | "spawn" | "sprites" | "evolutions" | "megas" | "party_items" | "npcs" | "zones" | "ui";
 export interface ApiHello {
     addon: string;
     api: number;

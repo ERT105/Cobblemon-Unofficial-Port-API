@@ -50,7 +50,32 @@ import { fileURLToPath } from "node:url";
 var ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 function resolveFromRoot(relativePath) {
   if (path.isAbsolute(relativePath)) return relativePath;
-  return path.join(ROOT, relativePath);
+  const full = path.join(ROOT, relativePath);
+  if (existsSync(full)) return full;
+  return relocatedSource(relativePath) ?? full;
+}
+var RELOCATED_SOURCES = [
+  { from: "recursos/cobbreeding", to: ["recursos/Cobbreeding/common/src/main/resources"] },
+  {
+    from: "recursos/raiddens",
+    to: [
+      "recursos/cobblemon-raiddens/common/src/main/resources",
+      "recursos/cobblemon-raiddens/common/src/main/generated"
+    ]
+  }
+];
+function relocatedSource(relativePath) {
+  const normalized = relativePath.replace(/\\/g, "/");
+  for (const { from, to } of RELOCATED_SOURCES) {
+    const lower = normalized.toLowerCase();
+    if (lower !== from && !lower.startsWith(`${from}/`)) continue;
+    const rest = normalized.slice(from.length);
+    for (const base of to) {
+      const candidate = path.join(ROOT, base + rest);
+      if (existsSync(candidate)) return candidate;
+    }
+  }
+  return void 0;
 }
 var COBBLEMON_JAVA_LEGACY_PREFIX = "recursos/cobblemon-fabric-1.7.3+1.21.1";
 var COBBLEMON_JAVA_CANDIDATES = [

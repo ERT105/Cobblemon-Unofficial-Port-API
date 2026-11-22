@@ -17,7 +17,7 @@
 
 import { system, world } from "@minecraft/server";
 import { API_VERSION, ApiEvents, EVENT_PREFIX } from "./protocol.generated.js";
-import type { Ack, AddonDefinition, CobblemonClient, CobblemonEvents, PlayerLike } from "./types.js";
+import type { Ack, AddonDefinition, CobblemonClient, CobblemonEvents, Place, PlayerLike } from "./types.js";
 
 export * from "./types.js";
 export { API_VERSION };
@@ -75,11 +75,16 @@ export function registerAddon(def: AddonDefinition): CobblemonClient {
     for (const species of def.species ?? []) sendPacket("species", species.id, species);
     // Additions before spawns, sprites and megas: those can refer to the forms they add.
     for (const addition of def.additions ?? []) sendPacket("additions", addition.target, addition);
+    // Zones before spawns: entries with `zone` are checked against them.
+    if (def.zones && Object.keys(def.zones).length) sendPacket("zones", "zones", def.zones);
     if (def.spawn?.entries.length) sendPacket("spawn", "spawn", def.spawn);
     if (def.sprites && Object.keys(def.sprites).length) sendPacket("sprites", "sprites", def.sprites);
     if (def.evolutions && Object.keys(def.evolutions).length) sendPacket("evolutions", "evolutions", def.evolutions);
     if (def.megas?.length) sendPacket("megas", "megas", { entries: def.megas, accessories: def.megaAccessories ?? [] });
     if (def.partyItems?.length) sendPacket("party_items", "party_items", { items: def.partyItems });
+    // NPCs last: their teams can use the species and moves sent above.
+    if (def.npcs && Object.keys(def.npcs).length) sendPacket("npcs", "npcs", def.npcs);
+    if (def.buttons?.length) sendPacket("ui", "ui", { buttons: def.buttons });
     send(ApiEvents.DONE, { addon: def.addon });
   };
 
@@ -170,7 +175,82 @@ export function registerAddon(def: AddonDefinition): CobblemonClient {
     pokedex: (player, species) => query("pokedex", { player: playerId(player), species }),
     nearby: (req) => query("nearby", { player: playerId(req.player), at: req.at, radius: req.radius }),
     species: (id) => query("species", { species: id }),
+    spawnNpc: (req) => action("spawn_npc", { npc: req.npc, at: req.at, yaw: req.yaw, tag: req.tag }),
+    despawnNpc: (entityId) => action<undefined>("despawn_npc", { entity: entityId }).then(() => undefined),
+    npcMarker: (blockId, npcs, options) =>
+      registerMarker(def.addon, "npcMarker", blockId, options?.state ?? `${def.addon}:npc`, options?.groupState, (index, at) => {
+        const npc = npcs[index];
+        return npc ? action<{ entityId: string }>("spawn_npc", { npc, at, tag: options?.tag }) : null;
+      }),
+    pokemonMarker: (blockId, pokemon, options) =>
+      registerMarker(def.addon, "pokemonMarker", blockId, options?.state ?? `${def.addon}:pokemon`, options?.groupState, (index, at) => {
+        const request = pokemon[index];
+        return request ? action("spawn", { pokemon: request, at }) : null;
+      }),
+    markZone: (zone, at) => action("mark_zone", { zone, at }),
+    zoneMarker: (blockId, zones, options) =>
+      registerMarker(def.addon, "zoneMarker", blockId, options?.state ?? `${def.addon}:zone`, options?.groupState, (index, at) => {
+        const entry = zones[index];
+        if (!entry) return null;
+        const list = Array.isArray(entry) ? entry : [entry];
+        return Promise.all(list.map((zone) => action("mark_zone", { zone, at })));
+      }),
   };
+}
+
+/** Startup has passed: block components can't be registered any more. */
+let startupDone = false;
+system.beforeEvents.startup.subscribe(() => {
+  system.run(() => {
+    startupDone = true;
+  });
+});
+
+/**
+ * A placeholder block (`npcMarker`, `pokemonMarker`, `zoneMarker`). When it ticks in the
+ * world, it becomes air and calls `onIndex` with the number its states say.
+ *
+ * Air first, request after: a marker that stayed would ask again on every
+ * tick, and if the NPC can't spawn there (no room), trying again won't help.
+ */
+function registerMarker(
+  addon: string,
+  method: string,
+  blockId: string,
+  state: string,
+  groupState: string | undefined,
+  onIndex: (index: number, at: Place) => Promise<unknown> | null
+): void {
+  if (startupDone) {
+    console.warn(`[${addon}] ${method}("${blockId}") was called after startup; call it when your script loads`);
+    return;
+  }
+  system.beforeEvents.startup.subscribe((init) => {
+    init.blockComponentRegistry.registerCustomComponent(blockId, {
+      onTick(event) {
+        const block = event.block;
+        let index: number;
+        try {
+          const states = block.permutation.getAllStates();
+          const own = Number(states[state] ?? 0);
+          const group = groupState ? Number(states[groupState] ?? 0) : 0;
+          index = group * 16 + own;
+          // A marker inside a pond stays water, not an air pocket.
+          block.setType(block.isWaterlogged ? "minecraft:water" : "minecraft:air");
+        } catch {
+          return;
+        }
+        const { x, y, z } = block.location;
+        const dimension = block.dimension.id.replace(/^minecraft:/, "") as Place["dimension"];
+        const pending = onIndex(index, { dimension, x, y, z });
+        if (!pending) {
+          console.warn(`[${addon}] ${blockId}: nothing for number ${index}`);
+          return;
+        }
+        pending.catch((err: unknown) => console.warn(`[${addon}] ${blockId}: ${String(err)}`));
+      },
+    });
+  });
 }
 
 /**

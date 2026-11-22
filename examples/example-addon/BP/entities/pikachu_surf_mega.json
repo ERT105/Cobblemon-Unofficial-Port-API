@@ -102,6 +102,11 @@
           ],
           "default": 0,
           "client_sync": true
+        },
+        "cooblemon:alpha_eyes": {
+          "type": "bool",
+          "default": true,
+          "client_sync": true
         }
       }
     },
@@ -707,6 +712,19 @@
         "time_down_event": {
           "event": "cooblemon:may_despawn"
         }
+      },
+      "minecraft:equipment": {
+        "table": "loot_tables/empty.json",
+        "slot_drop_chance": [
+          {
+            "slot": "slot.weapon.mainhand",
+            "drop_chance": 0
+          },
+          {
+            "slot": "slot.weapon.offhand",
+            "drop_chance": 0
+          }
+        ]
       }
     },
     "events": {

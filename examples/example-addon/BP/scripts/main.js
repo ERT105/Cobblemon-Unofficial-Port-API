@@ -14,10 +14,12 @@
  *   and reports them in chat;
  * - and it has test commands that ask Cobblemon Bedrock to do things
  *   (actions and queries), run with `/scriptevent ejemplo:<command>`:
- *   `altar`, `boss`, `gift`, `heal`, `info`, `mega` and `items`;
+ *   `altar`, `boss`, `gift`, `heal`, `info`, `mega`, `items` and `npcs`;
  * - its own move, Surf Shock (`ejemplo:surf_shock`), based on Surf;
  * - two items used on a party Pokémon (`ejemplo:surf_soda`, `ejemplo:surf_charm`):
- *   Cobblemon Bedrock picks the Pokémon and this add-on applies the effect.
+ *   Cobblemon Bedrock picks the Pokémon and this add-on applies the effect;
+ * - three NPCs (a trainer, a nurse and a shopkeeper) and a marker block that
+ *   turns into them inside a structure (`ejemplo:npc_marker`).
  *
  * Registration and events are handled by the `cobblemon-bedrock-api` library
  * (`cobblemon-bedrock-api.js`, copied from `api/dist/`): this file only holds
@@ -34,7 +36,7 @@ import { BATTLE_CLIPS, LOCATORS } from "./battleData.js";
 
 /** Your namespace: the one of your entities and your species. */
 const ADDON = "ejemplo";
-const VERSION = "1.7.0";
+const VERSION = "1.9.0";
 
 const SPECIES = {
   id: "ejemplo:pikachu_surf",
@@ -242,6 +244,112 @@ const PARTY_ITEMS = [
   { id: "ejemplo:surf_charm", species: ["ejemplo:pikachu_surf"] },
 ];
 
+// NPCs: a trainer, a nurse and a shopkeeper (needs Cobblemon Bedrock with API 2).
+// Every line is a language key from this add-on's RP/texts; `%s` is the
+// player's name. Put them in the world with `spawnNpc` (`/scriptevent
+// ejemplo:npcs`) or with the marker block, `ejemplo:npc_marker`: its state
+// `ejemplo:npc` says which one (0 Kai, 1 Marina, 2 Nico; see NPC_MARKER).
+const NPCS = {
+  "ejemplo:surfer_kai": {
+    name: "Kai",
+    role: "trainer",
+    skin: "ace_trainer_abel_04a5",
+    // Each Pokémon with its own level: the strong one closes.
+    team: [
+      { species: "wingull", level: 18 },
+      { species: "ejemplo:pikachu_surf", level: 24, moves: ["ejemplo:surf_shock", "quickattack", "thunderwave"] },
+    ],
+    skill: 0.9,
+    battle: { cooldown: 120, reward: 900 },
+    dialogue: {
+      greeting: ["ejemplo.npc.kai.greeting"],
+      options: ["battle", "close"],
+      challenge: ["ejemplo.npc.kai.challenge"],
+      victory: ["ejemplo.npc.kai.victory"],
+      defeat: ["ejemplo.npc.kai.defeat"],
+      cooldown: ["ejemplo.npc.kai.cooldown"],
+      hurt: ["ejemplo.npc.hurt"],
+    },
+  },
+  "ejemplo:nurse_marina": {
+    name: "Marina",
+    role: "nurse",
+    skin: "nurse-joy",
+    dialogue: { greeting: ["ejemplo.npc.marina.greeting"], hurt: ["ejemplo.npc.hurt"] },
+  },
+  "ejemplo:shop_nico": {
+    name: "Nico",
+    role: "merchant",
+    skin: "shop_keeper",
+    // One page per category; more than 12 offers in one category get more
+    // pages. `stock` is per in-game day, for everyone; without it, never runs out.
+    shop: [
+      {
+        name: "ejemplo.npc.nico.category",
+        offers: [
+          { item: "ejemplo:surf_soda", price: 300 },
+          { item: "ejemplo:surf_charm", price: 2500, stock: 1 },
+          { item: "cooblemon:dive_ball", price: 1000 },
+        ],
+      },
+      {
+        name: "ejemplo.npc.nico.balls",
+        offers: [
+          { item: "cooblemon:poke_ball", price: 200 },
+          { item: "cooblemon:great_ball", price: 600 },
+          { item: "cooblemon:ultra_ball", price: 800 },
+          { item: "cooblemon:net_ball", price: 1000 },
+          { item: "cooblemon:dive_ball", price: 1000 },
+          { item: "cooblemon:quick_ball", price: 1000 },
+          { item: "cooblemon:dusk_ball", price: 1000 },
+          { item: "cooblemon:timer_ball", price: 1000, stock: 5 },
+        ],
+      },
+      {
+        name: "ejemplo.npc.nico.medicine",
+        offers: [
+          { item: "cooblemon:potion", price: 200 },
+          { item: "cooblemon:super_potion", price: 700 },
+          { item: "cooblemon:hyper_potion", price: 1500 },
+          { item: "cooblemon:antidote", price: 200 },
+          { item: "cooblemon:paralyze_heal", price: 200 },
+          { item: "cooblemon:burn_heal", price: 200 },
+          { item: "cooblemon:ice_heal", price: 200 },
+          { item: "cooblemon:awakening", price: 200 },
+          { item: "cooblemon:full_heal", price: 400 },
+          { item: "cooblemon:ether", price: 1200 },
+          { item: "cooblemon:revive", price: 2000, stock: 3 },
+          { item: "cooblemon:max_potion", price: 2500 },
+          { item: "cooblemon:full_restore", price: 3000 },
+        ],
+      },
+    ],
+    // No greeting and no options: touching it opens the shop, like any merchant.
+  },
+};
+
+// —— Buttons in Cobblemon Bedrock's screens ——
+//
+// They show up behind an "Add-ons" button in the party summary and the PC,
+// only when one fits the Pokémon on screen. Picking one closes the screen and
+// sends `ui_button`; what it does is ours (below). The icons are textures:
+// these two are Cobblemon Bedrock's, but your own RP's work the same.
+const BUTTONS = [
+  // Party summary only: `updatePokemon` works on the party, not on PC boxes.
+  { id: "ejemplo:rest", screen: "summary", label: "ejemplo.button.rest", icon: "textures/items/super_potion" },
+  // Both screens, only for Pikachu and our surfing one.
+  {
+    id: "ejemplo:wave",
+    screen: ["summary", "pc"],
+    label: "ejemplo.button.wave",
+    icon: "textures/items/water_stone",
+    species: ["pikachu", "ejemplo:pikachu_surf"],
+  },
+];
+
+/** The marker block's numbers (its `ejemplo:npc` state). */
+const NPC_MARKER = { 0: "ejemplo:surfer_kai", 1: "ejemplo:nurse_marina", 2: "ejemplo:shop_nico" };
+
 // —— Registration ——
 
 // `registerAddon` returns the client for actions and queries (see "Test commands").
@@ -256,6 +364,17 @@ const cobblemon = registerAddon({
   megas: MEGAS,
   megaAccessories: MEGA_ACCESSORIES,
   partyItems: PARTY_ITEMS,
+  npcs: NPCS,
+  buttons: BUTTONS,
+});
+
+// The marker block: in a structure, it becomes the NPC when the chunk loads.
+// It must be registered now, while the script loads.
+cobblemon.npcMarker("ejemplo:npc_marker", NPC_MARKER, { tag: "example_village" });
+
+// Battles against our NPCs come with their id and tag.
+onCobblemonEvent("battle_end", (e) => {
+  if (e.npc?.startsWith(`${ADDON}:`)) console.warn(`[${ADDON}] battle against ${e.npc} (${e.npcTag ?? "no tag"}): ${e.result}`);
 });
 
 // The effect of each item: what to change in the Pokémon, and what to say.
@@ -263,6 +382,11 @@ const ITEM_EFFECTS = {
   "ejemplo:surf_soda": { changes: { heal: 40 }, say: (before, after) => ["ejemplo.item.healed", [String(after.hp - before.hp)]] },
   "ejemplo:surf_charm": { changes: { levels: 1 }, say: (_before, after) => ["ejemplo.item.level", [String(after.level)]] },
 };
+
+// Every purchase in a shop, ours or Cobblemon Bedrock's (`npc: null`).
+onCobblemonEvent("npc_purchase", (e) => {
+  if (e.npc?.startsWith(`${ADDON}:`)) console.warn(`[${ADDON}] ${e.player.name} bought ${e.item} from ${e.npc} for ${e.price} (${e.category ?? "no category"})`);
+});
 
 onCobblemonEvent("item_used", (e) => {
   const effect = ITEM_EFFECTS[e.item];
@@ -276,6 +400,26 @@ onCobblemonEvent("item_used", (e) => {
       say(player, key, [speciesName(pokemon.species), ...params]);
     })
     .catch((err) => console.warn(`[${ADDON}] item ${e.item}: ${err.message}`));
+});
+
+// What each button does. `ui_button` reaches every add-on: keep only yours.
+onCobblemonEvent("ui_button", (e) => {
+  if (e.addon !== ADDON) return;
+  const player = world.getAllPlayers().find((p) => p.id === e.player.id);
+  if (!player) return;
+  if (e.button === "ejemplo:rest") {
+    cobblemon
+      .updatePokemon(e.player.id, e.pokemon.uuid, { heal: "full", cure: true })
+      .then(({ pokemon }) => say(player, "ejemplo.button.rested", [speciesName(pokemon.species)]))
+      .catch((err) => console.warn(`[${ADDON}] button ${e.button}: ${err.message}`));
+  } else if (e.button === "ejemplo:wave") {
+    // Where it is: a party slot, or a PC box (both counted from 1 for players).
+    const where =
+      e.place.kind === "party"
+        ? { translate: "ejemplo.button.in_party", with: { rawtext: [{ text: String(e.place.slot + 1) }] } }
+        : { translate: "ejemplo.button.in_box", with: { rawtext: [{ text: String(e.place.box + 1) }, { text: String(e.place.slot + 1) }] } };
+    say(player, "ejemplo.button.waved", [speciesName(e.pokemon.species), where]);
+  }
 });
 
 // —— Cobblemon Bedrock events (see "Events" in the reference) ——
@@ -327,6 +471,7 @@ for (const [name, describe] of Object.entries(ON_EVENT)) {
 // `/scriptevent ejemplo:info`   Your party, your Pokédex and the wild Pokémon around you.
 // `/scriptevent ejemplo:mega`   The test Key Stone, a Surfite, and a Surfing Pikachu already holding one.
 // `/scriptevent ejemplo:items`  Surf Sodas and Surf Charms, items used on a party Pokémon.
+// `/scriptevent ejemplo:npcs`   Kai, Marina and Nico in a row in front of you.
 
 /** Sends a chat line to one player with this example's prefix. */
 function say(player, key, params = []) {
@@ -401,6 +546,25 @@ const COMMANDS = {
     inventory?.addItem(new ItemStack("ejemplo:surf_soda", 5));
     inventory?.addItem(new ItemStack("ejemplo:surf_charm", 5));
     say(player, "ejemplo.cmd.items");
+  },
+  async npcs(player) {
+    // In a row, three blocks in front of the player, facing them.
+    const yaw = player.getRotation().y;
+    const rad = (yaw * Math.PI) / 180;
+    const ahead = { x: -Math.sin(rad), z: Math.cos(rad) };
+    const side = { x: ahead.z, z: -ahead.x };
+    const ids = Object.keys(NPCS);
+    for (const [i, npc] of ids.entries()) {
+      const offset = (i - (ids.length - 1) / 2) * 2;
+      const at = {
+        dimension: player.dimension.id.replace("minecraft:", ""),
+        x: Math.floor(player.location.x + ahead.x * 3 + side.x * offset),
+        y: Math.floor(player.location.y),
+        z: Math.floor(player.location.z + ahead.z * 3 + side.z * offset),
+      };
+      const result = await cobblemon.spawnNpc({ npc, at, yaw: yaw + 180, tag: "test" });
+      say(player, "ejemplo.cmd.npc", [npc, result.entityId]);
+    }
   },
 };
 

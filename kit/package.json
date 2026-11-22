@@ -1,6 +1,6 @@
 {
   "name": "cobblemon-bedrock-kit",
-  "version": "1.8.12",
+  "version": "1.8.13",
   "private": true,
   "description": "Convierte un addon de Cobblemon Java en un add-on para Cobblemon Bedrock.",
   "type": "module",
@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "archiver": "^7.0.1",
+    "prismarine-nbt": "^2.8.0",
     "puppeteer-core": "^25.11.0",
     "three": "^0.186.0"
   },

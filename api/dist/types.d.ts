@@ -133,12 +133,23 @@ export interface SpeciesAddition {
 }
 /** A spawn entry, using the mod's biome tags. */
 export interface SpawnEntry {
-    /** One of your species, or a Cobblemon Bedrock one with a `form` you added. */
+    /**
+     * One of your species, or a Cobblemon Bedrock one with a `form` you added.
+     * In an entry with `zone`, any Cobblemon Bedrock species too.
+     */
     species: string;
     /** A form of the same species, by its id (`alolan`). */
     form?: string;
-    /** Biome tag (`forest`, `beach`, `taiga`…). */
-    biome: string;
+    /**
+     * Biome tag (`forest`, `beach`, `taiga`…). Optional in an entry with
+     * `zone`: the zone already says where.
+     */
+    biome?: string;
+    /**
+     * Only inside these zones of yours (see `zones`): the Pokémon of a village.
+     * Outside them the entry doesn't count. Needs Cobblemon Bedrock with API 2.
+     */
+    zone?: string | string[];
     biomeTag?: string;
     biomeAny?: string[];
     biomeAll?: string[];
@@ -268,6 +279,24 @@ export interface AddonDefinition {
     megaAccessories?: string[];
     /** Items used on a party Pokémon: you get `item_used` and apply the effect. */
     partyItems?: PartyItemDefinition[];
+    /**
+     * NPCs: trainers, merchants, nurses or people who just talk. Keyed by
+     * `"myaddon:name"`. Put them in the world with `spawnNpc` or `npcMarker`.
+     * Needs Cobblemon Bedrock with API 2.
+     */
+    npcs?: Record<string, NpcDefinition>;
+    /**
+     * Spawn zones: places in the world, like your villages, with their own
+     * Pokémon (spawn entries with `zone`). Keyed by `"myaddon:name"`. Mark where
+     * each one is with `markZone` or `zoneMarker`. Needs Cobblemon Bedrock with
+     * API 2.
+     */
+    zones?: Record<string, ZoneDefinition>;
+    /**
+     * Buttons in Cobblemon Bedrock's screens (the party summary and the PC).
+     * They show up behind an "Add-ons" button; picking one sends `ui_button`.
+     */
+    buttons?: UiButtonDefinition[];
     /** What to do with Cobblemon Bedrock's reply. By default, it goes to the content log. */
     onAck?: (ack: Ack) => void;
 }
@@ -287,6 +316,164 @@ export interface PartyItemDefinition {
     fainted?: boolean;
     /** Only Pokémon missing HP (potions). */
     hurt?: boolean;
+}
+/** A screen of Cobblemon Bedrock that can show your buttons. */
+export type UiScreen = "summary" | "pc";
+/**
+ * A button of yours in Cobblemon Bedrock's screens. Those screens can't be
+ * edited from another pack, so yours go in a list: an "Add-ons" button shows
+ * up when at least one of them fits the Pokémon on screen, and opens it.
+ */
+export interface UiButtonDefinition {
+    /** `myaddon:rename`. It comes back in `ui_button`. */
+    id: string;
+    /** Where it shows up: the party summary, the PC (with a Pokémon picked), or both. */
+    screen: UiScreen | UiScreen[];
+    /** A key in your add-on's `.lang`. */
+    label: string;
+    /** A texture in your resource pack: `textures/myaddon/ui/rename`. */
+    icon?: string;
+    /** Only for these species. */
+    species?: string[];
+}
+/** What an NPC does when you talk to it. */
+export type NpcRole = "trainer" | "merchant" | "nurse" | "talker";
+/** A button in an NPC's dialogue window. */
+export type NpcOption = "battle" | "shop" | "heal" | "close";
+/** A Pokémon in an NPC's team. Unknown species, items or moves are left out with a warning. */
+export interface NpcPokemon {
+    /** `milotic` (Cobblemon Bedrock species) or `myaddon:species`. */
+    species: string;
+    /** 1–100. Without it, the NPC's `level` (or one that adapts to the player). */
+    level?: number;
+    heldItem?: string;
+    /** Up to four. Without them, the ones it learns by level. */
+    moves?: string[];
+    ability?: string;
+    shiny?: boolean;
+}
+/**
+ * A shop category: one page (or more, 12 offers each) in the shop. Prices are
+ * in Cobblemon Bedrock's money (the player's wallet). Up to 16 categories
+ * and 64 offers per shop.
+ */
+export interface NpcShopCategory {
+    /** A language key from your `.lang`, or plain text. */
+    name: string;
+    offers: NpcShopOffer[];
+}
+export interface NpcShopOffer {
+    item: string;
+    price: number;
+    /**
+     * Units per in-game day, for all players together. Without it, it never
+     * runs out.
+     */
+    stock?: number;
+}
+/**
+ * Everything an NPC says. Every line is a **language key** from your add-on's
+ * `.lang`; one is picked at random. Use `%s` in the text for the player's name.
+ */
+export interface NpcDialogue {
+    /** When the player talks to it. With `greeting` or `options`, a window opens. */
+    greeting?: string[];
+    /** The window's buttons. Default: the one for its role, and "Goodbye". */
+    options?: NpcOption[];
+    /** Before a battle. */
+    challenge?: string[];
+    /** When the player wins. */
+    victory?: string[];
+    /** When the player loses. */
+    defeat?: string[];
+    /** When asked to battle again too soon. */
+    cooldown?: string[];
+    /** If the player has hit it recently: it won't talk. */
+    hurt?: string[];
+}
+export interface NpcDefinition {
+    /** Shown above its head and in messages. Plain text (a name doesn't get translated). */
+    name: string;
+    /** Default `"trainer"`. */
+    role?: NpcRole;
+    /**
+     * A Cobblemon Bedrock trainer skin, by file name: `nurse-joy`, `shop_keeper`,
+     * `shop_keeper_2`, `ace_trainer_abel_04a5`… Unknown: one for its role.
+     */
+    skin?: string;
+    /** Only for `role: "trainer"`. Up to six. */
+    team?: NpcPokemon[];
+    /** Level for the whole team (each Pokémon's own `level` wins). Without any, it adapts to the player. */
+    level?: number;
+    /** How well it plays, 0 to 1. Without it, the one for its `battle.kind`. */
+    skill?: number;
+    battle?: {
+        format?: "singles" | "doubles";
+        /** `"request"` (default): talk to it to battle. `"sight"`: it challenges you when it sees you. */
+        start?: "request" | "sight";
+        /** `false`: once beaten, it never battles that player again. */
+        rematch?: boolean;
+        /** Seconds before a rematch. Default: five minutes. */
+        cooldown?: number;
+        /** Money it pays when beaten. Default: by its level and kind. */
+        reward?: number | null;
+        kind?: "standard" | "gym_leader" | "elite_four" | "champion";
+        /** Items it can use in battle (up to three). */
+        items?: string[];
+    };
+    /** Only for `role: "merchant"`. */
+    shop?: NpcShopCategory[];
+    dialogue?: NpcDialogue;
+    /** Default `"still"`. */
+    movement?: "still" | "free";
+}
+export interface SpawnNpcRequest {
+    /** One of your NPCs: `"myaddon:nurse"`. */
+    npc: string;
+    /** Where. It looks up to two blocks higher for room to stand. */
+    at: Place;
+    /** Which way it faces, in degrees. */
+    yaw?: number;
+    /** Follows the NPC: it comes back in `battle_start`/`battle_end` as `npcTag`. */
+    tag?: string;
+}
+/** Options for `npcMarker`. */
+export interface NpcMarkerOptions {
+    /** The block state with the NPC number. Default `"<addon>:npc"`. */
+    state?: string;
+    /**
+     * A second state for more than 16 NPCs: the number is `group * 16 + npc`.
+     * A Bedrock state holds 16 values at most.
+     */
+    groupState?: string;
+    /** The `tag` for every NPC this marker spawns. */
+    tag?: string;
+}
+/** Options for `pokemonMarker`. */
+export interface PokemonMarkerOptions {
+    /** The block state with the Pokémon number. Default `"<addon>:pokemon"`. */
+    state?: string;
+    /** A second state for more than 16 Pokémon, as in `npcMarker`. */
+    groupState?: string;
+}
+/**
+ * A spawn zone. Cobblemon Bedrock's spawner adds the zone's entries to the
+ * spawn attempts that fall within `radius` of a marked center, the way a
+ * Habitat block does in natural mode. A Habitat block that replaces spawns
+ * still wins: the player placed it.
+ */
+export interface ZoneDefinition {
+    /** Blocks from the center, sideways and up or down. 4 to 128, default 48. */
+    radius?: number;
+    /** Inside, only the zone's entries spawn (no world spawns). Default `false`. */
+    replaceSpawns?: boolean;
+}
+/** Options for `zoneMarker`. */
+export interface ZoneMarkerOptions {
+    /** The block state with the zone number. Default `"<addon>:zone"`. */
+    state?: string;
+    /** A second state for more than 16 zones, as in `npcMarker`. */
+    groupState?: string;
 }
 /** Cobblemon Bedrock's reply to a registration. */
 export interface Ack {
@@ -321,6 +508,9 @@ interface BattleInfo {
     opponent?: PokemonSummary;
     raidTier?: number;
     trainerName?: string | null;
+    /** Against one of your NPCs (or another add-on's): its id and `tag`. */
+    npc?: string;
+    npcTag?: string | null;
 }
 export interface CobblemonEvents {
     captured: {
@@ -375,6 +565,42 @@ export interface CobblemonEvents {
         item: string;
         slot: number;
         pokemon: PartyPokemon;
+    };
+    /**
+     * Something was bought in a merchant's shop. `npc` is your NPC's id, or
+     * `null` for Cobblemon Bedrock's own merchants. `wallet` is what the
+     * player has left.
+     */
+    /**
+     * One of your `buttons` was picked. The screen is already closed. In the PC
+     * the Pokémon may be in a box: `updatePokemon` only works on the party.
+     */
+    ui_button: {
+        api: number;
+        player: PlayerRef;
+        addon: string;
+        button: string;
+        screen: UiScreen;
+        place: {
+            kind: "party";
+            slot: number;
+        } | {
+            kind: "pc";
+            box: number;
+            slot: number;
+        };
+        pokemon: PartyPokemon;
+    };
+    npc_purchase: {
+        api: number;
+        player: PlayerRef;
+        npc: string | null;
+        npcTag: string | null;
+        merchant: string;
+        item: string;
+        price: number;
+        category: string | null;
+        wallet: number;
     };
 }
 /** A party Pokémon, with what you need to decide an item's effect. */
@@ -559,5 +785,44 @@ export interface CobblemonClient {
         pokemon: NearbyPokemon[];
     }>;
     species(id: string): Promise<SpeciesInfo>;
+    /** Puts one of your NPCs in the world. Needs Cobblemon Bedrock with API 2. */
+    spawnNpc(request: SpawnNpcRequest): Promise<{
+        entityId: string;
+    }>;
+    /** Removes one of your NPCs. */
+    despawnNpc(entityId: string): Promise<void>;
+    /**
+     * Makes a block of yours a placeholder for NPCs: when it loads in the world
+     * it turns into air and spawns the NPC its state says. Put it in your
+     * structures where the NPC should stand.
+     *
+     * Call it when your script loads (like `registerAddon`), not later: block
+     * components can only be registered on startup. The block needs
+     * `"minecraft:custom_components": ["<blockId>"]`, a `minecraft:tick`
+     * component and the state (`"<addon>:npc"`, 0–15).
+     */
+    npcMarker(blockId: string, npcs: Record<number, string>, options?: NpcMarkerOptions): void;
+    /**
+     * The same for Pokémon that stand in your structures (a Chansey in a
+     * Pokémon Center): when the block loads, it turns into air and the Pokémon
+     * its state says is spawned there. The block needs the component, a tick
+     * and the state (`"<addon>:pokemon"`, 0–15).
+     */
+    pokemonMarker(blockId: string, pokemon: Record<number, SpawnRequest["pokemon"]>, options?: PokemonMarkerOptions): void;
+    /**
+     * Marks the center of one of your zones. The world keeps it, so the zone
+     * works without any block left there. Marking the same zone again within
+     * 8 blocks does nothing (`added: false`).
+     */
+    markZone(zone: string, at: Place): Promise<{
+        added: boolean;
+    }>;
+    /**
+     * A placeholder block that marks zones: when it loads, it turns into air and
+     * marks the zone (or zones) its state says, centered on the block. Put it
+     * in the middle piece of your village. The block needs the component, a
+     * tick and the state (`"<addon>:zone"`, 0–15).
+     */
+    zoneMarker(blockId: string, zones: Record<number, string | string[]>, options?: ZoneMarkerOptions): void;
 }
 export {};

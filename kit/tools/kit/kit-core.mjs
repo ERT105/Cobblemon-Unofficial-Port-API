@@ -48,10 +48,37 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 function resolveFromRoot(relativePath) {
   if (path.isAbsolute(relativePath)) return relativePath;
-  return path.join(ROOT, relativePath);
+  const full = path.join(ROOT, relativePath);
+  if (existsSync(full)) return full;
+  return relocatedSource(relativePath) ?? full;
+}
+function relocatedSource(relativePath) {
+  const normalized = relativePath.replace(/\\/g, "/");
+  for (const { from, to } of RELOCATED_SOURCES) {
+    const lower = normalized.toLowerCase();
+    if (lower !== from && !lower.startsWith(`${from}/`)) continue;
+    const rest = normalized.slice(from.length);
+    for (const base of to) {
+      const candidate = path.join(ROOT, base + rest);
+      if (existsSync(candidate)) return candidate;
+    }
+  }
+  return void 0;
 }
 function cobblemonSpeciesMarker(root) {
   return path.join(root, "data", "cobblemon", "species");
+}
+function bedrockSamples(relative = "") {
+  const dir = resolveFromRoot("recursos");
+  let root = resolveFromRoot("recursos/bedrock-samples");
+  if (!existsSync(root)) {
+    try {
+      const match = readdirSync(dir).find((name) => name.startsWith("bedrock-samples"));
+      if (match) root = path.join(dir, match);
+    } catch {
+    }
+  }
+  return relative ? path.join(root, relative) : root;
 }
 function resolveCobblemonJavaRoot() {
   const envRoot = process.env.COOBLEMON_JAVA_ROOT?.trim();
@@ -103,11 +130,21 @@ function logStep(message) {
 function logWarn(message) {
   console.warn(`[cooblemon] ${message}`);
 }
-var ROOT, COBBLEMON_JAVA_LEGACY_PREFIX, COBBLEMON_JAVA_CANDIDATES;
+var ROOT, RELOCATED_SOURCES, COBBLEMON_JAVA_LEGACY_PREFIX, COBBLEMON_JAVA_CANDIDATES;
 var init_utils = __esm({
   "tools/lib/utils.ts"() {
     init_retiredFeatures();
     ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
+    RELOCATED_SOURCES = [
+      { from: "recursos/cobbreeding", to: ["recursos/Cobbreeding/common/src/main/resources"] },
+      {
+        from: "recursos/raiddens",
+        to: [
+          "recursos/cobblemon-raiddens/common/src/main/resources",
+          "recursos/cobblemon-raiddens/common/src/main/generated"
+        ]
+      }
+    ];
     COBBLEMON_JAVA_LEGACY_PREFIX = "recursos/cobblemon-fabric-1.7.3+1.21.1";
     COBBLEMON_JAVA_CANDIDATES = [
       /**
@@ -732,10 +769,10 @@ function normalizeGeometryIdentifier(identifier, speciesId) {
 function filterLocators(locators, speciesId) {
   if (!locators || !speciesId) return void 0;
   const allowed = PARTICLE_LOCATOR_ALLOWLIST[speciesId];
-  if (!allowed || allowed.size === 0) return void 0;
+  const keepEyes = !speciesId.endsWith("_female");
   const kept = {};
   for (const [name, value] of Object.entries(locators)) {
-    if (allowed.has(name)) kept[name] = value;
+    if (allowed?.has(name) || keepEyes && EYE_LOCATOR.test(name)) kept[name] = value;
   }
   return Object.keys(kept).length > 0 ? kept : void 0;
 }
@@ -815,6 +852,22 @@ function tieneDelante(cube, eje, todos) {
   }
   return masCerca;
 }
+function huecoConVecina(cube, eje, todos) {
+  const caja = cajaDe({ ...cube, inflate: 0 });
+  if (!caja) return null;
+  const ejes = [0, 1, 2].filter((i) => i !== eje);
+  let hueco = null;
+  for (const otro of todos) {
+    if (otro === cube || !Array.isArray(otro.size) || otro.size[eje] !== 0) continue;
+    const caja2 = cajaDe({ ...otro, inflate: 0 });
+    if (!caja2) continue;
+    const distancia = Math.abs(caja.min[eje] - caja2.min[eje]);
+    if (distancia < GROSOR_MINIMO || distancia >= 2 * FLAT_CUBE_INFLATE) continue;
+    const solapa = ejes.every((i) => Math.min(caja.max[i], caja2.max[i]) > Math.max(caja.min[i], caja2.min[i]));
+    if (solapa) hueco = hueco === null ? distancia : Math.min(hueco, distancia);
+  }
+  return hueco;
+}
 function inflateFlatCubes(bones) {
   const todos = [];
   for (const bone of bones) {
@@ -839,7 +892,13 @@ function inflateFlatCubes(bones) {
       continue;
     }
     const original = actual % FLAT_CUBE_INFLATE;
-    cube.inflate = Number((FLAT_CUBE_INFLATE + original).toFixed(4));
+    let grosor = FLAT_CUBE_INFLATE + original;
+    const vecina = huecoConVecina(cube, eje, todos);
+    if (vecina !== null) {
+      if (vecina / 2 < GROSOR_MINIMO) continue;
+      grosor = Math.min(grosor, vecina / 2);
+    }
+    cube.inflate = Number(grosor.toFixed(4));
     tocados++;
   }
   return tocados;
@@ -886,11 +945,12 @@ function sanitizeGeometry(data, speciesId) {
 function sanitizeGeometryJson(raw, speciesId) {
   return JSON.stringify(sanitizeGeometry(JSON.parse(raw), speciesId));
 }
-var GEO_ID_BODY, DEFAULT_PARTICLE_LOCATORS, FLAT_CUBE_INFLATE, GROSOR_MINIMO, STACK_DEPTH, STACK_COVERAGE;
+var GEO_ID_BODY, EYE_LOCATOR, DEFAULT_PARTICLE_LOCATORS, FLAT_CUBE_INFLATE, GROSOR_MINIMO, STACK_DEPTH, STACK_COVERAGE;
 var init_sanitize_geometry = __esm({
   "tools/lib/sanitize-geometry.ts"() {
     init_copy_pokemon_particles();
     GEO_ID_BODY = /^[A-Za-z0-9_.-]+$/;
+    EYE_LOCATOR = /^eye/i;
     DEFAULT_PARTICLE_LOCATORS = {
       gastly: {
         bone: "body",
@@ -914,7 +974,7 @@ async function loadAtmSpeciesAdditions() {
   const map = /* @__PURE__ */ new Map();
   const root = allTheMonsJava("data/cobblemon/species_additions");
   if (!root || !existsSync2(root)) return map;
-  async function walk3(dir) {
+  async function walk5(dir) {
     let entries;
     try {
       entries = await readdir2(dir, { withFileTypes: true });
@@ -924,7 +984,7 @@ async function loadAtmSpeciesAdditions() {
     for (const entry of entries) {
       const full = path2.join(dir, entry.name);
       if (entry.isDirectory()) {
-        await walk3(full);
+        await walk5(full);
         continue;
       }
       if (!entry.name.endsWith(".json")) continue;
@@ -937,7 +997,7 @@ async function loadAtmSpeciesAdditions() {
       }
     }
   }
-  await walk3(root);
+  await walk5(root);
   return map;
 }
 var ATM_SCALE_BLOCKLIST;
@@ -1164,9 +1224,9 @@ __export(init_exports, {
 });
 import archiver from "archiver";
 import { randomUUID } from "node:crypto";
-import { createWriteStream, existsSync as existsSync6 } from "node:fs";
-import { copyFile as copyFile2, mkdir as mkdir2, readdir as readdir6, readFile as readFile7, rm as rm2, writeFile as writeFile4 } from "node:fs/promises";
-import path7 from "node:path";
+import { createWriteStream, existsSync as existsSync9 } from "node:fs";
+import { copyFile as copyFile2, mkdir as mkdir5, readdir as readdir8, readFile as readFile11, rm as rm3, writeFile as writeFile7 } from "node:fs/promises";
+import path10 from "node:path";
 function parseInitArgs(argv) {
   const get = (flag) => {
     const i = argv.indexOf(flag);
@@ -1181,13 +1241,13 @@ function parseInitArgs(argv) {
   return {
     ns,
     name,
-    out: path7.resolve(get("--out") ?? `${ns}-addon`),
+    out: path10.resolve(get("--out") ?? `${ns}-addon`),
     force: argv.includes("--force")
   };
 }
-async function writeJson2(file, data) {
-  await mkdir2(path7.dirname(file), { recursive: true });
-  await writeFile4(file, `${JSON.stringify(data, null, 2)}
+async function writeJson4(file, data) {
+  await mkdir5(path10.dirname(file), { recursive: true });
+  await writeFile7(file, `${JSON.stringify(data, null, 2)}
 `, "utf8");
 }
 function mainScript(ns, name) {
@@ -1332,20 +1392,20 @@ If you port a Cobblemon Java addon, the kit does all of this for you:
 async function runInit(argv) {
   const args = parseInitArgs(argv);
   const { ns, name, out } = args;
-  if (existsSync6(out) && (await readdir6(out)).length > 0) {
+  if (existsSync9(out) && (await readdir8(out)).length > 0) {
     if (!args.force) throw new Error(`${out} already exists and is not empty (use --force to overwrite it)`);
-    await rm2(out, { recursive: true, force: true });
+    await rm3(out, { recursive: true, force: true });
   }
   const id = `${ns}:${name}`;
-  const bp = path7.join(out, "BP");
-  const rp = path7.join(out, "RP");
-  const baseBp = JSON.parse(await readFile7(resolveFromRoot("bp/manifest.json"), "utf8"));
-  const baseRp = JSON.parse(await readFile7(resolveFromRoot("rp/manifest.json"), "utf8"));
+  const bp = path10.join(out, "BP");
+  const rp = path10.join(out, "RP");
+  const baseBp = JSON.parse(await readFile11(resolveFromRoot("bp/manifest.json"), "utf8"));
+  const baseRp = JSON.parse(await readFile11(resolveFromRoot("rp/manifest.json"), "utf8"));
   const version = [1, 0, 0];
   const engine = [1, 26, 50];
   const bpUuid = randomUUID();
   const rpUuid = randomUUID();
-  await writeJson2(path7.join(bp, "manifest.json"), {
+  await writeJson4(path10.join(bp, "manifest.json"), {
     format_version: 2,
     header: { name: titleCase(name), description: "A Cobblemon Bedrock add-on.", uuid: bpUuid, version, min_engine_version: engine },
     modules: [
@@ -1358,7 +1418,7 @@ async function runInit(argv) {
       { module_name: "@minecraft/server", version: "2.10.0" }
     ]
   });
-  await writeJson2(path7.join(rp, "manifest.json"), {
+  await writeJson4(path10.join(rp, "manifest.json"), {
     format_version: 2,
     capabilities: ["pbr"],
     header: { name: `${titleCase(name)} (resources)`, description: "Models, textures and texts.", uuid: rpUuid, version, min_engine_version: engine },
@@ -1368,18 +1428,18 @@ async function runInit(argv) {
       { uuid: bpUuid, version }
     ]
   });
-  const entity = JSON.parse(await readFile7(resolveFromRoot(`bp/entities/${TEMPLATE}.json`), "utf8"));
+  const entity = JSON.parse(await readFile11(resolveFromRoot(`bp/entities/${TEMPLATE}.json`), "utf8"));
   const e = entity["minecraft:entity"];
   e.description.identifier = id;
   e.description.is_spawnable = true;
   e.description.is_summonable = true;
   renameFamilies(e, TEMPLATE, `${ns}_${name}`);
-  await writeJson2(path7.join(bp, "entities", `${name}.json`), entity);
+  await writeJson4(path10.join(bp, "entities", `${name}.json`), entity);
   const known = new Set(TEMPLATE_CLIPS.map((c) => `${TEMPLATE}.${c}`));
   const roles = rolesFromNames(TEMPLATE, (ref) => known.has(ref));
   const battleClips = BATTLE_CLIPS[TEMPLATE] ?? {};
-  await writeJson2(
-    path7.join(rp, "entity", `${name}.entity.json`),
+  await writeJson4(
+    path10.join(rp, "entity", `${name}.entity.json`),
     clientEntity(
       id,
       name,
@@ -1391,14 +1451,14 @@ async function runInit(argv) {
       null
     )
   );
-  await writeJson2(
-    path7.join(rp, "render_controllers", `${ns}.${name}.render_controllers.json`),
+  await writeJson4(
+    path10.join(rp, "render_controllers", `${ns}.${name}.render_controllers.json`),
     renderController(id, { geometry: false, texture: false })
   );
   const display = titleCase(name);
-  await mkdir2(path7.join(rp, "texts"), { recursive: true });
-  await writeFile4(
-    path7.join(rp, "texts", "en_US.lang"),
+  await mkdir5(path10.join(rp, "texts"), { recursive: true });
+  await writeFile7(
+    path10.join(rp, "texts", "en_US.lang"),
     [
       `entity.${id}.name=${display}`,
       `item.spawn_egg.entity.${id}.name=${display}`,
@@ -1407,14 +1467,14 @@ async function runInit(argv) {
     ].join("\n"),
     "utf8"
   );
-  await writeJson2(path7.join(rp, "texts", "languages.json"), ["en_US"]);
+  await writeJson4(path10.join(rp, "texts", "languages.json"), ["en_US"]);
   const apiLib = resolveFromRoot("packages/api/dist/cobblemon-bedrock-api.js");
-  if (!existsSync6(apiLib)) throw new Error("Missing packages/api/dist/cobblemon-bedrock-api.js: run npm run api:build first");
-  await mkdir2(path7.join(bp, "scripts"), { recursive: true });
-  await copyFile2(apiLib, path7.join(bp, "scripts", "cobblemon-bedrock-api.js"));
-  await writeFile4(path7.join(bp, "scripts", "main.js"), mainScript(ns, name), "utf8");
-  await writeFile4(
-    path7.join(bp, "scripts", "battleData.js"),
+  if (!existsSync9(apiLib)) throw new Error("Missing packages/api/dist/cobblemon-bedrock-api.js: run npm run api:build first");
+  await mkdir5(path10.join(bp, "scripts"), { recursive: true });
+  await copyFile2(apiLib, path10.join(bp, "scripts", "cobblemon-bedrock-api.js"));
+  await writeFile7(path10.join(bp, "scripts", "main.js"), mainScript(ns, name), "utf8");
+  await writeFile7(
+    path10.join(bp, "scripts", "battleData.js"),
     [
       "// Battle animations (name \u2192 [animation id, seconds, 1 if it loops]) and model",
       "// points (name \u2192 [x, y, z] in model pixels). Pikachu's, like the model: change",
@@ -1425,8 +1485,8 @@ async function runInit(argv) {
     ].join("\n"),
     "utf8"
   );
-  await writeFile4(path7.join(out, "README.md"), readme(ns, name, baseBp.header.version.join(".")), "utf8");
-  const pack = path7.join(out, `${ns}.mcaddon`);
+  await writeFile7(path10.join(out, "README.md"), readme(ns, name, baseBp.header.version.join(".")), "utf8");
+  const pack = path10.join(out, `${ns}.mcaddon`);
   await new Promise((resolve, reject) => {
     const output = createWriteStream(pack);
     const archive = archiver("zip", { zlib: { level: 9 } });
@@ -1463,9 +1523,9 @@ var init_init = __esm({
 // tools/kit/kit.ts
 import archiver2 from "archiver";
 import { createHash } from "node:crypto";
-import { createWriteStream as createWriteStream2, existsSync as existsSync7 } from "node:fs";
-import { copyFile as copyFile3, mkdir as mkdir3, readdir as readdir7, readFile as readFile8, rm as rm3, writeFile as writeFile5 } from "node:fs/promises";
-import path8 from "node:path";
+import { createWriteStream as createWriteStream2, existsSync as existsSync10 } from "node:fs";
+import { copyFile as copyFile3, mkdir as mkdir6, readdir as readdir9, readFile as readFile12, rm as rm4, writeFile as writeFile8 } from "node:fs/promises";
+import path11 from "node:path";
 
 // tools/lib/java-species.ts
 function toCamelStats(stats) {
@@ -1628,6 +1688,10 @@ var COBBLEMON_TAG_SELECTORS = {
   is_tundra: [{ any: ["ice_plains"] }],
   // `minecraft:snowy_plains` en Java = `minecraft:ice_plains` en Bedrock.
   is_snowy_flat: [{ any: ["ice_plains"] }],
+  // La pide la cicatriz de incendio de abeto. Sin ella caía al respaldo
+  // `overworld` y salía en cualquier bioma, también en mitad del océano, con
+  // su lista de Pokémon de tierra (Cyndaquil, Axew, Kleavor…).
+  is_snowy_plains: [{ any: ["ice_plains"] }],
   is_glacial: [{ any: ["frozen_peaks", "ice_plains"] }],
   is_cold: [{ any: ["cold"], not: ["ocean"] }],
   // --- Cuevas (biomas de cueva reales, no "subterráneo" genérico) ---
@@ -1778,7 +1842,7 @@ import { readFile as readFile4 } from "node:fs/promises";
 import { existsSync as existsSync3 } from "node:fs";
 import path4 from "node:path";
 var MOD_DATA = cobblemonJava("data");
-var BEDROCK_BLOCKS = "recursos/bedrock-samples-v1.26.50.4-full/metadata/vanilladata_modules/mojang-blocks.json";
+var BEDROCK_BLOCKS = bedrockSamples("metadata/vanilladata_modules/mojang-blocks.json");
 var VANILLA_TAGS = {
   "minecraft:iron_ores": ["minecraft:iron_ore", "minecraft:deepslate_iron_ore"],
   "minecraft:coal_ores": ["minecraft:coal_ore", "minecraft:deepslate_coal_ore"],
@@ -1847,15 +1911,18 @@ var tagCache = /* @__PURE__ */ new Map();
 var loaded = false;
 async function preloadNearbyBlockData() {
   if (loaded) return;
-  const { readdir: readdir8 } = await import("node:fs/promises");
-  const bedrock = resolveFromRoot(BEDROCK_BLOCKS);
-  if (existsSync3(bedrock)) {
+  const { readdir: readdir10 } = await import("node:fs/promises");
+  const bedrock = BEDROCK_BLOCKS;
+  if (!existsSync3(bedrock)) {
+    throw new Error(`[cooblemon] falta ${bedrock}: sin la lista de bloques vanilla se pierden las apariciones por bloque cercano`);
+  }
+  {
     const json = JSON.parse(await readFile4(bedrock, "utf8"));
     for (const entry of json.data_items ?? []) if (entry.name) vanillaBlockIds.add(entry.name);
   }
   const blocksDir = resolveFromRoot("bp/blocks");
   if (existsSync3(blocksDir)) {
-    for (const name of await readdir8(blocksDir)) {
+    for (const name of await readdir10(blocksDir)) {
       if (name.endsWith(".json")) portBlockIds.add(`cooblemon:${name.replace(/\.json$/, "")}`);
     }
   }
@@ -1863,7 +1930,7 @@ async function preloadNearbyBlockData() {
   for (const ns of ["cobblemon", "minecraft", "c"]) {
     const dir = resolveFromRoot(path4.join(MOD_DATA, ns, "tags/block"));
     if (!existsSync3(dir)) continue;
-    for (const name of await readdir8(dir)) {
+    for (const name of await readdir10(dir)) {
       if (!name.endsWith(".json")) continue;
       const tag = `${ns}:${name.replace(/\.json$/, "")}`;
       if (tagCache.has(tag)) continue;
@@ -1947,10 +2014,20 @@ function expandHerdLeader(entry) {
     ...entry,
     type: "pokemon",
     pokemon: leader.pokemon,
-    // El peso del líder dentro de la manada, no el de la manada entera.
-    weight: leader.weight ?? entry.weight,
+    // El peso de la **manada**, que es lo que sortea el mod (`PokemonHerdSpawnDetail`
+    // compite con su `weight`). El del líder solo decide quién encabeza dentro de
+    // ella, y como el líder alfa sale siempre, aquí no pinta nada. Con el del
+    // líder (30 frente a 10) los alfas salían el triple de lo que tocaba.
+    weight: entry.weight ?? leader.weight,
     levelRange: entry.levelRange ?? leader.levelRange
   };
+}
+function heldItemFromProperties(properties) {
+  const match = /(?:^|\s)held_item=([a-z0-9_.:-]+)/i.exec(properties);
+  if (!match) return void 0;
+  const id = match[1].toLowerCase();
+  if (id.startsWith("cobblemon:")) return `cooblemon:${id.slice("cobblemon:".length)}`;
+  return id.includes(":") ? id : `cooblemon:${id}`;
 }
 var SKIP_SPECIES = /* @__PURE__ */ new Set([
   "articuno",
@@ -1999,6 +2076,10 @@ function parsePokemonForm(pokemon) {
       if (sea === "east" || sea === "west") return sea;
     }
     if (formWord === "east" || formWord === "west") return formWord;
+    if (formWord.startsWith("region_bias=")) {
+      const region = formWord.slice("region_bias=".length);
+      if (region === "alola" || region === "galar" || region === "hisui") return `${region}_bias`;
+    }
   }
   return void 0;
 }
@@ -2233,6 +2314,7 @@ function ruleKey(species, form, biome, habitat, light, weather, dimension, heigh
   return `${species}|${form ?? ""}|${biome}|${habitat}|${light}|${weather}|${dimension}|${heightMin ?? ""}|${heightMax ?? ""}|${(baseBlocks ?? []).join(",")}|${(nearbyBlocks ?? []).join(",")}`;
 }
 async function convertJavaSpawnPools(options) {
+  const allowGeneric = options?.allowGeneric === true;
   if (options?.ignorePresetStructures) presetStructures.clear();
   else await loadSpawnPresetStructures();
   await preloadNearbyBlockData();
@@ -2359,14 +2441,14 @@ async function convertJavaSpawnPools(options) {
       for (const { selector, tag: biomeTag } of biomes.include) {
         const biome = selectorPrimaryTag(selector);
         if (!biome) continue;
-        if (shouldSkipGenericBiomeRule(biome, light, dimension, bucket, !!baseBlocks || !!nearbyBlocks)) {
+        if (!allowGeneric && shouldSkipGenericBiomeRule(biome, light, dimension, bucket, !!baseBlocks || !!nearbyBlocks)) {
           continue;
         }
-        const expandedBiomes = biome === "overworld" && bucket === "ultra-rare" ? [...ULTRA_RARE_OVERWORLD_BIOMES] : [biome];
+        const expandedBiomes = biome === "overworld" && bucket === "ultra-rare" && !allowGeneric ? [...ULTRA_RARE_OVERWORLD_BIOMES] : [biome];
         for (const resolvedBiome of expandedBiomes) {
           const ruleSelector = resolvedBiome === biome ? selector : { any: [resolvedBiome] };
           for (const variant of lightVariants) {
-            if (shouldSkipGenericBiomeRule(
+            if (!allowGeneric && shouldSkipGenericBiomeRule(
               resolvedBiome,
               variant.light,
               dimension,
@@ -2393,7 +2475,8 @@ async function convertJavaSpawnPools(options) {
               population,
               bucket,
               entryWeight: variant.weight,
-              alpha: /alpha=true/i.test(entry.pokemon ?? "") || void 0
+              alpha: /alpha=true/i.test(entry.pokemon ?? "") || void 0,
+              heldItem: /alpha=true/i.test(entry.pokemon ?? "") ? heldItemFromProperties(entry.pokemon ?? "") : void 0
             };
             const key = pendingRuleKey(pending);
             const existing = pendingDedup.get(key);
@@ -2429,6 +2512,7 @@ async function convertJavaSpawnPools(options) {
       entryWeight: rule.entryWeight,
       bucket: rule.bucket,
       ...rule.alpha ? { alpha: true } : {},
+      ...rule.heldItem ? { heldItem: rule.heldItem } : {},
       habitat: rule.habitat,
       population: rule.population,
       light: rule.light,
@@ -2488,10 +2572,14 @@ var DEDICATED_SPAWN_FORMS = /* @__PURE__ */ new Set(["alolan", "galarian", "hisu
 function isDedicatedSpawnForm(form) {
   return !!form && DEDICATED_SPAWN_FORMS.has(form);
 }
-function bundleSpawnRules(id, spawn) {
+var ASPECT_SPAWN_FORMS = /* @__PURE__ */ new Set(["alola_bias", "galar_bias", "hisui_bias"]);
+function isBundledSpawnForm(form) {
+  return isDedicatedSpawnForm(form) || !!form && ASPECT_SPAWN_FORMS.has(form);
+}
+function bundleSpawnRules(id, spawn, options) {
   const out = [];
   for (const rule of filterCoastalLandRules(spawn.rules)) {
-    if (shouldSkipGenericBiomeRule(
+    if (!options?.allowGeneric && shouldSkipGenericBiomeRule(
       rule.biome,
       rule.light,
       rule.dimension,
@@ -2510,12 +2598,13 @@ function bundleSpawnRules(id, spawn) {
       entryWeight: rule.entryWeight
     };
     if (rule.alpha) bundled.alpha = true;
+    if (rule.heldItem) bundled.heldItem = rule.heldItem;
     if (rule.biomeTag && rule.biomeTag !== rule.biome) bundled.biomeTag = rule.biomeTag;
     const selector = rule.biomeSelector;
     if (selector?.any && selector.any.length > 1) bundled.biomeAny = [...selector.any];
     if (selector?.all && selector.all.length > 0) bundled.biomeAll = [...selector.all];
     if (selector?.not && selector.not.length > 0) bundled.biomeNot = [...selector.not];
-    if (isDedicatedSpawnForm(rule.form)) bundled.form = rule.form;
+    if (isBundledSpawnForm(rule.form)) bundled.form = rule.form;
     if (rule.weather && rule.weather !== "any") bundled.weather = rule.weather;
     if (rule.baseBlocks && rule.baseBlocks.length > 0) bundled.baseBlocks = [...rule.baseBlocks];
     if (rule.nearbyBlocks && rule.nearbyBlocks.length > 0) bundled.nearbyBlocks = [...rule.nearbyBlocks];
@@ -3723,6 +3812,2312 @@ async function convertItems(opts) {
   return result;
 }
 
+// tools/kit/zones.ts
+import { existsSync as existsSync6 } from "node:fs";
+import { mkdir as mkdir2, readdir as readdir6, readFile as readFile7, rm as rm2, writeFile as writeFile4 } from "node:fs/promises";
+import path7 from "node:path";
+init_utils();
+var JAVA_DEFAULT_MAX_DISTANCE = 80;
+var MIN_RADIUS = 16;
+var MAX_RADIUS = 128;
+async function walk2(dir) {
+  if (!existsSync6(dir)) return [];
+  const out = [];
+  for (const entry of await readdir6(dir, { withFileTypes: true })) {
+    const full = path7.join(dir, entry.name);
+    if (entry.isDirectory()) out.push(...await walk2(full));
+    else out.push(full);
+  }
+  return out;
+}
+async function readJson(file) {
+  return JSON.parse((await readFile7(file, "utf8")).replace(/^﻿/, ""));
+}
+function relId(root, file, ext) {
+  return path7.relative(root, file).replace(/\\/g, "/").slice(0, -ext.length);
+}
+var FILL = 0.6;
+function radiusOf(structure) {
+  const raw = structure.max_distance_from_center;
+  const value = typeof raw === "number" ? raw : typeof raw?.horizontal === "number" ? Number(raw.horizontal) : JAVA_DEFAULT_MAX_DISTANCE;
+  return Math.max(MIN_RADIUS, Math.min(MAX_RADIUS, Math.round(value * FILL)));
+}
+async function convertZoneSpawns(opts) {
+  const { input, ns, own, tmp } = opts;
+  const data = path7.join(input, "data", ns);
+  const structureDir = path7.join(data, "worldgen", "structure");
+  const structures = /* @__PURE__ */ new Map();
+  for (const file of (await walk2(structureDir)).filter((f) => f.endsWith(".json"))) {
+    structures.set(`${ns}:${relId(structureDir, file, ".json")}`, await readJson(file));
+  }
+  if (structures.size === 0) return null;
+  const notes = [];
+  const expand = async (ref, seen = /* @__PURE__ */ new Set()) => {
+    if (!ref.startsWith("#")) return [ref];
+    if (seen.has(ref)) return [];
+    seen.add(ref);
+    const m = new RegExp(`^#${ns}:(.+)$`).exec(ref);
+    const file = m ? path7.join(data, "tags", "worldgen", "structure", `${m[1]}.json`) : "";
+    if (!m || !existsSync6(file)) return [ref];
+    const out = [];
+    for (const value of (await readJson(file)).values ?? []) {
+      const id = typeof value === "string" ? value : value?.id;
+      if (typeof id === "string") out.push(...await expand(id, seen));
+    }
+    return out;
+  };
+  const groups = /* @__PURE__ */ new Map();
+  const files = [
+    ...await walk2(path7.join(data, "spawn_pool_world")),
+    ...await walk2(path7.join(input, "data", "cobblemon", "spawn_pool_world"))
+  ].filter((f) => f.endsWith(".json"));
+  for (const file of files) {
+    const pool = await readJson(file);
+    if (pool.enabled === false) continue;
+    for (const spawn of pool.spawns ?? []) {
+      const condition = spawn.condition ?? {};
+      const refs = [...condition.structures ?? [], ...spawn.structures ?? []];
+      if (!refs.length) continue;
+      const resolved = (await Promise.all(refs.map((r) => expand(String(r))))).flat();
+      const zones2 = [...new Set(resolved.filter((r) => structures.has(r)))].sort();
+      if (!zones2.length) continue;
+      const others = resolved.filter((r) => !structures.has(r));
+      if (others.length) notes.push(`${String(spawn.id ?? spawn.pokemon)}: only in ${ns} structures; ${others.join(", ")} can't be told apart in Bedrock`);
+      const clone = JSON.parse(JSON.stringify(spawn));
+      const cond = { ...condition };
+      delete cond.structures;
+      clone.condition = cond;
+      delete clone.structures;
+      if (Array.isArray(clone.presets)) clone.presets = clone.presets.map((p) => String(p).toLowerCase());
+      const key = zones2.join("|");
+      const group = groups.get(key) ?? { zones: zones2, spawns: [] };
+      group.spawns.push(clone);
+      groups.set(key, group);
+    }
+  }
+  if (!groups.size) return null;
+  const used = /* @__PURE__ */ new Set();
+  const entries = [];
+  await mkdir2(tmp, { recursive: true });
+  try {
+    let i = 0;
+    for (const { zones: zones2, spawns } of groups.values()) {
+      const file = path7.join(tmp, `zone-${i++}.json`);
+      await writeFile4(file, JSON.stringify({ enabled: true, spawns }));
+      const pools = await convertJavaSpawnPools({ files: [file], generationOf: () => 0, quiet: true, allowGeneric: true });
+      for (const [n, spawn] of Object.entries(pools)) {
+        const id = own.has(n) ? `${ns}:${n}` : n;
+        const bundled = bundleSpawnRules(id, spawn, { allowGeneric: true });
+        const general = new Set(bundled.filter((e) => e.biome === "overworld").map((e) => JSON.stringify({ ...e, biome: "" })));
+        for (const entry of bundled) {
+          if (entry.biome === "sky" && general.has(JSON.stringify({ ...entry, biome: "" }))) continue;
+          entries.push({ ...entry, zone: zones2.length === 1 ? zones2[0] : zones2 });
+        }
+      }
+      zones2.forEach((z) => used.add(z));
+    }
+  } finally {
+    await rm2(tmp, { recursive: true, force: true });
+  }
+  const zones = {};
+  for (const id of [...used].sort()) zones[id] = { radius: radiusOf(structures.get(id)) };
+  logStep(`  zones: ${Object.keys(zones).length} structures with their own spawns, ${entries.length} entries`);
+  return { zones, entries, notes };
+}
+
+// tools/kit/structures.ts
+import { existsSync as existsSync8 } from "node:fs";
+import { mkdir as mkdir4, readdir as readdir7, readFile as readFile10, writeFile as writeFile6 } from "node:fs/promises";
+import path9 from "node:path";
+import nbt2 from "prismarine-nbt";
+
+// tools/lib/java-nbt-to-mcstructure.ts
+import { mkdir as mkdir3, readFile as readFile8, writeFile as writeFile5 } from "node:fs/promises";
+import { readFileSync as readFileSync2 } from "node:fs";
+import path8 from "node:path";
+import nbt from "prismarine-nbt";
+
+// tools/data/item-block-ids.ts
+init_utils();
+import { readFileSync } from "node:fs";
+var ITEM_BLOCK_ALIAS = {
+  x_defence: "x_defense",
+  x_special_attack: "x_sp_atk",
+  x_special_defence: "x_sp_def"
+};
+var EXTRA = ["relic_coin_sack"];
+function leerEtiqueta() {
+  const file = cobblemonJava("data/cobblemon/tags/item/item_blocks.json");
+  const tag = JSON.parse(readFileSync(file, "utf8"));
+  return tag.values.map((value) => {
+    const id = value.split(":").pop();
+    return ITEM_BLOCK_ALIAS[id] ?? id;
+  });
+}
+var ITEM_BLOCK_IDS = [...leerEtiqueta(), ...EXTRA];
+var INDICE = new Set(ITEM_BLOCK_IDS);
+
+// tools/lib/structure-block-map.ts
+var BEDROCK_BLOCK_VERSION = 18168865;
+var BLOCK_VERSION_OVERRIDES = {
+  // 1.26.50.0, la misma que pide el manifiesto del paquete.
+  "minecraft:stone": 18493952
+};
+function blockVersionFor(name) {
+  return BLOCK_VERSION_OVERRIDES[name] ?? BEDROCK_BLOCK_VERSION;
+}
+var BLOCK_ALIASES = {
+  "cobblemon:apricorn_door": "minecraft:wooden_door",
+  // Placas de mostrador Pokécenter (Java face=floor) → alfombra; evita oak_wall_sign vacío (?)
+  "cobblemon:red_plaque": "minecraft:red_carpet",
+  "cobblemon:white_plaque": "minecraft:white_carpet",
+  "cobblemon:black_plaque": "minecraft:black_carpet",
+  "cobblemon:blue_plaque": "minecraft:blue_carpet",
+  "cobblemon:yellow_plaque": "minecraft:yellow_carpet",
+  "cobblemon:green_plaque": "minecraft:green_carpet",
+  "cobblemon:pink_plaque": "minecraft:pink_carpet",
+  "cobblemon:gilded_chest": "minecraft:chest",
+  "cobblemon:gimmighoul_chest": "minecraft:chest",
+  "cobblemon:display_case": "minecraft:glass",
+  "cobblemon:pasteurizer": "minecraft:cauldron",
+  "cobblemon:monitor": "minecraft:glass"
+};
+var JAVA_TO_BEDROCK_VANILLA = {
+  // Los que trajo la torre de la Liga. Mismo caso: existen, con otro nombre.
+  "minecraft:end_stone_bricks": "minecraft:end_bricks",
+  "minecraft:end_stone_brick_stairs": "minecraft:end_brick_stairs",
+  "minecraft:warped_sign": "minecraft:warped_standing_sign",
+  "minecraft:oak_button": "minecraft:wooden_button",
+  // **Los que trajeron los pueblos de CobbleTowns.** Nombres que Bedrock nunca
+  // renombró, comprobados uno a uno contra su lista de bloques: la puerta de
+  // roble es «de madera» a secas, el caldero es uno solo con nivel de llenado,
+  // la cabeza de jugador no distingue suelo de pared, la maceta tampoco
+  // distingue qué planta lleva —eso va en los datos del bloque— y el cartel de
+  // roble oscuro se escribe junto.
+  "minecraft:oak_door": "minecraft:wooden_door",
+  // La puerta y la trampilla de apricorn del mod: el port no las tiene y se
+  // sustituyen por las de roble, el tono más cercano del juego base. Van aquí y
+  // no en una reescritura del conversor para que el camino normal les conserve
+  // la orientación: una puerta sin su `cardinal_direction` no se coloca.
+  "cobblemon:apricorn_door": "minecraft:wooden_door",
+  "cobblemon:apricorn_trapdoor": "minecraft:trapdoor",
+  "minecraft:oak_trapdoor": "minecraft:trapdoor",
+  "minecraft:water_cauldron": "minecraft:cauldron",
+  // **Las cabezas decorativas se quitan.** En el datapack son cabezas de
+  // jugador con textura propia —una URL dentro de su `SkullOwner`—, que es como
+  // se decoran fachadas en Java. Bedrock no sabe pintar esa textura y las
+  // dibujaba todas como Steve: 186 caras asomando de las paredes de treinta
+  // edificios. Quitarlas deja la pared lisa, que es lo que había detrás.
+  "minecraft:player_wall_head": "minecraft:air",
+  "minecraft:player_head": "minecraft:air",
+  "minecraft:dark_oak_wall_sign": "minecraft:darkoak_wall_sign",
+  "minecraft:stonecutter": "minecraft:stonecutter_block",
+  "minecraft:potted_allium": "minecraft:flower_pot",
+  "minecraft:potted_blue_orchid": "minecraft:flower_pot",
+  "minecraft:potted_brown_mushroom": "minecraft:flower_pot",
+  "minecraft:potted_red_mushroom": "minecraft:flower_pot",
+  "minecraft:potted_dark_oak_sapling": "minecraft:flower_pot",
+  "minecraft:potted_cherry_sapling": "minecraft:flower_pot",
+  // Los tres que trajeron los gimnasios de Radical Gyms. Bedrock los tiene,
+  // solo que con otro nombre: el bloque de luz va numerado por nivel, el
+  // cartel de roble no lleva la madera delante y el cobre encerado se llama a
+  // secas `waxed_copper`.
+  "minecraft:light": "minecraft:light_block_15",
+  "minecraft:oak_wall_sign": "minecraft:wall_sign",
+  "minecraft:waxed_copper_block": "minecraft:waxed_copper",
+  "minecraft:cobweb": "minecraft:web",
+  "minecraft:magma_block": "minecraft:magma",
+  "minecraft:snow_block": "minecraft:snow",
+  "minecraft:terracotta": "minecraft:hardened_clay",
+  "minecraft:cave_air": "minecraft:air",
+  "minecraft:void_air": "minecraft:air",
+  "minecraft:cobblestone_stairs": "minecraft:stone_stairs",
+  "minecraft:rooted_dirt": "minecraft:dirt_with_roots",
+  "minecraft:flowering_azalea_leaves": "minecraft:azalea_leaves_flowered",
+  "minecraft:redstone_wall_torch": "minecraft:redstone_torch",
+  "minecraft:wall_torch": "minecraft:torch",
+  // `minecraft:grass` desapareció de Bedrock al renombrarse a `grass_block`, así
+  // que este alias estaba generando bloques desconocidos: se deja tal cual.
+  //
+  // El resto son nombres que en Bedrock nunca coincidieron con los de Java.
+  "minecraft:grass": "minecraft:short_grass",
+  "minecraft:tall_grass": "minecraft:tall_grass",
+  "minecraft:oak_trapdoor": "minecraft:trapdoor",
+  "minecraft:oak_pressure_plate": "minecraft:wooden_pressure_plate",
+  "minecraft:repeater": "minecraft:unpowered_repeater",
+  "minecraft:tripwire": "minecraft:trip_wire",
+  "minecraft:spawner": "minecraft:mob_spawner",
+  "minecraft:stone_slab": "minecraft:normal_stone_slab",
+  "minecraft:tall_seagrass": "minecraft:seagrass",
+  "minecraft:kelp_plant": "minecraft:kelp",
+  "minecraft:cave_vines_plant": "minecraft:cave_vines",
+  "minecraft:big_dripleaf_stem": "minecraft:big_dripleaf",
+  "minecraft:small_dripleaf": "minecraft:small_dripleaf_block",
+  "minecraft:potted_jungle_sapling": "minecraft:flower_pot",
+  "minecraft:white_banner": "minecraft:standing_banner",
+  "minecraft:white_wall_banner": "minecraft:wall_banner",
+  "minecraft:brown_wall_banner": "minecraft:wall_banner",
+  "minecraft:orange_wall_banner": "minecraft:wall_banner",
+  // Renombrado a `iron_chain` con la actualización de las cadenas de cobre.
+  "minecraft:chain": "minecraft:iron_chain",
+  "minecraft:dirt_path": "minecraft:grass_path",
+  "minecraft:melon": "minecraft:melon_block",
+  "minecraft:bricks": "minecraft:brick_block",
+  "minecraft:nether_bricks": "minecraft:nether_brick",
+  "minecraft:red_nether_bricks": "minecraft:red_nether_brick",
+  "minecraft:slime_block": "minecraft:slime",
+  // Puertas / camas Java → IDs Bedrock legacy-compatibles en estructuras
+  "minecraft:oak_door": "minecraft:wooden_door",
+  "minecraft:potted_cactus": "minecraft:flower_pot",
+  "minecraft:potted_dead_bush": "minecraft:flower_pot",
+  "minecraft:potted_fern": "minecraft:flower_pot",
+  "minecraft:potted_oak_sapling": "minecraft:flower_pot",
+  "minecraft:potted_poppy": "minecraft:flower_pot",
+  "minecraft:potted_dandelion": "minecraft:flower_pot",
+  "minecraft:potted_azure_bluet": "minecraft:flower_pot",
+  "minecraft:potted_oxeye_daisy": "minecraft:flower_pot",
+  "minecraft:potted_red_tulip": "minecraft:flower_pot",
+  "minecraft:potted_orange_tulip": "minecraft:flower_pot",
+  "minecraft:potted_white_tulip": "minecraft:flower_pot",
+  "minecraft:potted_pink_tulip": "minecraft:flower_pot",
+  "minecraft:potted_cornflower": "minecraft:flower_pot",
+  "minecraft:potted_lily_of_the_valley": "minecraft:flower_pot",
+  "minecraft:potted_wither_rose": "minecraft:flower_pot",
+  "minecraft:potted_bamboo": "minecraft:flower_pot",
+  // Nombres que Bedrock nunca renombró al de Java. Los detecta
+  // `verify:structure-blocks` contra la lista oficial de bloques.
+  "minecraft:dead_bush": "minecraft:deadbush",
+  "minecraft:lily_pad": "minecraft:waterlily",
+  "minecraft:sugar_cane": "minecraft:reeds",
+  "minecraft:weeping_vines_plant": "minecraft:weeping_vines",
+  "minecraft:twisting_vines_plant": "minecraft:twisting_vines",
+  "minecraft:nether_quartz_ore": "minecraft:quartz_ore",
+  "minecraft:cyan_wall_banner": "minecraft:wall_banner",
+  "minecraft:potted_torchflower": "minecraft:flower_pot",
+  "minecraft:prismarine_brick_stairs": "minecraft:prismarine_bricks_stairs",
+  // Errata en los datos del mod: `minecraft:dirt_block` no existe en ninguna
+  // edición. Aparece 7 veces como `final_state` de jigsaw en los hábitats.
+  "minecraft:dirt_block": "minecraft:dirt",
+  // Otra errata del mod: "strucutre" por "structure".
+  "minecraft:strucutre_void": "minecraft:structure_void"
+};
+var ITEM_BLOCK_ALIASES = Object.fromEntries(
+  ITEM_BLOCK_IDS.map((port) => {
+    const java = Object.entries(ITEM_BLOCK_ALIAS).find(([, nuestro]) => nuestro === port)?.[0];
+    return [`cobblemon:${java ?? port}`, `cooblemon:${port}_block`];
+  })
+);
+var EXISTING_CUSTOM = /* @__PURE__ */ new Set([
+  "cooblemon:healing_machine",
+  "cooblemon:pc",
+  "cooblemon:restoration_tank",
+  "cooblemon:restoration_monitor",
+  "cooblemon:tumblestone_block",
+  "cooblemon:tumblestone_bricks",
+  "cooblemon:smooth_tumblestone",
+  "cooblemon:black_tumblestone_block",
+  "cooblemon:sky_tumblestone_block",
+  "cooblemon:apricorn_log",
+  "cooblemon:apricorn_wood",
+  "cooblemon:apricorn_planks",
+  "cooblemon:apricorn_leaves",
+  "cooblemon:saccharine_log",
+  "cooblemon:saccharine_planks",
+  "cooblemon:saccharine_leaves",
+  // Hábitats: el bloque que los gobierna. Sin esto la red de seguridad lo
+  // convertía en piedra y las 584 estructuras salían sin su spawner.
+  "cooblemon:habitat_block",
+  // Mega Showdown: los dos meteoritos (megaroid / mega_site).
+  "cooblemon:mega_meteorid_block",
+  "cooblemon:mega_meteorid_radiated_block",
+  "cooblemon:keystone_ore",
+  "cooblemon:mega_stone_crystal",
+  "cooblemon:wishing_star_crystal",
+  "cooblemon:mega_meteorid_fire_ore",
+  "cooblemon:mega_meteorid_thunder_ore",
+  "cooblemon:mega_meteorid_water_ore",
+  "cooblemon:mega_meteorid_leaf_ore",
+  "cooblemon:mega_meteorid_moon_ore",
+  "cooblemon:mega_meteorid_sun_ore",
+  "cooblemon:mega_meteorid_dawn_ore",
+  "cooblemon:mega_meteorid_shiny_ore",
+  "cooblemon:mega_meteorid_ice_ore",
+  "cooblemon:mega_meteorid_dusk_ore"
+]);
+var PORTED_NAMESPACES = [
+  ["cobblemon:", "cooblemon:"],
+  ["mega_showdown:", "cooblemon:"],
+  ["cobblefurnies:", "cooblemon:"],
+  ["cobbletowns:", "cooblemon:towns/"]
+];
+var FURNITURE_FAMILIES = [
+  // Cortinas y tapizados: lo que importa es el pano de color.
+  { pattern: /^(\w+)_curtain$/, to: (c) => `minecraft:${c}_wool` },
+  { pattern: /^(\w+)_poke_wool$/, to: (c) => `minecraft:${c}_wool` },
+  { pattern: /^(\w+)_poke_wool_carpet$/, to: (c) => `minecraft:${c}_carpet` },
+  { pattern: /^(\w+)_sofa$/, to: (c) => `minecraft:${c}_wool` },
+  // Mobiliario: terracota del color, que es mate y no canta como el hormigon.
+  { pattern: /^(\w+)_cabinetry$/, to: (c) => `minecraft:${c}_terracotta` },
+  // Taburetes: media altura, para que se sigan leyendo como asiento.
+  { pattern: /^(\w+_)?(dark_)?stool$/, to: () => "minecraft:spruce_slab" },
+  // Lamparas: da igual el color, lo que hace falta es que alumbre.
+  { pattern: /^(\w+)_lamp$/, to: () => "minecraft:lantern" }
+];
+var FURNITURE_SINGLES = {
+  // El suelo de todos los gimnasios: un mosaico claro.
+  vanilla_mosaic: "minecraft:quartz_bricks",
+  // Moldura de pared de abeto.
+  spruce_wall_support: "minecraft:stripped_spruce_wood",
+  // Estatua de dos bloques de alto.
+  statue_ancient: "minecraft:chiseled_stone_bricks",
+  // Plantas de interior. Las de dos alturas se quedan en hojas arriba y abajo:
+  // separar tiesto y copa pediria mirar el estado `half`, y a cambio se veria
+  // casi igual.
+  mini_topiary: "minecraft:oak_leaves",
+  bonsai_plant: "minecraft:oak_leaves",
+  potted_pothos: "minecraft:flower_pot"
+};
+var PORTED_FURNITURE = /* @__PURE__ */ new Set();
+function registerPortedFurniture(names) {
+  for (const name of names) PORTED_FURNITURE.add(name);
+}
+var TWO_BLOCK_FURNITURE = /* @__PURE__ */ new Set();
+function registerTwoBlockFurniture(names) {
+  for (const name of names) TWO_BLOCK_FURNITURE.add(name);
+}
+function remapFurniture(id) {
+  if (!id.startsWith("cobblefurnies:")) return null;
+  const name = id.slice("cobblefurnies:".length);
+  if (PORTED_FURNITURE.has(name)) return null;
+  const single = FURNITURE_SINGLES[name];
+  if (single) return single;
+  for (const { pattern, to } of FURNITURE_FAMILIES) {
+    const match = pattern.exec(name);
+    if (match) return to(match[1] ?? "");
+  }
+  return null;
+}
+function remapNamespaceId(id) {
+  if (!id) return "minecraft:air";
+  for (const [ns, target] of PORTED_NAMESPACES) {
+    if (id.startsWith(ns)) return `${target}${id.slice(ns.length)}`;
+  }
+  return id;
+}
+var customBlockStates = /* @__PURE__ */ new Map();
+var vanillaBlockStates = /* @__PURE__ */ new Map();
+function registerVanillaBlockStates(states) {
+  vanillaBlockStates.clear();
+  for (const [id, keys] of states) vanillaBlockStates.set(id, keys);
+}
+function allowedStates(name) {
+  return customBlockStates.get(name) ?? vanillaBlockStates.get(name);
+}
+var DOOR_CARDINAL = {
+  east: "south",
+  south: "west",
+  west: "north",
+  north: "east"
+};
+var OPPOSITE = {
+  north: "south",
+  south: "north",
+  east: "west",
+  west: "east"
+};
+var FACING_DIRECTION_INDEX = {
+  down: 0,
+  up: 1,
+  north: 2,
+  south: 3,
+  west: 4,
+  east: 5
+};
+function applyFacing(states, allowed, facing, isDoor, isDoorUpper, facingIsWallSide = false) {
+  void isDoorUpper;
+  if (!facing) return;
+  if (allowed.has("minecraft:cardinal_direction") && HORIZONTAL.has(facing)) {
+    states["minecraft:cardinal_direction"] = isDoor ? DOOR_CARDINAL[facing] ?? facing : facingIsWallSide ? OPPOSITE[facing] ?? facing : facing;
+    return;
+  }
+  if (allowed.has("minecraft:block_face")) {
+    states["minecraft:block_face"] = facing;
+    return;
+  }
+  if (allowed.has("minecraft:facing_direction")) {
+    states["minecraft:facing_direction"] = facing;
+    return;
+  }
+  if (allowed.has("torch_facing_direction") && HORIZONTAL.has(facing)) {
+    states["torch_facing_direction"] = OPPOSITE[facing] ?? facing;
+    return;
+  }
+  if (allowed.has("facing_direction") && FACING_DIRECTION_INDEX[facing] !== void 0) {
+    states["facing_direction"] = FACING_DIRECTION_INDEX[facing];
+  }
+}
+function registerCustomBlockStates(states) {
+  customBlockStates.clear();
+  for (const [id, keys] of states) customBlockStates.set(id, keys);
+}
+function isExistingCustom(id) {
+  if (customBlockStates.size > 0) return customBlockStates.has(id);
+  return EXISTING_CUSTOM.has(id);
+}
+function remapBlockId(rawJavaName) {
+  const javaName = rawJavaName.replace(/\[.*$/, "").trim();
+  const bedMatch = /^minecraft:(\w+)_bed$/.exec(javaName);
+  if (bedMatch) return "minecraft:bed";
+  const aliased = BLOCK_ALIASES[javaName] ?? ITEM_BLOCK_ALIASES[javaName] ?? JAVA_TO_BEDROCK_VANILLA[javaName] ?? javaName;
+  const remapped = remapNamespaceId(aliased);
+  if (remapped === "cooblemon:restoration_tank_top" || remapped === "cooblemon:pasture_top") {
+    return "minecraft:air";
+  }
+  if (remapped.includes("waystone")) return "minecraft:lodestone";
+  const furniture = remapFurniture(javaName);
+  if (furniture) return furniture;
+  if (!remapped.startsWith("minecraft:") && !remapped.startsWith("cooblemon:")) {
+    return "minecraft:stone";
+  }
+  if (remapped.startsWith("cooblemon:") && !isExistingCustom(remapped)) {
+    if (remapped.includes("door")) return "minecraft:wooden_door";
+    if (remapped.includes("chest")) return "minecraft:chest";
+    if (remapped.includes("sign") || remapped.includes("plaque")) return "minecraft:red_carpet";
+    if (remapped.includes("berry") || remapped.includes("crop") || remapped.includes("apricorn")) {
+      return "minecraft:oak_leaves";
+    }
+    return "minecraft:stone";
+  }
+  return remapped;
+}
+var HORIZONTAL = /* @__PURE__ */ new Set(["north", "south", "east", "west"]);
+var STAIRS_WEIRDO = { east: 0, west: 1, south: 2, north: 3 };
+var FACING_DIRECTION = {
+  down: 0,
+  up: 1,
+  east: 2,
+  west: 3,
+  south: 4,
+  north: 5
+};
+function isStairsBlock(name) {
+  return name.endsWith("_stairs") || name === "minecraft:stone_stairs";
+}
+var JAVA_UPPER_HALVES = {
+  "cobblemon:pc": { prop: "part", value: "top" }
+};
+var FACING_IS_WALL_SIDE = /* @__PURE__ */ new Set(["cobblemon:pc", "cobblemon:healing_machine"]);
+var BERRY_MAX_AGE = 5;
+var TRAPDOOR_DIRECTION = {
+  east: 0,
+  west: 1,
+  south: 2,
+  north: 3
+};
+var JIGSAW_FACING = {
+  down: 0,
+  up: 1,
+  north: 2,
+  south: 3,
+  west: 4,
+  east: 5
+};
+var JIGSAW_ROTATION = {
+  north: 0,
+  east: 1,
+  south: 2,
+  west: 3
+};
+function jigsawStates(orientation) {
+  if (!orientation) return null;
+  const [front, top] = orientation.split("_");
+  const facing = front ? JIGSAW_FACING[front] : void 0;
+  if (facing === void 0) return null;
+  const rotation = top && top !== "up" ? JIGSAW_ROTATION[top] ?? 0 : 0;
+  return { facing_direction: facing, rotation };
+}
+function mapJavaBlockState(javaName, props) {
+  const upper = JAVA_UPPER_HALVES[javaName];
+  if (upper && props?.[upper.prop] === upper.value) {
+    return { name: "minecraft:air", states: {}, waterlogged: false };
+  }
+  const name = remapBlockId(javaName);
+  if (name === "minecraft:jigsaw") {
+    const js = jigsawStates(props?.orientation);
+    if (js) return { name, states: js, waterlogged: false };
+  }
+  const states = {};
+  const p = props ?? {};
+  const waterlogged = p.waterlogged === "true";
+  const isDoor = name === "minecraft:wooden_door" || /_door$/.test(name);
+  const isBed = name === "minecraft:bed";
+  const isCarpet = name.endsWith("_carpet");
+  const isStairs = isStairsBlock(name);
+  const isBarrel = name === "minecraft:barrel";
+  const isTrapdoor = /_trapdoor$/.test(name) || name === "minecraft:trapdoor";
+  if (isTrapdoor) {
+    if (p.facing && TRAPDOOR_DIRECTION[p.facing] !== void 0) {
+      states["direction"] = TRAPDOOR_DIRECTION[p.facing];
+    }
+    states["upside_down_bit"] = p.half === "top";
+    states["open_bit"] = p.open === "true";
+  }
+  if (!isDoor && !isBed && !isCarpet && !isTrapdoor) {
+    if (isStairs) {
+      if (p.facing && STAIRS_WEIRDO[p.facing] !== void 0) {
+        states["weirdo_direction"] = STAIRS_WEIRDO[p.facing];
+      }
+    } else if (isBarrel) {
+      if (p.facing && FACING_DIRECTION[p.facing] !== void 0) {
+        states["facing_direction"] = FACING_DIRECTION[p.facing];
+      }
+    } else if (p.facing && HORIZONTAL.has(p.facing)) {
+      states["minecraft:cardinal_direction"] = FACING_IS_WALL_SIDE.has(javaName) ? OPPOSITE[p.facing] ?? p.facing : p.facing;
+    } else if (p.facing === "up" || p.facing === "down") {
+      states["facing_direction"] = p.facing === "up" ? 1 : 0;
+    }
+  }
+  if (p.axis === "x" || p.axis === "y" || p.axis === "z") {
+    states["pillar_axis"] = p.axis;
+  }
+  if (javaName === "minecraft:pointed_dripstone") {
+    states["hanging"] = p.vertical_direction === "down";
+    const grosor = p.thickness === "tip_merge" ? "merge" : p.thickness;
+    if (grosor) states["dripstone_thickness"] = grosor;
+  }
+  if (p.amount) {
+    const puestas = Number(p.amount);
+    if (Number.isFinite(puestas)) {
+      states["cooblemon:amount"] = Math.min(4, Math.max(1, Math.round(puestas)));
+    }
+  }
+  if (p.half === "top") states["upside_down_bit"] = 1;
+  if (p.half === "bottom" && (isStairs || javaName.includes("trapdoor"))) {
+    states["upside_down_bit"] = 0;
+  }
+  if (p.type === "top") states["minecraft:vertical_half"] = "top";
+  if (p.type === "bottom") states["minecraft:vertical_half"] = "bottom";
+  if (p.type === "double") states["minecraft:vertical_half"] = "bottom";
+  if (!isDoor) {
+    if (p.open === "true") states["open_bit"] = 1;
+    if (p.open === "false") states["open_bit"] = 0;
+  }
+  if (p.powered === "true") states["powered_bit"] = 1;
+  if (isBed) {
+    const bedColor = /^minecraft:(\w+)_bed$/.exec(javaName);
+    if (bedColor) states["color"] = bedColor[1];
+    if (p.facing && HORIZONTAL.has(p.facing)) {
+      const dirMap = { south: 0, west: 1, north: 2, east: 3 };
+      states["direction"] = dirMap[p.facing] ?? 0;
+    }
+    if (p.part === "head") states["head_piece_bit"] = 1;
+    if (p.part === "foot") states["head_piece_bit"] = 0;
+  }
+  if (isDoor) {
+    states["upper_block_bit"] = p.half === "upper" ? 1 : 0;
+    states["door_hinge_bit"] = p.hinge === "right" ? 1 : 0;
+    states["open_bit"] = p.open === "true" ? 1 : 0;
+  }
+  if (/^cooblemon:[a-z]+_berry$/.test(name)) {
+    const age = Number(p.age);
+    if (Number.isFinite(age)) {
+      states["cooblemon:age"] = Math.max(0, Math.min(BERRY_MAX_AGE, Math.floor(age)));
+    }
+  }
+  if (name === "cooblemon:healing_machine") {
+    const charge = Number(p.charge ?? "0");
+    states["cooblemon:active"] = false;
+    states["cooblemon:machine_state"] = Math.max(0, Math.min(5, Number.isFinite(charge) ? Math.floor(charge) : 0));
+    if (p.facing && HORIZONTAL.has(p.facing)) {
+      states["minecraft:cardinal_direction"] = p.facing;
+    }
+  }
+  const allowed = allowedStates(name);
+  if (allowed) {
+    for (const key of Object.keys(states)) {
+      if (!allowed.has(key)) delete states[key];
+    }
+    applyFacing(
+      states,
+      allowed,
+      p.facing,
+      isDoor,
+      p.half === "upper",
+      FACING_IS_WALL_SIDE.has(javaName)
+    );
+  }
+  return { name, states, waterlogged };
+}
+function remapStructureRef(ref) {
+  if (!ref || ref === "minecraft:empty") return ref;
+  return remapNamespaceId(ref);
+}
+var knownJigsawPools = /* @__PURE__ */ new Set();
+function registerKnownJigsawPools(pools) {
+  knownJigsawPools.clear();
+  for (const pool of pools) knownJigsawPools.add(pool);
+}
+function isMissingJigsawPool(pool) {
+  if (knownJigsawPools.size === 0) return false;
+  if (!pool || pool === "minecraft:empty") return false;
+  return !knownJigsawPools.has(pool);
+}
+function isBlankStructureRef(ref) {
+  const trimmed = ref.trim();
+  return trimmed.length === 0 || trimmed.endsWith(":");
+}
+function isUnavailableJigsawPool(pool) {
+  if (!pool || pool === "minecraft:empty") return false;
+  for (const ns of addonJigsawNamespaces) if (pool.startsWith(`${ns}:`)) return false;
+  return pool.startsWith("repurposed_structures:") || pool.includes("village/");
+}
+var addonJigsawNamespaces = /* @__PURE__ */ new Set();
+function registerAddonJigsawNamespace(ns) {
+  addonJigsawNamespaces.add(ns);
+}
+function clampStructureSetSpacing(spacing, separation) {
+  const s = Math.max(1, Math.floor(spacing));
+  let sep = Math.max(0, Math.floor(separation));
+  const maxSep = Math.floor(s / 2) - 1;
+  if (sep > maxSep) sep = Math.max(0, maxSep);
+  return { spacing: s, separation: sep };
+}
+
+// tools/lib/structure-loot.ts
+init_utils();
+function remapLootTableRef(javaId) {
+  const raw = String(javaId ?? "").trim();
+  if (!raw) return "";
+  let out;
+  if (raw.startsWith("loot_tables/")) {
+    out = raw;
+  } else if (raw.startsWith("cobblemon:")) {
+    out = `loot_tables/cooblemon/${raw.slice("cobblemon:".length)}`;
+  } else if (raw.startsWith("cooblemon:")) {
+    out = `loot_tables/cooblemon/${raw.slice("cooblemon:".length)}`;
+  } else if (raw.startsWith("cobbletowns:")) {
+    out = `loot_tables/cooblemon/towns/${raw.slice("cobbletowns:".length)}`;
+  } else if (raw.startsWith("mega_showdown:")) {
+    out = `loot_tables/mega_showdown/${raw.slice("mega_showdown:".length)}`;
+  } else if (raw.startsWith("minecraft:")) {
+    const rest = raw.slice("minecraft:".length);
+    out = rest.startsWith("loot_tables/") ? rest : `loot_tables/${rest}`;
+  } else if (/^[a-z0-9_.-]+:/.test(raw)) {
+    out = `loot_tables/${raw.replace(":", "/")}`;
+  } else {
+    out = `loot_tables/${raw}`;
+  }
+  return out.endsWith(".json") ? out : `${out}.json`;
+}
+var JAVA_TO_BEDROCK_ITEM = {
+  "minecraft:cobweb": "minecraft:web",
+  "minecraft:map": "minecraft:empty_map"
+};
+function remapItemId(id) {
+  if (id.startsWith("cobblemon:")) return `cooblemon:${id.slice("cobblemon:".length)}`;
+  if (id.startsWith("mega_showdown:")) return `cooblemon:${id.slice("mega_showdown:".length)}`;
+  return JAVA_TO_BEDROCK_ITEM[id] ?? id;
+}
+function convertRolls(rolls) {
+  if (typeof rolls === "number") return rolls;
+  if (rolls && typeof rolls === "object") {
+    const r = rolls;
+    if (typeof r.min === "number" && typeof r.max === "number") {
+      return { min: Math.min(r.min, r.max), max: Math.max(r.min, r.max) };
+    }
+    if (r.type === "minecraft:uniform" || r.type === "uniform") {
+      const min = Number(r.min ?? 0);
+      const max = Number(r.max ?? 1);
+      return { min: Math.min(min, max), max: Math.max(min, max) };
+    }
+    if (r.type === "minecraft:constant" || r.type === "constant") {
+      return Number(r.value ?? r.min ?? 1);
+    }
+  }
+  return 1;
+}
+function extractTmMoveFromFunctions(fns) {
+  if (!Array.isArray(fns)) return null;
+  for (const raw of fns) {
+    if (!raw || typeof raw !== "object") continue;
+    const f = raw;
+    const name = String(f.function ?? "").replace(/^minecraft:/, "");
+    if (name !== "set_components") continue;
+    const components = f.components;
+    if (!components || typeof components !== "object") continue;
+    const tmMove = components["cobblemon:tm_move"];
+    if (!tmMove || typeof tmMove !== "object") continue;
+    const move = String(tmMove.move ?? "").toLowerCase().replace(/^cobblemon:/, "");
+    if (move) return move;
+  }
+  return null;
+}
+function convertFunctions(fns) {
+  if (!Array.isArray(fns)) return void 0;
+  const out = [];
+  for (const raw of fns) {
+    if (!raw || typeof raw !== "object") continue;
+    const f = raw;
+    const name = String(f.function ?? "").replace(/^minecraft:/, "");
+    if (name === "set_count") {
+      const count = f.count;
+      if (typeof count === "number") {
+        out.push({ function: "set_count", count });
+      } else if (count && typeof count === "object") {
+        const c = count;
+        out.push({
+          function: "set_count",
+          count: {
+            min: Number(c.min ?? 1),
+            max: Number(c.max ?? c.min ?? 1)
+          }
+        });
+      }
+    } else if (name === "enchant_randomly") {
+      out.push({ function: "enchant_randomly" });
+    } else if (name === "enchant_with_levels") {
+      out.push({
+        function: "enchant_with_levels",
+        levels: typeof f.levels === "number" ? f.levels : 30,
+        treasure: Boolean(f.treasure)
+      });
+    }
+  }
+  return out.length ? out : void 0;
+}
+function convertEntry(entry) {
+  const type = String(entry.type ?? "").replace(/^minecraft:/, "");
+  if (type === "empty") return { type: "empty", weight: Number(entry.weight ?? 1) };
+  if (type === "item") {
+    let name = remapItemId(String(entry.name ?? ""));
+    if (!name) return null;
+    const tmMove = extractTmMoveFromFunctions(entry.functions);
+    if (tmMove && (name === "cooblemon:technical_machine" || name === "cobblemon:technical_machine")) {
+      name = `cooblemon:tm_${tmMove}`;
+    }
+    const out = {
+      type: "item",
+      name,
+      weight: Number(entry.weight ?? 1)
+    };
+    const functions = convertFunctions(entry.functions);
+    if (functions) out.functions = functions;
+    return out;
+  }
+  if (type === "loot_table") {
+    const name = remapLootTableRef(String(entry.name ?? entry.value ?? ""));
+    if (!name) return null;
+    return {
+      type: "loot_table",
+      name,
+      weight: Number(entry.weight ?? 1)
+    };
+  }
+  return null;
+}
+function convertPool(pool) {
+  const entriesIn = Array.isArray(pool.entries) ? pool.entries : [];
+  const entries = [];
+  for (const e of entriesIn) {
+    const converted = convertEntry(e);
+    if (converted) entries.push(converted);
+  }
+  if (!entries.length) return null;
+  const out = {
+    rolls: convertRolls(pool.rolls ?? 1),
+    entries
+  };
+  if (typeof pool.bonus_rolls === "number") out.bonus_rolls = pool.bonus_rolls;
+  return out;
+}
+function javaLootTableToBedrock(java) {
+  const poolsIn = Array.isArray(java.pools) ? java.pools : [];
+  const pools = [];
+  for (const p of poolsIn) {
+    const converted = convertPool(p);
+    if (converted) pools.push(converted);
+  }
+  if (!pools.length) return null;
+  return { pools };
+}
+
+// tools/lib/java-nbt-to-mcstructure.ts
+init_utils();
+
+// bp/src/data/habitat-mimics.generated.ts
+var HABITAT_MIMICS = {
+  "minecraft:grass_block": { group: 0, slot: 1 },
+  "minecraft:sand": { group: 0, slot: 2 },
+  "minecraft:mud": { group: 0, slot: 3 },
+  "minecraft:snow_block": { group: 0, slot: 4 },
+  "minecraft:basalt": { group: 0, slot: 5 },
+  "minecraft:gravel": { group: 0, slot: 6 },
+  "minecraft:oak_leaves": { group: 0, slot: 7 },
+  "minecraft:sandstone": { group: 0, slot: 8 },
+  "minecraft:red_sand": { group: 0, slot: 9 },
+  "minecraft:copper_ore": { group: 0, slot: 10 },
+  "minecraft:terracotta": { group: 0, slot: 11 },
+  "minecraft:nether_quartz_ore": { group: 0, slot: 12 },
+  "minecraft:cracked_nether_bricks": { group: 0, slot: 13 },
+  "minecraft:coarse_dirt": { group: 0, slot: 14 },
+  "minecraft:birch_log": { group: 0, slot: 15 },
+  "minecraft:end_stone": { group: 1, slot: 0 },
+  "minecraft:flowering_azalea_leaves": { group: 1, slot: 1 },
+  "minecraft:acacia_log": { group: 1, slot: 2 },
+  "minecraft:packed_ice": { group: 1, slot: 3 },
+  "minecraft:smooth_basalt": { group: 1, slot: 4 },
+  "minecraft:mycelium": { group: 1, slot: 5 },
+  "minecraft:oak_log": { group: 1, slot: 6 },
+  "minecraft:mossy_stone_bricks": { group: 1, slot: 7 },
+  "minecraft:bone_block": { group: 1, slot: 8 },
+  "minecraft:spruce_log": { group: 1, slot: 9 },
+  "minecraft:mossy_cobblestone": { group: 1, slot: 10 },
+  "minecraft:stone": { group: 1, slot: 11 },
+  "minecraft:packed_mud": { group: 1, slot: 12 },
+  "minecraft:tuff": { group: 1, slot: 13 },
+  "minecraft:mangrove_roots": { group: 1, slot: 14 },
+  "minecraft:warped_nylium": { group: 1, slot: 15 },
+  "minecraft:cobbled_deepslate": { group: 2, slot: 0 },
+  "minecraft:dripstone_block": { group: 2, slot: 1 },
+  "minecraft:gold_block": { group: 2, slot: 2 },
+  "minecraft:crimson_nylium": { group: 2, slot: 3 },
+  "minecraft:dirt": { group: 2, slot: 4 }
+};
+var HABITAT_PRESETS = {
+  "2:5": { pool: "abandoned_fortress", mimicId: "cracked_nether_bricks" },
+  "2:6": { pool: "abandoned_village_house", mimicId: "grass_block" },
+  "2:7": { pool: "abandoned_village_house", mimicId: "sand" },
+  "2:8": { pool: "abandoned_village_house", mimicId: "snow_block" },
+  "2:9": { pool: "badlands_shaded_rock", mimicId: "terracotta" },
+  "2:10": { pool: "berry_patch", mimicId: "oak_leaves" },
+  "2:11": { pool: "birch_wildfire_scar", mimicId: "birch_log" },
+  "2:12": { pool: "bug_mound", mimicId: "packed_mud" },
+  "2:13": { pool: "carved_ice_spikes", mimicId: "snow_block" },
+  "2:14": { pool: "chorus_briar", mimicId: "end_stone" },
+  "2:15": { pool: "crimson_fungal_dwelling", mimicId: "crimson_nylium" },
+  "3:0": { pool: "custom__default_pool", mimicId: "stone" },
+  "3:1": { pool: "deep_roots", mimicId: "coarse_dirt" },
+  "3:2": { pool: "deep_roots", mimicId: "flowering_azalea_leaves" },
+  "3:3": { pool: "deep_sea_spire", mimicId: "tuff" },
+  "3:4": { pool: "desert_oasis", mimicId: "acacia_log" },
+  "3:5": { pool: "desert_shaded_rock", mimicId: "sandstone" },
+  "3:6": { pool: "drifting_icebergs", mimicId: "packed_ice" },
+  "3:7": { pool: "earthen_hives", mimicId: "mud" },
+  "3:8": { pool: "exposed_geode", mimicId: "smooth_basalt" },
+  "3:9": { pool: "fae_mounds", mimicId: "mycelium" },
+  "3:10": { pool: "flowerbed_clearing", mimicId: "grass_block" },
+  "3:11": { pool: "freshwater_pond", mimicId: "gravel" },
+  "3:12": { pool: "freshwater_pond", mimicId: "dirt" },
+  "3:13": { pool: "fungal_dwelling", mimicId: "mud" },
+  "3:14": { pool: "lost_cave_ruins", mimicId: "mossy_cobblestone" },
+  "3:15": { pool: "lush_canopy", mimicId: "grass_block" },
+  "4:0": { pool: "lush_cenote", mimicId: "stone" },
+  "4:1": { pool: "lush_peat_bog", mimicId: "mud" },
+  "4:2": { pool: "meteorite_impact", mimicId: "cobbled_deepslate" },
+  "4:3": { pool: "natural_lightning_rod", mimicId: "copper_ore" },
+  "4:4": { pool: "oak_wildfire_scar", mimicId: "oak_log" },
+  "4:5": { pool: "parched_peat_bog", mimicId: "mud" },
+  "4:6": { pool: "pinkflowerbed_clearing", mimicId: "grass_block" },
+  "4:7": { pool: "quartz_spikes", mimicId: "nether_quartz_ore" },
+  "4:8": { pool: "reclaimed_desert_monument", mimicId: "sandstone" },
+  "4:9": { pool: "reclaimed_lush_monument", mimicId: "mossy_stone_bricks" },
+  "4:10": { pool: "rocky_outcrop", mimicId: "dripstone_block" },
+  "4:11": { pool: "rocky_tide_pool", mimicId: "gravel" },
+  "4:12": { pool: "root_nursery", mimicId: "mangrove_roots" },
+  "4:13": { pool: "sandpit_clearing", mimicId: "sand" },
+  "4:14": { pool: "sandy_tide_pool", mimicId: "sand" },
+  "4:15": { pool: "skeletal_fall", mimicId: "bone_block" },
+  "5:0": { pool: "snowy_grotto", mimicId: "snow_block" },
+  "5:1": { pool: "snowy_thermal_vents", mimicId: "basalt" },
+  "5:2": { pool: "spruce_wildfire_scar", mimicId: "spruce_log" },
+  "5:3": { pool: "strange_fungal_dwelling", mimicId: "warped_nylium" },
+  "5:4": { pool: "sunflowerbed_clearing", mimicId: "grass_block" },
+  "5:5": { pool: "sunscorched_clearing", mimicId: "red_sand" },
+  "5:6": { pool: "thermal_crevices", mimicId: "basalt" },
+  "5:7": { pool: "treasure_hoard", mimicId: "gold_block" },
+  "5:8": { pool: "volcanic_plume", mimicId: "basalt" },
+  "5:9": { pool: "warped_fungal_dwelling", mimicId: "warped_nylium" },
+  "5:10": { pool: "zen_garden", mimicId: "sand" }
+};
+function habitatPresetSlot(pool, mimicId) {
+  for (const [key, preset] of Object.entries(HABITAT_PRESETS)) {
+    if (preset.pool !== pool || preset.mimicId !== mimicId) continue;
+    const [group, slot] = key.split(":");
+    return { group: Number(group), slot: Number(slot) };
+  }
+  return void 0;
+}
+var HABITAT_MIMIC_IDS = Object.keys(HABITAT_MIMICS);
+
+// tools/lib/java-nbt-to-mcstructure.ts
+function finalStateFor(valor) {
+  return remapBlockId(String(valor ?? "minecraft:air"));
+}
+function makeRandom(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = a + 1831565813 >>> 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function habitatPresetStates(javaNbt) {
+  const pool = String(javaNbt?.PoolId ?? "").split(":").pop();
+  const mimic = String(javaNbt?.MimicId ?? "").split(":").pop();
+  if (!pool || !mimic) return void 0;
+  const slot = habitatPresetSlot(pool, mimic);
+  if (!slot) return void 0;
+  return {
+    "cooblemon:mimic_group": slot.group,
+    "cooblemon:mimic_slot": slot.slot,
+    // Los hábitats generados nacen spawneando; el estado es booleano.
+    "cooblemon:active": true
+  };
+}
+function paletteKey(name, states) {
+  return `${name}|${JSON.stringify(states)}`;
+}
+var BOOL_STATES = (() => {
+  try {
+    const file = path8.resolve(
+      process.cwd(),
+      bedrockSamples("metadata/vanilladata_modules/mojang-blocks.json")
+    );
+    const data = JSON.parse(readFileSync2(file, "utf8"));
+    return new Set(
+      (data.block_properties ?? []).filter((p) => p.type === "bool" && p.name).map((p) => p.name)
+    );
+  } catch {
+    return /* @__PURE__ */ new Set();
+  }
+})();
+function isBoolState(key) {
+  return BOOL_STATES.size > 0 ? BOOL_STATES.has(key) : key.endsWith("_bit");
+}
+function stateTagValue(key, v) {
+  if (typeof v === "boolean") return nbt.byte(v ? 1 : 0);
+  if (typeof v === "number") {
+    return isBoolState(key) ? nbt.byte(v ? 1 : 0) : nbt.int(Math.trunc(v));
+  }
+  return nbt.string(v);
+}
+var BLOCK_ACTOR_ID = {
+  "minecraft:chest": "Chest",
+  "minecraft:trapped_chest": "Chest",
+  "minecraft:barrel": "Barrel"
+};
+function convertBlockEntity(javaNbt, x, y, z) {
+  if (!javaNbt) return null;
+  const idRaw = String(javaNbt.id ?? "");
+  const id = remapBlockId(idRaw);
+  if (idRaw === "minecraft:jigsaw" || id === "minecraft:jigsaw") {
+    let pool = remapStructureRef(String(javaNbt.pool ?? "minecraft:empty"));
+    let target = remapStructureRef(String(javaNbt.target ?? "minecraft:empty"));
+    let name = remapStructureRef(String(javaNbt.name ?? "minecraft:empty"));
+    if (isUnavailableJigsawPool(pool) || isUnavailableJigsawPool(String(javaNbt.pool ?? ""))) {
+      pool = "minecraft:empty";
+      target = "minecraft:empty";
+    }
+    if (isBlankStructureRef(pool)) pool = "minecraft:empty";
+    if (isBlankStructureRef(target)) target = "minecraft:empty";
+    if (isBlankStructureRef(name)) name = "minecraft:empty";
+    if (isMissingJigsawPool(pool)) {
+      pool = "minecraft:empty";
+      target = "minecraft:empty";
+    }
+    return {
+      id: nbt.string("minecraft:jigsaw"),
+      x: nbt.int(x),
+      y: nbt.int(y),
+      z: nbt.int(z),
+      name: nbt.string(name),
+      target: nbt.string(target),
+      pool: nbt.string(pool),
+      final_state: nbt.string(finalStateFor(javaNbt.final_state)),
+      joint: nbt.string(String(javaNbt.joint ?? "rollable"))
+    };
+  }
+  if (id.startsWith("cooblemon:") || id === "minecraft:chest" || id === "minecraft:barrel" || id === "minecraft:trapped_chest") {
+    const be = {
+      // Bedrock reconoce los contenedores por su id de block actor (`Chest`,
+      // `Barrel`), igual que `Banner`; con el id del bloque ignora los datos y
+      // el `LootTable` no llega a aplicarse.
+      id: nbt.string(BLOCK_ACTOR_ID[id] ?? id),
+      x: nbt.int(x),
+      y: nbt.int(y),
+      z: nbt.int(z)
+    };
+    const lootRaw = javaNbt.LootTable ?? javaNbt.loot_table;
+    if (typeof lootRaw === "string" && lootRaw.length > 0) {
+      const loot = remapLootTableRef(lootRaw);
+      if (loot) be.LootTable = nbt.string(loot);
+    }
+    return be;
+  }
+  if (id === "minecraft:brushable_block" || id.includes("suspicious")) {
+    const be = {
+      id: nbt.string("BrushableBlock"),
+      x: nbt.int(x),
+      y: nbt.int(y),
+      z: nbt.int(z)
+    };
+    const lootRaw = javaNbt.LootTable ?? javaNbt.loot_table;
+    if (typeof lootRaw === "string" && lootRaw.length > 0) {
+      const loot = remapLootTableRef(lootRaw);
+      if (loot) be.LootTable = nbt.string(loot);
+    }
+    return be;
+  }
+  return null;
+}
+var BANNER_BASE_COLOR = {
+  black: 0,
+  red: 1,
+  green: 2,
+  brown: 3,
+  blue: 4,
+  purple: 5,
+  cyan: 6,
+  light_gray: 7,
+  gray: 8,
+  pink: 9,
+  lime: 10,
+  yellow: 11,
+  light_blue: 12,
+  magenta: 13,
+  orange: 14,
+  white: 15
+};
+function bannerBlockEntity(javaName, bedrockName, x, y, z) {
+  if (bedrockName !== "minecraft:wall_banner" && bedrockName !== "minecraft:standing_banner") return null;
+  const color = /^minecraft:(\w+?)_(?:wall_)?banner$/.exec(javaName)?.[1] ?? "white";
+  return {
+    id: nbt.string("Banner"),
+    x: nbt.int(x),
+    y: nbt.int(y),
+    z: nbt.int(z),
+    Base: nbt.int(BANNER_BASE_COLOR[color] ?? 15),
+    Type: nbt.int(0)
+  };
+}
+async function convertJavaNbtToMcstructure(javaNbtPath, outMcstructurePath, options) {
+  const buf = await readFile8(javaNbtPath);
+  const { parsed } = await nbt.parse(buf);
+  const simp = nbt.simplify(parsed);
+  const crop = options?.crop;
+  const origin = crop ? crop.min : [0, 0, 0];
+  const [sx, sy, sz] = crop ? [
+    crop.max[0] - crop.min[0],
+    crop.max[1] - crop.min[1],
+    crop.max[2] - crop.min[2]
+  ] : simp.size;
+  const volume = sx * sy * sz;
+  const primary = new Array(volume).fill(-1);
+  const secondary = new Array(volume).fill(-1);
+  const bedrockPalette = [];
+  const paletteIndex = /* @__PURE__ */ new Map();
+  const positionData = {};
+  let healingPos = null;
+  let hasPc = false;
+  function ensurePalette(name, states) {
+    const key = paletteKey(name, states);
+    const existing = paletteIndex.get(key);
+    if (existing !== void 0) return existing;
+    const idx = bedrockPalette.length;
+    bedrockPalette.push({ name, states });
+    paletteIndex.set(key, idx);
+    return idx;
+  }
+  const waterIdx = ensurePalette("minecraft:water", {});
+  const rule = options?.ruleReplacement;
+  const random = rule ? makeRandom(rule.seed) : null;
+  const applyRule = (javaName) => {
+    if (!rule || !random || javaName !== rule.from) return javaName;
+    for (const { probability, to } of rule.rules) {
+      if (random() < probability) return to;
+    }
+    return rule.fallback;
+  };
+  for (const block of simp.blocks ?? []) {
+    const x = block.pos[0] - origin[0];
+    const y = block.pos[1] - origin[1];
+    const z = block.pos[2] - origin[2];
+    if (x < 0 || y < 0 || z < 0 || x >= sx || y >= sy || z >= sz) continue;
+    const linear = (x * sy + y) * sz + z;
+    const javaPal = simp.palette[block.state];
+    if (!javaPal) continue;
+    const javaName = applyRule(javaPal.Name);
+    const rewritten = options?.blockRewrite?.({
+      javaName: javaPal.Name,
+      // La posición **de la original**, no la del recorte: quien reescribe
+      // bloques trabaja con las coordenadas del archivo que está leyendo.
+      pos: block.pos,
+      nbt: block.nbt
+    });
+    const mapped = rewritten ? { name: rewritten.name, states: rewritten.states ?? {}, waterlogged: false } : mapJavaBlockState(javaName, javaName === javaPal.Name ? javaPal.Properties : void 0);
+    if (rewritten) {
+      const idx2 = ensurePalette(mapped.name, mapped.states);
+      primary[linear] = mapped.name === "minecraft:air" && !rewritten.placeAir ? -1 : idx2;
+      if (rewritten.waterlogged) secondary[linear] = waterIdx;
+      const loot = rewritten.lootTable ? remapLootTableRef(rewritten.lootTable) : "";
+      if (loot) {
+        positionData[String(linear)] = nbt.comp({
+          block_entity_data: nbt.comp({
+            id: nbt.string("BrushableBlock"),
+            x: nbt.int(x),
+            y: nbt.int(y),
+            z: nbt.int(z),
+            LootTable: nbt.string(loot),
+            type: nbt.string(mapped.name)
+          })
+        });
+      }
+      continue;
+    }
+    if (mapped.name === "cooblemon:habitat_block") {
+      const preset = habitatPresetStates(block.nbt);
+      if (preset) Object.assign(mapped.states, preset);
+    }
+    if (mapped.name === "minecraft:structure_void" || javaPal.Name === "minecraft:structure_void") {
+      primary[linear] = -1;
+      continue;
+    }
+    const idx = ensurePalette(mapped.name, mapped.states);
+    primary[linear] = idx;
+    if (mapped.waterlogged) secondary[linear] = waterIdx;
+    if (mapped.name === "cooblemon:healing_machine" && !healingPos) {
+      healingPos = [x, y, z];
+    }
+    if (mapped.name === "cooblemon:pc") hasPc = true;
+    const be = convertBlockEntity(block.nbt, x, y, z) ?? bannerBlockEntity(javaName, mapped.name, x, y, z);
+    if (be) {
+      positionData[String(linear)] = nbt.comp({
+        block_entity_data: nbt.comp(be)
+      });
+    }
+  }
+  if (options?.ensurePcNearHealing && healingPos && !hasPc) {
+    const [hx, hy, hz] = healingPos;
+    const candidates = [
+      [hx + 1, hy, hz],
+      [hx - 1, hy, hz],
+      [hx, hy, hz + 1],
+      [hx, hy, hz - 1],
+      [hx + 1, hy, hz + 1],
+      [hx - 1, hy, hz + 1],
+      [hx + 1, hy, hz - 1],
+      [hx - 1, hy, hz - 1]
+    ];
+    const replaceable = /* @__PURE__ */ new Set([
+      "minecraft:air",
+      "minecraft:green_carpet",
+      "minecraft:white_carpet",
+      "minecraft:red_carpet",
+      "minecraft:light_gray_carpet",
+      "minecraft:oak_pressure_plate"
+    ]);
+    const pcIdx = ensurePalette("cooblemon:pc", {
+      "minecraft:cardinal_direction": "south"
+    });
+    const tryPlace = (preferEmpty) => {
+      for (const [x, y, z] of candidates) {
+        if (x < 0 || y < 0 || z < 0 || x >= sx || y >= sy || z >= sz) continue;
+        const linear = (x * sy + y) * sz + z;
+        if (preferEmpty) {
+          if (primary[linear] !== -1) continue;
+        } else {
+          if (primary[linear] < 0) continue;
+          const name = bedrockPalette[primary[linear]]?.name;
+          if (!name || !replaceable.has(name)) continue;
+        }
+        primary[linear] = pcIdx;
+        secondary[linear] = -1;
+        return true;
+      }
+      return false;
+    };
+    if (!tryPlace(true)) tryPlace(false);
+  }
+  if (bedrockPalette.length === 0) {
+    ensurePalette("minecraft:air", {});
+  }
+  const blockPaletteList = {
+    type: "list",
+    value: {
+      type: "compound",
+      value: bedrockPalette.map(
+        (entry) => nbt.comp({
+          name: nbt.string(entry.name),
+          states: nbt.comp(
+            Object.fromEntries(
+              Object.entries(entry.states).map(([k, v]) => [k, stateTagValue(k, v)])
+            )
+          ),
+          version: nbt.int(blockVersionFor(entry.name))
+        }).value
+      )
+    }
+  };
+  const root = {
+    type: "compound",
+    name: "",
+    value: nbt.comp({
+      format_version: nbt.int(1),
+      size: { type: "list", value: { type: "int", value: [sx, sy, sz] } },
+      structure_world_origin: { type: "list", value: { type: "int", value: [0, 0, 0] } },
+      structure: nbt.comp({
+        block_indices: {
+          type: "list",
+          value: {
+            type: "list",
+            value: [
+              { type: "int", value: primary },
+              { type: "int", value: secondary }
+            ]
+          }
+        },
+        entities: { type: "list", value: { type: "end", value: [] } },
+        palette: nbt.comp({
+          default: nbt.comp({
+            block_palette: blockPaletteList,
+            block_position_data: nbt.comp(positionData)
+          })
+        })
+      })
+    }).value
+  };
+  await mkdir3(path8.dirname(outMcstructurePath), { recursive: true });
+  const outBuf = nbt.writeUncompressed(root, "little");
+  await writeFile5(outMcstructurePath, outBuf);
+  return { blocks: primary.filter((idx) => idx >= 0).length, size: [sx, sy, sz] };
+}
+
+// tools/lib/custom-block-states.ts
+init_utils();
+import { readFile as readFile9 } from "node:fs/promises";
+import { existsSync as existsSync7 } from "node:fs";
+async function loadCustomBlockStates() {
+  const out = /* @__PURE__ */ new Map();
+  let files;
+  try {
+    files = (await walkFiles(resolveFromRoot("bp/blocks"))).filter((f) => f.endsWith(".json"));
+  } catch {
+    return out;
+  }
+  for (const file of files) {
+    let data;
+    try {
+      data = JSON.parse(await readFile9(file, "utf8"));
+    } catch {
+      continue;
+    }
+    const description = data["minecraft:block"]?.description;
+    const id = description?.identifier;
+    if (!id) continue;
+    const keys = new Set(Object.keys(description?.states ?? {}));
+    for (const trait of Object.values(description?.traits ?? {})) {
+      for (const state of trait?.enabled_states ?? []) keys.add(state);
+    }
+    out.set(id, keys);
+  }
+  return out;
+}
+async function loadVanillaBlockStates() {
+  const out = /* @__PURE__ */ new Map();
+  try {
+    const raw = await readFile9(
+      bedrockSamples("metadata/vanilladata_modules/mojang-blocks.json"),
+      "utf8"
+    );
+    const data = JSON.parse(raw.replace(/^﻿/, ""));
+    for (const item of data.data_items ?? []) {
+      if (!item.name) continue;
+      out.set(
+        item.name,
+        new Set((item.properties ?? []).map((prop) => prop.name ?? "").filter(Boolean))
+      );
+    }
+  } catch {
+  }
+  return out;
+}
+async function loadPortedFurniture() {
+  const modDir = resolveFromRoot("recursos/CobbleFurnies/assets/cobblefurnies/blockstates");
+  if (!existsSync7(modDir)) return [];
+  const { readdir: readdir10 } = await import("node:fs/promises");
+  const delMod = new Set(
+    (await readdir10(modDir)).filter((f) => f.endsWith(".json")).map((f) => f.slice(0, -5))
+  );
+  const nuestros = await readdir10(resolveFromRoot("bp/blocks")).catch(() => []);
+  return nuestros.filter((f) => f.endsWith(".json")).map((f) => f.slice(0, -5)).filter((name) => delMod.has(name));
+}
+async function loadTwoBlockFurniture() {
+  const dir = resolveFromRoot("rp/models/blocks/furnies");
+  if (!existsSync7(dir)) return [];
+  const { readdir: readdir10 } = await import("node:fs/promises");
+  const out = [];
+  for (const file of await readdir10(dir)) {
+    if (!file.endsWith(".geo.json")) continue;
+    try {
+      const geo = JSON.parse(await readFile9(resolveFromRoot(`rp/models/blocks/furnies/${file}`), "utf8"));
+      const cubes = (geo["minecraft:geometry"]?.[0]?.bones ?? []).flatMap((b) => b.cubes ?? []);
+      const alto = Math.max(0, ...cubes.map((c) => (c.origin?.[1] ?? 0) + (c.size?.[1] ?? 0)));
+      if (alto > 16) out.push(file.replace(".geo.json", ""));
+    } catch {
+    }
+  }
+  return out;
+}
+
+// tools/lib/structure-worldgen.ts
+var HEIGHTMAP = {
+  WORLD_SURFACE_WG: "world_surface",
+  WORLD_SURFACE: "world_surface",
+  OCEAN_FLOOR_WG: "ocean_floor",
+  OCEAN_FLOOR: "ocean_floor",
+  MOTION_BLOCKING: "world_surface",
+  MOTION_BLOCKING_NO_LEAVES: "world_surface"
+};
+var STEP_MAP = {
+  raw_generation: "raw_generation",
+  lakes: "lakes",
+  local_modifications: "local_modifications",
+  underground_structures: "underground_structures",
+  surface_structures: "surface_structures",
+  strongholds: "strongholds",
+  underground_ores: "underground_ores",
+  underground_decoration: "underground_decoration",
+  fluid_springs: "fluid_springs",
+  vegetal_decoration: "vegetal_decoration",
+  top_layer_modification: "top_layer_modification"
+};
+var EXTRA_BIOME_FALLBACKS = {
+  "has_block/oak_log": ["forest"],
+  "has_block/birch_log": ["birch"],
+  "has_block/spruce_log": ["taiga"],
+  "has_block/acacia_log": ["savanna"],
+  "has_block/jungle_log": ["jungle"],
+  "has_block/dark_oak_log": ["roofed"],
+  "has_block/mangrove_log": ["mangrove_swamp"],
+  "has_block/cherry_log": ["cherry_grove"],
+  // Sin estos dos, once estructuras caían al respaldo `forest` y aparecían en
+  // bosques en vez de en desiertos y mesetas.
+  // El tag del mod solo lista `minecraft:desert`; incluir `beach` metía los
+  // oasis y las ruinas de arena en cualquier playa.
+  "has_block/sand": ["desert"],
+  "has_block/red_sand": ["mesa"]
+};
+var VANILLA_BIOME_SELECTORS = {
+  "minecraft:ocean": { any: ["ocean"] },
+  // Bedrock no tiene tag `deep_ocean`: los profundos llevan `deep` + `ocean`.
+  "minecraft:deep_ocean": { all: ["ocean", "deep"] },
+  "minecraft:dark_forest": { any: ["roofed"] },
+  // `ice_plains` solo no basta: incluye las llanuras nevadas normales.
+  "minecraft:ice_spikes": { all: ["ice_plains", "mutated"] },
+  // **Los que piden los pueblos de CobbleTowns.** Las etiquetas salen de los
+  // propios biomas del juego (`behavior_pack/biomes/*.biome.json`), no de
+  // adivinar por el nombre: Bedrock llama `swampland` al pantano, `mesa` a las
+  // tierras baldías y `roofed_forest` al bosque oscuro, y sus etiquetas no
+  // siempre coinciden con el nombre. Donde dos biomas comparten etiqueta se
+  // añade la que los separa —`mutated` para las variantes, `mega` para los
+  // bosques viejos—, y donde eso no existe se acepta el de al lado: una
+  // `sunflower_plains` es una llanura, y un pueblo de llanura cabe en ella.
+  "minecraft:plains": { all: ["plains"] },
+  "minecraft:sunflower_plains": { all: ["plains", "mutated"] },
+  "minecraft:snowy_plains": { all: ["ice_plains"] },
+  "minecraft:desert": { all: ["desert"] },
+  "minecraft:swamp": { all: ["swamp"] },
+  "minecraft:mangrove_swamp": { all: ["mangrove_swamp"] },
+  // `forest` lo llevan también la taiga y el bosque oscuro; `oak_forest` es el
+  // único que señala al bosque de robles.
+  "minecraft:forest": { all: ["oak_forest"] },
+  "minecraft:flower_forest": { all: ["flower_forest"] },
+  "minecraft:birch_forest": { all: ["birch"] },
+  "minecraft:old_growth_birch_forest": { all: ["birch", "mutated"] },
+  "minecraft:old_growth_pine_taiga": { all: ["taiga", "mega"] },
+  "minecraft:old_growth_spruce_taiga": { all: ["taiga", "mega", "mutated"] },
+  "minecraft:taiga": { all: ["taiga"] },
+  "minecraft:savanna": { all: ["savanna"] },
+  "minecraft:savanna_plateau": { all: ["savanna", "plateau"] },
+  "minecraft:windswept_savanna": { all: ["savanna", "mutated"] },
+  "minecraft:windswept_hills": { all: ["extreme_hills"] },
+  "minecraft:windswept_gravelly_hills": { all: ["extreme_hills", "mutated"] },
+  "minecraft:windswept_forest": { all: ["extreme_hills", "forest"] },
+  "minecraft:jungle": { all: ["jungle"] },
+  "minecraft:sparse_jungle": { all: ["jungle", "edge"] },
+  "minecraft:bamboo_jungle": { all: ["bamboo"] },
+  "minecraft:badlands": { all: ["mesa"] },
+  "minecraft:eroded_badlands": { all: ["mesa", "mutated"] },
+  "minecraft:wooded_badlands": { all: ["mesa", "plateau"] },
+  "minecraft:meadow": { all: ["meadow"] },
+  "minecraft:grove": { all: ["grove"] },
+  "minecraft:snowy_slopes": { all: ["snowy_slopes"] },
+  "minecraft:beach": { all: ["beach"] },
+  "minecraft:river": { all: ["river"] },
+  "minecraft:warm_ocean": { all: ["ocean", "warm"] },
+  "minecraft:lukewarm_ocean": { all: ["lukewarm"] },
+  "minecraft:deep_lukewarm_ocean": { all: ["lukewarm", "deep"] }
+};
+function biomeTagFilters(biomesRaw) {
+  if (!biomesRaw) return void 0;
+  const list = Array.isArray(biomesRaw) ? biomesRaw : [biomesRaw];
+  const expanded = [];
+  for (const b of list) {
+    if (b.startsWith("#cobblemon:has_block/")) {
+      const key = b.slice("#cobblemon:".length);
+      expanded.push(...(EXTRA_BIOME_FALLBACKS[key] ?? ["forest"]).map((t) => `#fake:${t}`));
+      continue;
+    }
+    expanded.push(b);
+  }
+  const selectors = [];
+  const real = expanded.filter((b) => !b.startsWith("#fake:"));
+  selectors.push(...mapCobblemonSelectors(real).map((t) => t.selector));
+  for (const f of expanded.filter((b) => b.startsWith("#fake:"))) {
+    selectors.push({ any: [f.slice("#fake:".length)] });
+  }
+  for (const raw of real) {
+    const direct = VANILLA_BIOME_SELECTORS[raw];
+    if (direct) selectors.push(direct);
+  }
+  if (selectors.length === 0) {
+    console.warn(`[cooblemon] Bioma sin traducir (${list.join(", ")}): la estructura sale en todo el mundo normal`);
+    return [{ test: "has_biome_tag", operator: "==", value: "overworld" }];
+  }
+  const filters = [];
+  for (const sel of selectors) {
+    const parts = [];
+    if (sel.any?.length) {
+      parts.push({
+        any_of: sel.any.map((t) => ({ test: "has_biome_tag", operator: "==", value: t }))
+      });
+    }
+    if (sel.all?.length) {
+      parts.push({
+        all_of: sel.all.map((t) => ({ test: "has_biome_tag", operator: "==", value: t }))
+      });
+    }
+    if (sel.not?.length) {
+      parts.push({
+        none_of: sel.not.map((t) => ({ test: "has_biome_tag", operator: "==", value: t }))
+      });
+    }
+    if (parts.length === 1) filters.push(parts[0]);
+    else if (parts.length > 1) filters.push({ all_of: parts });
+  }
+  return filters.length === 1 ? filters : [{ any_of: filters }];
+}
+function mapVerticalAnchor(raw) {
+  if (!raw) return { absolute: 0 };
+  if (typeof raw.absolute === "number") return { absolute: raw.absolute };
+  if (typeof raw.above_bottom === "number") return { from_bottom: raw.above_bottom };
+  if (typeof raw.below_top === "number") return { from_top: raw.below_top };
+  if (typeof raw.from_bottom === "number") return { from_bottom: raw.from_bottom };
+  if (typeof raw.from_top === "number") return { from_top: raw.from_top };
+  if (typeof raw.from_sea === "number") return { from_sea: raw.from_sea };
+  return { absolute: 0 };
+}
+function mapStartHeight(raw) {
+  if (raw == null) {
+    return { type: "constant", value: { absolute: 0 } };
+  }
+  if (typeof raw === "number") {
+    return { type: "constant", value: { absolute: raw } };
+  }
+  const obj = raw;
+  if (typeof obj.absolute === "number") {
+    return { type: "constant", value: { absolute: obj.absolute } };
+  }
+  if (typeof obj.above_bottom === "number") {
+    return { type: "constant", value: { from_bottom: obj.above_bottom } };
+  }
+  if (typeof obj.below_top === "number") {
+    return { type: "constant", value: { from_top: obj.below_top } };
+  }
+  if (obj.type === "minecraft:uniform" || obj.min_inclusive || obj.max_inclusive) {
+    const minRaw = obj.min_inclusive ?? obj.min ?? { absolute: 0 };
+    const maxRaw = obj.max_inclusive ?? obj.max ?? { absolute: 0 };
+    const min = mapVerticalAnchor(minRaw);
+    const max = mapVerticalAnchor(maxRaw);
+    if (JSON.stringify(min) === JSON.stringify(max)) {
+      return { type: "constant", value: min };
+    }
+    return {
+      type: "uniform",
+      min,
+      max
+    };
+  }
+  return { type: "constant", value: { absolute: 0 } };
+}
+function javaStructureToBedrock(relativeId, java, namespace = "cobblemon") {
+  const identifier = remapStructureRef(`${namespace}:${relativeId.replace(/\\/g, "/")}`);
+  const rawPool = String(java.start_pool ?? "");
+  const startPool = rawPool === "minecraft:empty" ? identifier : remapStructureRef(rawPool);
+  const size = typeof java.size === "number" ? java.size : 7;
+  const step = STEP_MAP[String(java.step ?? "surface_structures")] ?? "surface_structures";
+  const heightmapRaw = String(java.project_start_to_heightmap ?? "");
+  const heightmap = HEIGHTMAP[heightmapRaw];
+  const terrain = String(java.terrain_adaptation ?? "none");
+  const maxDist = java.max_distance_from_center;
+  const biomeFilters = biomeTagFilters(java.biomes);
+  const out = {
+    format_version: "1.21.20",
+    "minecraft:jigsaw": {
+      description: { identifier },
+      step,
+      terrain_adaptation: ["none", "bury", "beard_thin", "beard_box", "encapsulate"].includes(terrain) ? terrain : "beard_thin",
+      start_pool: startPool,
+      max_depth: Math.min(20, Math.max(0, size)),
+      start_height: mapStartHeight(java.start_height),
+      ...heightmap ? { heightmap_projection: heightmap } : {},
+      ...biomeFilters ? { biome_filters: biomeFilters } : {},
+      ...typeof java.dimension_padding === "number" ? { dimension_padding: java.dimension_padding } : {},
+      ...java.liquid_settings ? { liquid_settings: String(java.liquid_settings) } : {},
+      ...typeof maxDist === "number" ? { max_distance_from_center: { horizontal: maxDist, vertical: maxDist } } : {}
+    }
+  };
+  return out;
+}
+function javaTemplatePoolToBedrock(relativeId, java, namespace = "cobblemon") {
+  const identifier = remapStructureRef(`${namespace}:${relativeId.replace(/\\/g, "/")}`);
+  const elementsIn = Array.isArray(java.elements) ? java.elements : [];
+  const elements = elementsIn.map((entry) => {
+    const el = entry.element ?? entry;
+    const type = String(el.element_type ?? "minecraft:single_pool_element");
+    if (type === "minecraft:empty_pool_element") {
+      return {
+        weight: Number(entry.weight ?? 1),
+        element: { element_type: "minecraft:empty_pool_element" }
+      };
+    }
+    if (type === "minecraft:feature_pool_element") {
+      return null;
+    }
+    const locationRaw = String(el.location ?? "");
+    const location = locationRaw.includes(":") ? remapNamespaceId(locationRaw).replace(":", "/") : `cooblemon/${locationRaw}`;
+    const processorsRaw = String(el.processors ?? "minecraft:empty");
+    const processors = processorsRaw === "minecraft:empty" || processorsRaw === "" ? "" : remapStructureRef(processorsRaw);
+    const projection = String(el.projection ?? "rigid");
+    return {
+      weight: Math.max(1, Math.min(200, Number(entry.weight ?? 1))),
+      element: {
+        element_type: "minecraft:single_pool_element",
+        location,
+        ...processors ? { processors } : {},
+        projection: projection === "terrain_matching" ? "terrain_matching" : "rigid"
+      }
+    };
+  }).filter(Boolean);
+  return {
+    format_version: "1.21.20",
+    "minecraft:template_pool": {
+      description: { identifier },
+      fallback: remapStructureRef(String(java.fallback ?? "minecraft:empty")),
+      elements
+    }
+  };
+}
+function javaStructureSetToBedrock(relativeId, java, namespace = "cobblemon") {
+  const identifier = remapStructureRef(
+    `${namespace}:${relativeId.replace(/\\/g, "/").replace(/\.json$/, "")}`
+  );
+  const placement = java.placement ?? {};
+  const structures = Array.isArray(java.structures) ? java.structures : [];
+  const { spacing, separation } = clampStructureSetSpacing(
+    Number(placement.spacing ?? 24),
+    Number(placement.separation ?? 8)
+  );
+  return {
+    format_version: "1.21.20",
+    "minecraft:structure_set": {
+      description: { identifier },
+      placement: {
+        type: "minecraft:random_spread",
+        salt: Number(placement.salt ?? 1),
+        separation,
+        spacing,
+        spread_type: placement.spread_type === "triangular" ? "triangular" : "linear"
+      },
+      structures: structures.map((s) => ({
+        structure: remapStructureRef(String(s.structure)),
+        weight: Math.max(1, Math.min(200, Number(s.weight ?? 1)))
+      }))
+    }
+  };
+}
+function mapOutputState(state) {
+  if (!state) return null;
+  const javaName = String(state.Name ?? "minecraft:air");
+  const props = state.Properties ?? {};
+  const mapped = mapJavaBlockState(javaName, props);
+  const out = { name: mapped.name };
+  if (Object.keys(mapped.states).length > 0) {
+    out.states = mapped.states;
+  }
+  return out;
+}
+var GIMMIGHOUL_CHEST = "cobblemon:gimmighoul_chest";
+var GIMMIGHOUL_CHEST_LOOT = "cobblemon:ruins/gilded_chests/ruins";
+function javaProcessorListToBedrock(relativeId, java, namespace = "cobblemon") {
+  const identifier = remapStructureRef(`${namespace}:${relativeId.replace(/\\/g, "/")}`);
+  const processorsIn = Array.isArray(java.processors) ? java.processors : [];
+  const processors = [];
+  for (const proc of processorsIn) {
+    const type = String(proc.processor_type ?? "");
+    if (type === "minecraft:rule") {
+      const rules = [];
+      for (const rule of proc.rules ?? []) {
+        const input = rule.input_predicate ?? {};
+        const predType = String(input.predicate_type ?? "");
+        let input_predicate = null;
+        if (predType === "minecraft:random_block_match" || predType === "minecraft:block_match") {
+          input_predicate = {
+            predicate_type: predType === "minecraft:block_match" ? "minecraft:block_match" : "minecraft:random_block_match",
+            block: remapBlockId(String(input.block ?? "minecraft:air")),
+            ...typeof input.probability === "number" ? { probability: input.probability } : {}
+          };
+        } else if (predType === "minecraft:random_blockstate_match") {
+          const bs = input.block_state ?? {};
+          input_predicate = {
+            predicate_type: "minecraft:random_block_match",
+            block: remapBlockId(String(bs.Name ?? "minecraft:air")),
+            probability: typeof input.probability === "number" ? input.probability : 1
+          };
+        }
+        const output = mapOutputState(rule.output_state);
+        if (!input_predicate || !output) continue;
+        if (input_predicate.block === output.name && output.name === "minecraft:chest") {
+          delete output.states;
+        }
+        const outRule = {
+          input_predicate,
+          output_state: output
+        };
+        const bem = rule.block_entity_modifier;
+        let lootRef = bem && String(bem.type ?? "").includes("append_loot") ? String(bem.loot_table ?? "") : "";
+        const outputName = String(rule.output_state?.Name ?? "");
+        if (!lootRef && outputName === GIMMIGHOUL_CHEST) lootRef = GIMMIGHOUL_CHEST_LOOT;
+        if (lootRef) {
+          const loot = remapLootTableRef(lootRef);
+          if (loot) {
+            outRule.block_entity_modifier = {
+              type: "minecraft:append_loot",
+              loot_table: loot
+            };
+          }
+        }
+        const key = JSON.stringify(outRule);
+        if (rules.some((r) => JSON.stringify(r) === key)) continue;
+        rules.push(outRule);
+      }
+      if (rules.length) {
+        processors.push({ processor_type: "minecraft:rule", rules });
+      }
+    } else if (type === "minecraft:capped") {
+      const delegate = proc.delegate;
+      if (delegate?.processor_type === "minecraft:rule") {
+        const nested = javaProcessorListToBedrock("_tmp", { processors: [delegate] });
+        const nestedProcs = nested?.["minecraft:processor_list"]?.processors ?? [];
+        if (nestedProcs[0]) {
+          processors.push({
+            processor_type: "minecraft:capped",
+            limit: Number(proc.limit ?? 1),
+            delegate: nestedProcs[0]
+          });
+        }
+      }
+    }
+  }
+  if (processors.length === 0) return null;
+  return {
+    format_version: "1.21.20",
+    "minecraft:processor_list": {
+      description: { identifier },
+      processors
+    }
+  };
+}
+
+// tools/kit/structures.ts
+init_utils();
+var BASE_NAMESPACES = /* @__PURE__ */ new Set(["minecraft", "cobblemon", "waystones", "cobblefurnies", "cobbletowns", "mega_showdown"]);
+var VANILLA_STRUCTURE_TAGS = {
+  "#minecraft:has_structure/village_plains": ["minecraft:plains", "minecraft:meadow"],
+  "#minecraft:has_structure/village_desert": ["minecraft:desert"],
+  "#minecraft:has_structure/village_savanna": ["minecraft:savanna"],
+  "#minecraft:has_structure/village_snowy": ["minecraft:snowy_plains"],
+  "#minecraft:has_structure/village_taiga": ["minecraft:taiga"],
+  "#minecraft:has_structure/swamp_hut": ["minecraft:swamp"]
+};
+var MIN_SKILL = 0.55;
+var BLOCK_STATES_FILE = "data/structure-block-states.json";
+async function blockStateLists() {
+  const toObj = (m) => Object.fromEntries([...m].map(([k, v]) => [k, [...v]]));
+  return {
+    custom: toObj(await loadCustomBlockStates()),
+    vanilla: toObj(await loadVanillaBlockStates()),
+    furniture: await loadPortedFurniture(),
+    twoBlock: await loadTwoBlockFurniture()
+  };
+}
+async function walk3(dir) {
+  if (!existsSync8(dir)) return [];
+  const out = [];
+  for (const entry of await readdir7(dir, { withFileTypes: true })) {
+    const full = path9.join(dir, entry.name);
+    if (entry.isDirectory()) out.push(...await walk3(full));
+    else out.push(full);
+  }
+  return out;
+}
+async function readJson2(file) {
+  return JSON.parse((await readFile10(file, "utf8")).replace(/^﻿/, ""));
+}
+async function writeJson3(file, data) {
+  await mkdir4(path9.dirname(file), { recursive: true });
+  await writeFile6(file, `${JSON.stringify(data, null, 2)}
+`, "utf8");
+}
+function relId2(root, file, ext) {
+  return path9.relative(root, file).split(path9.sep).join("/").slice(0, -ext.length);
+}
+function slug(text) {
+  return text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 40) || "npc";
+}
+function plainName(raw, lang) {
+  if (typeof raw !== "string" || !raw) return null;
+  let value = raw;
+  try {
+    value = JSON.parse(raw);
+  } catch {
+  }
+  if (typeof value === "string") return lang[value] ?? readableKey(value);
+  if (value && typeof value === "object") {
+    const v = value;
+    if (typeof v.text === "string" && v.text) return v.text;
+    if (typeof v.translate === "string") return lang[v.translate] ?? readableKey(v.translate);
+  }
+  return null;
+}
+function readableKey(text) {
+  const m = /^(?:[a-z0-9_]+\.)+([a-z0-9_]+)\.name$/.exec(text);
+  if (!m) return text;
+  return m[1].split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+}
+function dialogueLine(raw, npcName) {
+  if (typeof raw === "string") return raw;
+  const expr = raw?.expression;
+  if (typeof expr !== "string") return null;
+  let out = "";
+  const re = /\s*(?:'((?:[^'\\]|\\.)*)'|(q\.player\.username)|(q\.npc\.name))\s*(\+|$)/gy;
+  let consumed = 0;
+  for (const m of expr.matchAll(re)) {
+    if (m[1] !== void 0) out += m[1].replace(/\\(.)/g, "$1");
+    else if (m[2]) out += "%s";
+    else if (m[3]) out += npcName;
+    consumed = (m.index ?? 0) + m[0].length;
+    if (m[4] === "") break;
+  }
+  return consumed >= expr.trimEnd().length && out ? out : null;
+}
+function langText(text) {
+  return text.replace(/\r?\n/g, " ").trim();
+}
+function partyMember(raw, warn) {
+  const [head, ...rest] = raw.trim().split(/\s+/);
+  if (!head) return null;
+  const member = { species: head.replace(/^cobblemon:/, "") };
+  for (const token of rest) {
+    const [key, value] = token.split("=");
+    if (!value) {
+      if (key === "shiny") member.shiny = true;
+      else warn(`"${key}" (aspects and forms are not supported in a team yet)`);
+      continue;
+    }
+    if (key === "level" || key === "lvl") member.level = Number(value);
+    else if (key === "held_item") member.heldItem = value;
+    else if (key === "moves") member.moves = value.split(",").filter(Boolean);
+    else if (key === "ability") member.ability = value;
+    else if (key === "shiny") member.shiny = value === "true" || value === "yes";
+  }
+  return member;
+}
+function readDialogue(pages, npcName) {
+  const byId = new Map(pages.map((p) => [p.id ?? "", p]));
+  const linesOf = (page2) => (page2.lines ?? []).map((l) => dialogueLine(l, npcName)).filter((l) => !!l);
+  const allActions = JSON.stringify(pages);
+  const heals = /heal_player_pokemon|heal/i.test(allActions);
+  const hurtPage = pages.find((p) => p.speaker === "npc" && /hurt/i.test(p.id ?? ""));
+  const hurt = hurtPage ? linesOf(hurtPage).join(" ") || null : null;
+  let page = pages.find((p) => p.speaker === "npc" && p !== hurtPage);
+  const said = [];
+  let options = [];
+  for (let hops = 0; page && hops < 4; hops++) {
+    said.push(...linesOf(page));
+    const input = page.input;
+    if (input && typeof input === "object" && Array.isArray(input.options)) {
+      options = input.options;
+      break;
+    }
+    const next = typeof input === "string" ? /set_page\('([^']+)'\)/.exec(input)?.[1] : void 0;
+    const nextPage = next ? byId.get(next) : void 0;
+    if (!nextPage || nextPage.speaker !== "npc") {
+      const ahead = pages.find((p) => p.speaker === "npc" && typeof p.input === "object" && p.input.options);
+      if (ahead && ahead !== page) options = ahead.input.options ?? [];
+      break;
+    }
+    page = nextPage;
+  }
+  const mapped = /* @__PURE__ */ new Set();
+  for (const option of options) {
+    const text = `${option.value ?? ""} ${JSON.stringify(option.action ?? "")}`;
+    if (/heal/i.test(text)) mapped.add("heal");
+    else if (/battle|challenge/i.test(text)) mapped.add("battle");
+    else if (/shop|trade|merchant/i.test(text)) mapped.add("shop");
+    else if (/close|cancel|bye|no\b/i.test(text)) mapped.add("close");
+  }
+  if (mapped.size > 0 && !mapped.has("close")) mapped.add("close");
+  return { greeting: said.join(" ") || null, hurt, options: [...mapped], heals };
+}
+function zoneSpot(size, cells, taken) {
+  const [sx = 0, sy = 0, sz = 0] = size;
+  const cx = Math.floor(sx / 2);
+  const cz = Math.floor(sz / 2);
+  const open = (name) => name === "minecraft:air" || name === "minecraft:cave_air";
+  const ground = (name) => !!name && !open(name) && !/water|lava|structure_void|jigsaw|leaves|fence|wall|torch|carpet|door|pane|sign/.test(name);
+  for (let r = 0; r <= Math.max(cx, cz); r++) {
+    for (let dx = -r; dx <= r; dx++) {
+      for (let dz = -r; dz <= r; dz++) {
+        if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue;
+        const x = cx + dx;
+        const z = cz + dz;
+        if (x < 0 || z < 0 || x >= sx || z >= sz) continue;
+        for (let y = 1; y < sy; y++) {
+          const key = `${x},${y},${z}`;
+          if (open(cells.get(key)) && ground(cells.get(`${x},${y - 1},${z}`)) && !taken.has(key)) return key;
+        }
+      }
+    }
+  }
+  return null;
+}
+async function convertStructures(opts) {
+  const { input, ns, bp } = opts;
+  const data = path9.join(input, "data", ns);
+  const pieceRoot = [path9.join(data, "structure"), path9.join(data, "structures")].find((d) => existsSync8(d));
+  if (!pieceRoot) return null;
+  try {
+    const shipped = resolveFromRoot(BLOCK_STATES_FILE);
+    const lists = existsSync8(shipped) ? await readJson2(shipped) : await blockStateLists();
+    const toMap = (o) => new Map(Object.entries(o).map(([k, v]) => [k, new Set(v)]));
+    registerCustomBlockStates(toMap(lists.custom));
+    registerVanillaBlockStates(toMap(lists.vanilla));
+    registerPortedFurniture(lists.furniture);
+    registerTwoBlockFurniture(lists.twoBlock);
+  } catch (error) {
+    logWarn(`Structures: the base block list could not be read (${String(error)}); block states are not filtered`);
+  }
+  const langDir = path9.join(input, "assets", ns, "lang");
+  const langFiles = (await walk3(langDir)).filter((f) => f.endsWith(".json"));
+  const english = {};
+  for (const file of langFiles) {
+    if (path9.basename(file, ".json") === "en_us") Object.assign(english, await readJson2(file));
+  }
+  const cobblemonLang = path9.join(input, "assets", "cobblemon", "lang", "en_us.json");
+  if (existsSync8(cobblemonLang)) Object.assign(english, await readJson2(cobblemonLang), english);
+  const classes = /* @__PURE__ */ new Map();
+  for (const file of (await walk3(path9.join(input, "data", "cobblemon", "npcs"))).filter((f) => f.endsWith(".json"))) {
+    const json = await readJson2(file);
+    classes.set(json.resourceIdentifier ?? `cobblemon:${path9.basename(file, ".json")}`, json);
+    classes.set(`cobblemon:${path9.basename(file, ".json")}`, json);
+  }
+  const dialogues = /* @__PURE__ */ new Map();
+  for (const file of (await walk3(path9.join(input, "data", "cobblemon", "dialogues"))).filter((f) => f.endsWith(".json"))) {
+    const json = await readJson2(file);
+    dialogues.set(`cobblemon:${path9.basename(file, ".json")}`, json.pages ?? []);
+  }
+  registerAddonJigsawNamespace(ns);
+  const worldgen = path9.join(data, "worldgen");
+  const poolFiles = (await walk3(path9.join(worldgen, "template_pool"))).filter((f) => f.endsWith(".json"));
+  registerKnownJigsawPools(poolFiles.map((f) => `${ns}:${relId2(path9.join(worldgen, "template_pool"), f, ".json")}`));
+  const npcs = {};
+  const npcIndex = /* @__PURE__ */ new Map();
+  const npcSignature = /* @__PURE__ */ new Map();
+  const pokemonIndex = /* @__PURE__ */ new Map();
+  const pokemonMarker = {};
+  const lang = /* @__PURE__ */ new Map();
+  const entityReport = /* @__PURE__ */ new Map();
+  const blockReport = /* @__PURE__ */ new Map();
+  const notes = [];
+  const count = (map, id, action) => {
+    const now = map.get(id) ?? { count: 0, action };
+    now.count++;
+    map.set(id, now);
+  };
+  let skinTurn = 0;
+  const defineNpc = (name, definition) => {
+    const signature = JSON.stringify(definition);
+    const known = npcSignature.get(signature);
+    if (known) return known;
+    let id = `${ns}:${slug(name)}`;
+    for (let n = 2; npcs[id]; n++) id = `${ns}:${slug(name)}_${n}`;
+    npcs[id] = definition;
+    npcSignature.set(signature, id);
+    npcIndex.set(id, npcIndex.size);
+    return id;
+  };
+  const merchantFrom = (e) => {
+    const name = plainName(e.CustomName, english) ?? "Merchant";
+    const shop = [];
+    for (const cat of e.CobbleMerchantShop ?? []) {
+      const offers = [];
+      for (const offer of cat.Offers ?? []) {
+        const item = String(offer.Item?.id ?? "");
+        const price = Number(offer.Price);
+        const space = item.split(":")[0] ?? "";
+        if (!item || !Number.isFinite(price)) continue;
+        if (!["minecraft", "cobblemon", ns].includes(space)) {
+          notes.push(`${name}: "${item}" is from another mod; left out of the shop`);
+          continue;
+        }
+        offers.push({ item, price: Math.max(0, Math.round(price)) });
+      }
+      if (offers.length) shop.push({ name: cat.Category ?? "Shop", offers });
+    }
+    if (!shop.length) return null;
+    const nurse = /nurse/i.test(name);
+    const skin = nurse ? "nurse-joy" : skinTurn++ % 2 === 0 ? "shop_keeper" : "shop_keeper_2";
+    return defineNpc(name, { name: name.slice(0, 32), role: "merchant", skin, shop });
+  };
+  const npcFrom = (e) => {
+    const classId = String(e.NPCClass ?? "");
+    const cls = classes.get(classId);
+    const profession = String(e.VillagerData?.profession ?? "");
+    const name = plainName(e.CustomName, english) ?? (cls?.names?.[0] ? english[cls.names[0]] ?? readableKey(cls.names[0]) : null) ?? classId.split(":")[1] ?? "NPC";
+    if (!cls) notes.push(`${name}: NPC class "${classId}" is not in data/cobblemon/npcs; it only talks`);
+    const config = new Map((cls?.config ?? []).map((c) => [c.variableName ?? "", c.defaultValue]));
+    const pages = cls?.interaction?.dialogue ? dialogues.get(cls.interaction.dialogue) ?? [] : [];
+    const dialogue = readDialogue(pages, name);
+    const team = (cls?.party?.pokemon ?? []).map((p) => partyMember(p, (msg) => notes.push(`${name}: ${msg}`))).filter((m) => !!m).slice(0, 6);
+    const trainer = team.length > 0 && cls?.battleConfiguration?.canChallenge !== false;
+    const nurse = profession === "cobblemon:nurse" || dialogue.heals && !trainer;
+    const role = trainer ? "trainer" : nurse ? "nurse" : "talker";
+    const key = `${ns}.npc.${slug(name)}`;
+    const def = { name: name.slice(0, 32), role };
+    if (nurse) def.skin = "nurse-joy";
+    if (trainer) {
+      def.team = team;
+      const ticks = Number(config.get("challenge_cooldown"));
+      const battle = {};
+      if (Number.isFinite(ticks)) battle.cooldown = Math.max(0, Math.ceil(ticks / 20));
+      if (config.get("can_rechallenge") === false) battle.rematch = false;
+      def.battle = battle;
+      if (typeof cls?.skill === "number") def.skill = Math.max(MIN_SKILL, Math.min(1, cls.skill / 5));
+    }
+    const dlg = {};
+    const line = (suffix, text) => {
+      if (typeof text !== "string" || !text.trim()) return null;
+      lang.set(`${key}.${suffix}`, langText(text));
+      return [`${key}.${suffix}`];
+    };
+    const greeting = line("greeting", dialogue.greeting ?? (trainer ? config.get("intro_text") : null));
+    if (greeting) dlg.greeting = greeting;
+    if (dialogue.options.length) {
+      const allowed = dialogue.options.filter((o) => o === "close" || o === "battle" && trainer || o === "heal" && nurse);
+      if (allowed.some((o) => o !== "close") || greeting) dlg.options = allowed.length ? allowed : ["close"];
+    }
+    const hurt = line("hurt", dialogue.hurt);
+    if (hurt) dlg.hurt = hurt;
+    if (trainer) {
+      const challenge = line("challenge", config.get("challenge_accepted_text"));
+      const cooldown = line("cooldown", config.get("challenge_cooldown_text"));
+      if (challenge) dlg.challenge = challenge;
+      if (cooldown) dlg.cooldown = cooldown;
+    }
+    if (Object.keys(dlg).length) def.dialogue = dlg;
+    return defineNpc(name, def);
+  };
+  const pokemonFrom = (e) => {
+    const p = e.Pokemon;
+    if (!p?.Species) return null;
+    const request = { species: p.Species.replace(/^cobblemon:/, ""), level: Number(p.Level) || 5, tag: `${ns}:structure` };
+    if (p.Shiny === 1 || p.Shiny === true) request.shiny = true;
+    const signature = JSON.stringify(request);
+    let index = pokemonIndex.get(signature);
+    if (index === void 0) {
+      index = pokemonIndex.size;
+      pokemonIndex.set(signature, index);
+      pokemonMarker[index] = request;
+    }
+    return index;
+  };
+  const zonesByPiece = /* @__PURE__ */ new Map();
+  for (const zone of opts.zones ?? []) {
+    const file = path9.join(data, "worldgen", "structure", `${zone.slice(ns.length + 1)}.json`);
+    if (!existsSync8(file)) continue;
+    const startPool = String((await readJson2(file)).start_pool ?? "");
+    const poolFile = startPool.startsWith(`${ns}:`) ? path9.join(data, "worldgen", "template_pool", `${startPool.slice(ns.length + 1)}.json`) : "";
+    if (!poolFile || !existsSync8(poolFile)) {
+      notes.push(`Zone ${zone}: start pool "${startPool}" not found; the zone has no marker`);
+      continue;
+    }
+    const locations = [];
+    const collect = (element) => {
+      if (!element) return;
+      if (typeof element.location === "string") locations.push(element.location);
+      for (const inner of element.elements ?? []) collect(inner);
+    };
+    for (const e of (await readJson2(poolFile)).elements ?? []) collect(e.element);
+    for (const location of locations) {
+      if (!location.startsWith(`${ns}:`)) continue;
+      const rel = location.slice(ns.length + 1);
+      const set = zonesByPiece.get(rel) ?? /* @__PURE__ */ new Set();
+      set.add(zone);
+      zonesByPiece.set(rel, set);
+    }
+  }
+  const zoneIndex = /* @__PURE__ */ new Map();
+  const zoneMarker = {};
+  const pieceFiles = (await walk3(pieceRoot)).filter((f) => f.endsWith(".nbt"));
+  const markers = /* @__PURE__ */ new Map();
+  for (const file of pieceFiles) {
+    const pieceZones = zonesByPiece.get(relId2(pieceRoot, file, ".nbt"));
+    const { parsed } = await nbt2.parse(await readFile10(file));
+    const piece = nbt2.simplify(parsed);
+    if (!piece.entities?.length && !pieceZones) continue;
+    const cells = /* @__PURE__ */ new Map();
+    for (const b of piece.blocks ?? []) cells.set(b.pos.join(","), piece.palette?.[b.state]?.Name ?? "");
+    const here = /* @__PURE__ */ new Map();
+    for (const entity of piece.entities ?? []) {
+      const e = entity.nbt ?? {};
+      const id = String(e.id ?? "?");
+      let marker = null;
+      if (id === "cobbledollars:cobble_merchant") {
+        const npc = merchantFrom(e);
+        if (npc) marker = { kind: "npc", index: npcIndex.get(npc) };
+      } else if (id === "cobblemon:npc") {
+        const npc = npcFrom(e);
+        if (npc) marker = { kind: "npc", index: npcIndex.get(npc) };
+      } else if (id === "cobblemon:pokemon") {
+        const index = pokemonFrom(e);
+        if (index !== null) marker = { kind: "pokemon", index };
+      }
+      if (!marker) {
+        count(entityReport, id, "left out: Bedrock structures can't carry entities");
+        continue;
+      }
+      const [x, y, z] = entity.blockPos ?? [];
+      let spot = null;
+      let water = false;
+      const tries = [
+        [0, ["minecraft:air", "minecraft:water"]],
+        [1, ["minecraft:air"]],
+        [2, ["minecraft:air"]],
+        [1, ["minecraft:water"]],
+        [2, ["minecraft:water"]]
+      ];
+      for (const [dy, wanted] of tries) {
+        if (x === void 0 || y === void 0 || z === void 0) break;
+        const key = `${x},${y + dy},${z}`;
+        const cell = cells.get(key) ?? "";
+        if (wanted.includes(cell) && !here.has(key)) {
+          spot = key;
+          water = cell === "minecraft:water";
+          break;
+        }
+      }
+      if (!spot) {
+        count(entityReport, id, "left out: no air cell for its marker");
+        notes.push(`${relId2(pieceRoot, file, ".nbt")}: ${id} at ${entity.blockPos?.join(",")} has no air above it for its marker`);
+        continue;
+      }
+      here.set(spot, { ...marker, water });
+      count(entityReport, id, marker.kind === "npc" ? "NPC marker" : "Pok\xE9mon marker");
+    }
+    if (pieceZones) {
+      const list = [...pieceZones].sort();
+      const signature = list.join("|");
+      let index = zoneIndex.get(signature);
+      if (index === void 0) {
+        index = zoneIndex.size;
+        zoneIndex.set(signature, index);
+        zoneMarker[index] = list;
+      }
+      const spot = zoneSpot(piece.size ?? [], cells, here);
+      if (spot) here.set(spot, { kind: "zone", index, water: false });
+      else notes.push(`${relId2(pieceRoot, file, ".nbt")}: no open ground for the marker of ${list.join(", ")}`);
+    }
+    if (here.size) markers.set(file, here);
+  }
+  const npcGroups = Math.max(1, Math.ceil(npcIndex.size / 16));
+  const pokemonGroups = Math.max(1, Math.ceil(pokemonIndex.size / 16));
+  const zoneGroups = Math.max(1, Math.ceil(zoneIndex.size / 16));
+  const groupsOf = { npc: npcGroups, pokemon: pokemonGroups, zone: zoneGroups };
+  const markerBlock = (kind, index, waterlogged) => {
+    const states = { [`${ns}:${kind}`]: index % 16 };
+    if (groupsOf[kind] > 1) states[`${ns}:${kind}_group`] = Math.floor(index / 16);
+    return { name: `${ns}:${kind}_marker`, states, placeAir: true, waterlogged };
+  };
+  let converted = 0;
+  for (const file of pieceFiles) {
+    const rel = relId2(pieceRoot, file, ".nbt");
+    const here = markers.get(file);
+    const rewrite = ({ javaName, pos }) => {
+      const marker = here?.get(pos.join(","));
+      if (marker) return markerBlock(marker.kind, marker.index, marker.water);
+      const space = javaName.split(":")[0] ?? "";
+      if (BASE_NAMESPACES.has(space)) return void 0;
+      const mapped = javaName in opts.blockMap ? opts.blockMap[javaName] : opts.blockMap[`${space}:*`];
+      if (mapped !== void 0) {
+        count(blockReport, javaName, mapped ? `\u2192 ${mapped}` : "removed (block map)");
+        return { name: mapped ?? "minecraft:air", placeAir: true };
+      }
+      if (space === ns) {
+        count(blockReport, javaName, "kept (your own block; states are not converted)");
+        return { name: javaName };
+      }
+      count(blockReport, javaName, "removed: block from another mod");
+      return { name: "minecraft:air", placeAir: true };
+    };
+    try {
+      await convertJavaNbtToMcstructure(file, path9.join(bp, "structures", ns, `${rel}.mcstructure`), { blockRewrite: rewrite });
+      converted++;
+    } catch (error) {
+      logWarn(`Structure ${rel}: ${String(error)}`);
+    }
+  }
+  const resolveBiomes = async (raw) => {
+    const list = Array.isArray(raw) ? raw : raw ? [raw] : [];
+    const out = [];
+    const pending = list.map(String);
+    for (let guard = 0; pending.length && guard < 200; guard++) {
+      const ref = pending.shift();
+      const vanilla = VANILLA_STRUCTURE_TAGS[ref];
+      if (vanilla) {
+        out.push(...vanilla);
+        continue;
+      }
+      const tag = new RegExp(`^#${ns}:(.+)$`).exec(ref);
+      if (!tag) {
+        out.push(ref);
+        continue;
+      }
+      const file = path9.join(data, "tags", "worldgen", "biome", `${tag[1]}.json`);
+      if (!existsSync8(file)) {
+        notes.push(`Biome tag ${ref} not found`);
+        continue;
+      }
+      for (const value of (await readJson2(file)).values ?? []) {
+        const id = typeof value === "string" ? value : value?.id;
+        if (typeof id === "string" && (id.startsWith("minecraft:") || id.startsWith("#"))) pending.push(id);
+      }
+    }
+    return out.length ? out : raw;
+  };
+  for (const file of poolFiles) {
+    const id = relId2(path9.join(worldgen, "template_pool"), file, ".json");
+    await writeJson3(path9.join(bp, "worldgen", "template_pools", ns, `${id}.json`), javaTemplatePoolToBedrock(id, await readJson2(file), ns));
+  }
+  const processorFiles = (await walk3(path9.join(worldgen, "processor_list"))).filter((f) => f.endsWith(".json"));
+  for (const file of processorFiles) {
+    const id = relId2(path9.join(worldgen, "processor_list"), file, ".json");
+    const out = javaProcessorListToBedrock(id, await readJson2(file), ns);
+    if (out) await writeJson3(path9.join(bp, "worldgen", "processors", ns, `${id}.json`), out);
+  }
+  const structureFiles = (await walk3(path9.join(worldgen, "structure"))).filter((f) => f.endsWith(".json"));
+  const ownStructures = /* @__PURE__ */ new Set();
+  for (const file of structureFiles) {
+    const id = relId2(path9.join(worldgen, "structure"), file, ".json");
+    const java = await readJson2(file);
+    if (java.type !== void 0 && java.type !== "minecraft:jigsaw") {
+      notes.push(`Structure ${ns}:${id} is "${String(java.type)}", not jigsaw: left out`);
+      continue;
+    }
+    ownStructures.add(`${ns}:${id}`);
+    await writeJson3(
+      path9.join(bp, "worldgen", "structures", ns, `${id}.json`),
+      javaStructureToBedrock(id, { ...java, biomes: await resolveBiomes(java.biomes) }, ns)
+    );
+  }
+  const setDirs = [path9.join(worldgen, "structure_set"), path9.join(input, "data", "minecraft", "worldgen", "structure_set")];
+  let sets = 0;
+  for (const [i, dir] of setDirs.entries()) {
+    for (const file of (await walk3(dir)).filter((f) => f.endsWith(".json"))) {
+      const id = relId2(dir, file, ".json");
+      const java = await readJson2(file);
+      const structures = (java.structures ?? []).filter((s) => ownStructures.has(String(s.structure)));
+      if (!structures.length) continue;
+      if (i === 1) {
+        notes.push(
+          `minecraft:${id} is replaced by the mod in Java; in Bedrock it becomes ${ns}:${id} and its structures generate in addition to vanilla ones`
+        );
+      }
+      await writeJson3(path9.join(bp, "worldgen", "structure_sets", ns, `${id}.json`), javaStructureSetToBedrock(id, { ...java, structures }, ns));
+      sets++;
+    }
+  }
+  let loot = 0;
+  for (const dirName of ["loot_table", "loot_tables"]) {
+    const dir = path9.join(data, dirName);
+    for (const file of (await walk3(dir)).filter((f) => f.endsWith(".json"))) {
+      const table = javaLootTableToBedrock(await readJson2(file));
+      if (!table) continue;
+      await writeJson3(path9.join(bp, "loot_tables", ns, `${relId2(dir, file, ".json")}.json`), table);
+      loot++;
+    }
+  }
+  const writeMarker = async (kind, groups) => {
+    const states = { [`${ns}:${kind}`]: { values: { min: 0, max: 15 } } };
+    if (groups > 1) states[`${ns}:${kind}_group`] = { values: { min: 0, max: groups - 1 } };
+    await writeJson3(path9.join(bp, "blocks", `${kind}_marker.json`), {
+      format_version: "1.21.60",
+      "minecraft:block": {
+        description: { identifier: `${ns}:${kind}_marker`, menu_category: { category: "none" }, states },
+        components: {
+          "minecraft:custom_components": [`${ns}:${kind}_marker`],
+          "minecraft:tick": { interval_range: [10, 30] },
+          "minecraft:geometry": "geometry.cooblemon_empty",
+          "minecraft:material_instances": { "*": { texture: "cooblemon_empty", render_method: "blend" } },
+          "minecraft:collision_box": false,
+          "minecraft:selection_box": false,
+          "minecraft:light_dampening": 0,
+          // Para los marcadores dentro del agua: la librería pone agua al quitarlo.
+          "minecraft:liquid_detection": {
+            detection_rules: [{ liquid_type: "water", can_contain_liquid: true, on_liquid_touches: "no_reaction" }]
+          },
+          "minecraft:destructible_by_mining": { seconds_to_destroy: 0 },
+          "minecraft:destructible_by_explosion": { explosion_resistance: 0 }
+        }
+      }
+    });
+  };
+  if (npcIndex.size) await writeMarker("npc", npcGroups);
+  if (pokemonIndex.size) await writeMarker("pokemon", pokemonGroups);
+  if (zoneIndex.size) await writeMarker("zone", zoneGroups);
+  const npcMarker = {};
+  for (const [id, index] of npcIndex) npcMarker[index] = id;
+  const langLines = /* @__PURE__ */ new Map();
+  for (const locale of /* @__PURE__ */ new Set(["en_us", ...langFiles.map((f) => path9.basename(f, ".json"))])) {
+    langLines.set(locale, [...lang].map(([k, v]) => `${k}=${v}`));
+  }
+  const report = {
+    pieces: { total: pieceFiles.length, converted },
+    worldgen: { pools: poolFiles.length, structures: ownStructures.size, sets, processors: processorFiles.length, lootTables: loot },
+    npcs: Object.keys(npcs).length,
+    pokemon: pokemonIndex.size,
+    zoneMarkers: zoneMarker,
+    entities: Object.fromEntries(entityReport),
+    blocks: Object.fromEntries(blockReport),
+    notes: [...new Set(notes)]
+  };
+  logStep(
+    `  structures: ${converted}/${pieceFiles.length} pieces, ${ownStructures.size} structures, ${sets} sets, ${poolFiles.length} pools, ${loot} loot tables, ${Object.keys(npcs).length} NPCs, ${pokemonIndex.size} Pok\xE9mon markers`
+  );
+  return { npcs, npcMarker, npcGroups, pokemonMarker, pokemonGroups, zoneMarker, zoneGroups, langLines, report };
+}
+
 // tools/kit/kit.ts
 init_entity_files();
 function parseArgs() {
@@ -3739,28 +6134,29 @@ function parseArgs() {
   return {
     sprites: !argv.includes("--no-sprites"),
     glyphPage: page,
-    input: path8.resolve(input),
+    input: path11.resolve(input),
     ns: get("--ns") ?? null,
-    out: get("--out") ? path8.resolve(get("--out")) : null,
-    version: [v[0] ?? 1, v[1] ?? 0, v[2] ?? 0]
+    out: get("--out") ? path11.resolve(get("--out")) : null,
+    version: [v[0] ?? 1, v[1] ?? 0, v[2] ?? 0],
+    blockMap: get("--block-map") ? path11.resolve(get("--block-map")) : null
   };
 }
-async function walk2(dir) {
-  if (!existsSync7(dir)) return [];
+async function walk4(dir) {
+  if (!existsSync10(dir)) return [];
   const out = [];
-  for (const entry of await readdir7(dir, { withFileTypes: true })) {
-    const full = path8.join(dir, entry.name);
-    if (entry.isDirectory()) out.push(...await walk2(full));
+  for (const entry of await readdir9(dir, { withFileTypes: true })) {
+    const full = path11.join(dir, entry.name);
+    if (entry.isDirectory()) out.push(...await walk4(full));
     else out.push(full);
   }
   return out;
 }
-async function readJson(file) {
-  return JSON.parse(await readFile8(file, "utf8"));
+async function readJson3(file) {
+  return JSON.parse(await readFile12(file, "utf8"));
 }
-async function writeJson3(file, data) {
-  await mkdir3(path8.dirname(file), { recursive: true });
-  await writeFile5(file, `${JSON.stringify(data, null, 2)}
+async function writeJson5(file, data) {
+  await mkdir6(path11.dirname(file), { recursive: true });
+  await writeFile8(file, `${JSON.stringify(data, null, 2)}
 `, "utf8");
 }
 function stableUuid(seed) {
@@ -3796,24 +6192,24 @@ function rideStatsOf(raw) {
 }
 var textureRef = (t) => typeof t === "string" ? t : t?.frames?.[0];
 async function resolveAssets(roots, names) {
-  const pokemonDirs = roots.map((r) => path8.join(r, "bedrock", "pokemon"));
-  const filesIn = async (sub) => (await Promise.all(pokemonDirs.map((d) => walk2(path8.join(d, sub))))).flat().filter((f) => f.endsWith(".json"));
+  const pokemonDirs = roots.map((r) => path11.join(r, "bedrock", "pokemon"));
+  const filesIn = async (sub) => (await Promise.all(pokemonDirs.map((d) => walk4(path11.join(d, sub))))).flat().filter((f) => f.endsWith(".json"));
   const geoFiles = (await filesIn("models")).reverse();
   const poserFiles = (await filesIn("posers")).reverse();
   const tex = (ref) => {
     const rel = ref.split(":").pop();
     for (const root of [...roots].reverse()) {
-      const file = path8.join(root, rel);
-      if (existsSync7(file)) return file;
+      const file = path11.join(root, rel);
+      if (existsSync10(file)) return file;
     }
-    return path8.join(roots[roots.length - 1], rel);
+    return path11.join(roots[roots.length - 1], rel);
   };
   const byName = /* @__PURE__ */ new Map();
   for (const file of await filesIn("resolvers")) {
-    const r = await readJson(file);
+    const r = await readJson3(file);
     const name = speciesName(String(r.species ?? "").split(":").pop() ?? "");
     if (!names.has(name)) continue;
-    const entry = byName.get(name) ?? { folder: path8.basename(path8.dirname(file)), files: [] };
+    const entry = byName.get(name) ?? { folder: path11.basename(path11.dirname(file)), files: [] };
     entry.files.push({ order: r.order ?? 0, variations: r.variations ?? [] });
     byName.set(name, entry);
   }
@@ -3839,15 +6235,15 @@ async function resolveAssets(roots, names) {
           if (v.layers) layers = v.layers;
         }
         if (!model || !texture) return null;
-        const geoFile = geoFiles.find((f) => path8.basename(f) === `${model.split(":").pop()}.json`);
+        const geoFile = geoFiles.find((f) => path11.basename(f) === `${model.split(":").pop()}.json`);
         if (!geoFile) return null;
         const poserName = (poser ?? name).split(":").pop();
         return {
           poserName,
           geoFile,
           texture: tex(texture),
-          layers: layers.map((l) => textureRef(l.texture)).filter((t) => !!t).map(tex).filter((f) => existsSync7(f)),
-          poserFile: poserFiles.find((f) => path8.basename(f) === `${poserName}.json`) ?? null
+          layers: layers.map((l) => textureRef(l.texture)).filter((t) => !!t).map(tex).filter((f) => existsSync10(f)),
+          poserFile: poserFiles.find((f) => path11.basename(f) === `${poserName}.json`) ?? null
         };
       }
     });
@@ -3855,10 +6251,10 @@ async function resolveAssets(roots, names) {
   return out;
 }
 async function composedTexture(variant, dst) {
-  const base = decodePng(await readFile8(variant.texture));
+  const base = decodePng(await readFile12(variant.texture));
   const data = Buffer.from(base.data);
   for (const file of variant.layers) {
-    const layer = decodePng(await readFile8(file));
+    const layer = decodePng(await readFile12(file));
     for (let y = 0; y < base.height; y++) {
       for (let x = 0; x < base.width; x++) {
         const lx = Math.floor(x * layer.width / base.width);
@@ -3872,18 +6268,18 @@ async function composedTexture(variant, dst) {
       }
     }
   }
-  await mkdir3(path8.dirname(dst), { recursive: true });
-  await writeFile5(dst, encodePng({ width: base.width, height: base.height, data }));
+  await mkdir6(path11.dirname(dst), { recursive: true });
+  await writeFile8(dst, encodePng({ width: base.width, height: base.height, data }));
 }
 async function writeGeometry(ns, geoFile, rp, fileName, name) {
-  const geo = JSON.parse(sanitizeGeometryJson(await readFile8(geoFile, "utf8"), name));
+  const geo = JSON.parse(sanitizeGeometryJson(await readFile12(geoFile, "utf8"), name));
   let id = "";
   (geo["minecraft:geometry"] ?? []).forEach((g, index) => {
     const own = `geometry.${ns}.${fileName}${index ? `_${index}` : ""}`;
     g.description = { ...g.description, identifier: own };
     id ||= own;
   });
-  await writeJson3(path8.join(rp, "models", "entity", ns, `${fileName}.geo.json`), geo);
+  await writeJson5(path11.join(rp, "models", "entity", ns, `${fileName}.geo.json`), geo);
   return id;
 }
 function poseClip(pose) {
@@ -3961,13 +6357,13 @@ function rescale(node, ratio) {
 }
 async function behaviorEntity(id, family, raw, extras) {
   const template = TEMPLATES[profileOf(raw)];
-  const entity = await readJson(resolveFromRoot(`bp/entities/${template}.json`));
+  const entity = await readJson3(resolveFromRoot(`bp/entities/${template}.json`));
   const e = entity["minecraft:entity"];
   e.description.identifier = id;
   e.description.is_spawnable = true;
   e.description.is_summonable = true;
-  const templateSpecies = await readJson(
-    (await walk2(resolveFromRoot("data/species"))).find((f) => path8.basename(f) === `${template}.json`)
+  const templateSpecies = await readJson3(
+    (await walk4(resolveFromRoot("data/species"))).find((f) => path11.basename(f) === `${template}.json`)
   );
   const baseScale = raw.baseScale ?? 1;
   rescale(e, baseScale / (templateSpecies.baseScale ?? 1));
@@ -3984,7 +6380,7 @@ async function behaviorEntity(id, family, raw, extras) {
     )]
   };
   if (extras.shoulder && !e.component_groups?.["cooblemon:shoulder"]) {
-    const pikachu = (await readJson(resolveFromRoot("bp/entities/pikachu.json")))["minecraft:entity"];
+    const pikachu = (await readJson3(resolveFromRoot("bp/entities/pikachu.json")))["minecraft:entity"];
     e.component_groups["cooblemon:shoulder"] = pikachu.component_groups["cooblemon:shoulder"];
     renameFamilies(e.component_groups["cooblemon:shoulder"], "pikachu", family);
     for (const ev of ["cooblemon:shoulder_start", "cooblemon:shoulder_stop"]) e.events[ev] ??= pikachu.events[ev];
@@ -4016,11 +6412,11 @@ function convertForm(f, ref) {
 }
 var MODIFIER_ASPECTS = /^(shiny|female|male|alpha.*)$/;
 async function convertAdditions(ns, input, assets, own, convert, additions) {
-  const addonRoots = [.../* @__PURE__ */ new Set([path8.join(input, "assets", "cobblemon"), assets])].filter((d) => existsSync7(d));
+  const addonRoots = [.../* @__PURE__ */ new Set([path11.join(input, "assets", "cobblemon"), assets])].filter((d) => existsSync10(d));
   const looks = /* @__PURE__ */ new Map();
-  const resolverFiles = (await Promise.all(addonRoots.map((r) => walk2(path8.join(r, "bedrock", "pokemon", "resolvers"))))).flat();
+  const resolverFiles = (await Promise.all(addonRoots.map((r) => walk4(path11.join(r, "bedrock", "pokemon", "resolvers"))))).flat();
   for (const file of resolverFiles.filter((f) => f.endsWith(".json"))) {
-    const r = await readJson(file);
+    const r = await readJson3(file);
     const name = speciesName(String(r.species ?? "").split(":").pop() ?? "");
     if (!name || own.has(name)) continue;
     for (const v of r.variations ?? []) {
@@ -4044,8 +6440,8 @@ async function convertAdditions(ns, input, assets, own, convert, additions) {
     return [own.has(n) ? `${ns}:${n}` : n, ...rest].join(" ");
   };
   const dataForms = /* @__PURE__ */ new Map();
-  for (const file of (await walk2(path8.join(input, "data", ns, "species_additions"))).filter((f) => f.endsWith(".json"))) {
-    const a = await readJson(file);
+  for (const file of (await walk4(path11.join(input, "data", ns, "species_additions"))).filter((f) => f.endsWith(".json"))) {
+    const a = await readJson3(file);
     const name = speciesName(String(a.target ?? "").split(":").pop() ?? "");
     if (!name) continue;
     const ignored = Object.keys(a).filter((k) => k !== "target" && k !== "forms");
@@ -4055,18 +6451,18 @@ async function convertAdditions(ns, input, assets, own, convert, additions) {
   if (looks.size === 0 && dataForms.size === 0) return;
   if (looks.size) {
     const jarAssets = cobblemonJava("assets/cobblemon");
-    if (!existsSync7(jarAssets)) {
+    if (!existsSync10(jarAssets)) {
       throw new Error("This addon changes the look of Cobblemon species: the extracted Cobblemon .jar is needed (its models and animations are the base)");
     }
     const resolved = await resolveAssets([jarAssets, ...addonRoots], new Set(looks.keys()));
-    const speciesFiles = await walk2(cobblemonJava("data/cobblemon/species"));
+    const speciesFiles = await walk4(cobblemonJava("data/cobblemon/species"));
     for (const [name, aspects] of looks) {
-      const file = speciesFiles.find((f) => path8.basename(f) === `${name}.json`);
+      const file = speciesFiles.find((f) => path11.basename(f) === `${name}.json`);
       if (!file) {
         logWarn(`${name}: not a Cobblemon species (skipped)`);
         continue;
       }
-      const raw = await readJson(file);
+      const raw = await readJson3(file);
       for (const aspect of aspects) {
         await convert(raw, resolved.get(name), [jarAssets, ...addonRoots], { form: formIdOf(aspect), aspects: [aspect] });
       }
@@ -4127,7 +6523,7 @@ function convertSpecies(ns, raw, own, extras) {
     locators: extras.locators
   };
 }
-var RENDERER = existsSync7(resolveFromRoot("tools/kit/render-pokemon-sprites.mjs")) ? [resolveFromRoot("tools/kit/render-pokemon-sprites.mjs")] : [resolveFromRoot("node_modules/tsx/dist/cli.mjs"), resolveFromRoot("tools/render-pokemon-sprites.ts")];
+var RENDERER = existsSync10(resolveFromRoot("tools/kit/render-pokemon-sprites.mjs")) ? [resolveFromRoot("tools/kit/render-pokemon-sprites.mjs")] : [resolveFromRoot("node_modules/tsx/dist/cli.mjs"), resolveFromRoot("tools/render-pokemon-sprites.ts")];
 var QUIET_RENDER = { encoding: "utf8", stdio: "pipe", maxBuffer: 64 * 1024 * 1024 };
 function showRendererOutput(r) {
   const text = `${r.stdout ?? ""}${r.stderr ?? ""}${r.error ? String(r.error) : ""}`.trim();
@@ -4140,16 +6536,16 @@ async function renderSprites(ns, assetRoots, variants, rp, work, page) {
       species: v.name,
       ...v.aspects.length || shiny ? { aspects: [...v.aspects, ...shiny ? ["shiny"] : []] } : {},
       files: {
-        pc: path8.join(work, "pc", `${fileOf(v, shiny)}.png`),
-        face: path8.join(work, "face", `${fileOf(v, shiny)}.png`)
+        pc: path11.join(work, "pc", `${fileOf(v, shiny)}.png`),
+        face: path11.join(work, "face", `${fileOf(v, shiny)}.png`)
       }
     }))
   );
-  await rm3(work, { recursive: true, force: true });
-  await mkdir3(path8.join(work, "pc"), { recursive: true });
-  await mkdir3(path8.join(work, "face"), { recursive: true });
-  const manifest = path8.join(work, "jobs.json");
-  await writeFile5(manifest, JSON.stringify(jobs), "utf8");
+  await rm4(work, { recursive: true, force: true });
+  await mkdir6(path11.join(work, "pc"), { recursive: true });
+  await mkdir6(path11.join(work, "face"), { recursive: true });
+  const manifest = path11.join(work, "jobs.json");
+  await writeFile8(manifest, JSON.stringify(jobs), "utf8");
   logStep(`  Sprites: rendering ${jobs.length} variants (this can take a few minutes)\u2026`);
   const run2 = spawnSync(
     process.execPath,
@@ -4168,7 +6564,7 @@ async function renderSprites(ns, assetRoots, variants, rp, work, page) {
     logWarn("  Sprites: the renderer failed (is there a browser? see SPRITE_BROWSER); the add-on is built without sprites");
     return {};
   }
-  const dexDir = path8.join(work, "dex");
+  const dexDir = path11.join(work, "dex");
   const dexJobs = variants.flatMap(
     (v) => [false, true].map((shiny) => ({
       name: fileOf(v, shiny),
@@ -4177,12 +6573,12 @@ async function renderSprites(ns, assetRoots, variants, rp, work, page) {
     }))
   );
   for (const pass of ["icon", "portrait", "size"]) {
-    const dir = path8.join(dexDir, pass);
-    await mkdir3(dir, { recursive: true });
-    const jobsFile = path8.join(dexDir, `${pass}.jobs.json`);
-    const specFile = path8.join(dexDir, `${pass}.spec.json`);
-    await writeFile5(jobsFile, JSON.stringify(pass === "size" ? dexJobs.filter((j) => !j.name.endsWith("_shiny")) : dexJobs), "utf8");
-    await writeFile5(specFile, JSON.stringify(DEX_PASSES[pass]), "utf8");
+    const dir = path11.join(dexDir, pass);
+    await mkdir6(dir, { recursive: true });
+    const jobsFile = path11.join(dexDir, `${pass}.jobs.json`);
+    const specFile = path11.join(dexDir, `${pass}.spec.json`);
+    await writeFile8(jobsFile, JSON.stringify(pass === "size" ? dexJobs.filter((j) => !j.name.endsWith("_shiny")) : dexJobs), "utf8");
+    await writeFile8(specFile, JSON.stringify(DEX_PASSES[pass]), "utf8");
     const r = spawnSync(
       process.execPath,
       [
@@ -4210,25 +6606,25 @@ async function renderSprites(ns, assetRoots, variants, rp, work, page) {
   for (const v of variants) {
     for (const shiny of [false, true]) {
       const file = fileOf(v, shiny);
-      const pc = path8.join(work, "pc", `${file}.png`);
-      const face = path8.join(work, "face", `${file}.png`);
-      if (!existsSync7(pc)) continue;
+      const pc = path11.join(work, "pc", `${file}.png`);
+      const face = path11.join(work, "face", `${file}.png`);
+      if (!existsSync10(pc)) continue;
       const tex = `textures/${ns}/sprites`;
-      await mkdir3(path8.join(rp, tex, "pc"), { recursive: true });
-      await copyFile3(pc, path8.join(rp, tex, "pc", `${file}.png`));
+      await mkdir6(path11.join(rp, tex, "pc"), { recursive: true });
+      await copyFile3(pc, path11.join(rp, tex, "pc", `${file}.png`));
       const set = { pc: `${tex}/pc/${file}`, dex: `${tex}/pc/${file}`, portrait: `${tex}/pc/${file}` };
       for (const [pass, key] of [["icon", "dex"], ["portrait", "portrait"], ["size", "size"]]) {
-        const src = path8.join(dexDir, pass, `${pass === "size" ? fileOf(v, false) : file}.png`);
-        if (!existsSync7(src)) continue;
-        await mkdir3(path8.join(rp, tex, "dex", pass), { recursive: true });
-        await copyFile3(src, path8.join(rp, tex, "dex", pass, `${file}.png`));
+        const src = path11.join(dexDir, pass, `${pass === "size" ? fileOf(v, false) : file}.png`);
+        if (!existsSync10(src)) continue;
+        await mkdir6(path11.join(rp, tex, "dex", pass), { recursive: true });
+        await copyFile3(src, path11.join(rp, tex, "dex", pass, `${file}.png`));
         set[key] = `${tex}/dex/${pass}/${file}`;
       }
-      if (existsSync7(face)) {
-        await mkdir3(path8.join(rp, tex, "face"), { recursive: true });
-        await copyFile3(face, path8.join(rp, tex, "face", `${file}.png`));
+      if (existsSync10(face)) {
+        await mkdir6(path11.join(rp, tex, "face"), { recursive: true });
+        await copyFile3(face, path11.join(rp, tex, "face", `${file}.png`));
         set.face = `${tex}/face/${file}`;
-        faces.push(decodePng(await readFile8(face)));
+        faces.push(decodePng(await readFile12(face)));
         set.glyph = String.fromCharCode(page << 8 | index++);
       }
       sprites[`${v.base ? "" : `${ns}:`}${v.name}|${v.form ?? ""}|${shiny ? 1 : 0}`] = set;
@@ -4236,28 +6632,28 @@ async function renderSprites(ns, assetRoots, variants, rp, work, page) {
   }
   if (faces.length) {
     const fontName = `glyph_${page.toString(16).toUpperCase()}.png`;
-    await mkdir3(path8.join(rp, "font"), { recursive: true });
-    await writeFile5(path8.join(rp, "font", fontName), encodePng(glyphPage(faces)));
+    await mkdir6(path11.join(rp, "font"), { recursive: true });
+    await writeFile8(path11.join(rp, "font", fontName), encodePng(glyphPage(faces)));
   }
   return sprites;
 }
 async function main() {
   const args = parseArgs();
-  const dataRoot = path8.join(args.input, "data");
-  const ns = args.ns ?? (existsSync7(dataRoot) ? (await readdir7(dataRoot, { withFileTypes: true })).find((d) => d.isDirectory() && d.name !== "minecraft")?.name : void 0);
+  const dataRoot = path11.join(args.input, "data");
+  const ns = args.ns ?? (existsSync10(dataRoot) ? (await readdir9(dataRoot, { withFileTypes: true })).find((d) => d.isDirectory() && d.name !== "minecraft" && d.name !== "cobblemon")?.name : void 0);
   if (!ns || !/^[a-z0-9_]+$/.test(ns) || ns === "cooblemon" || ns === "cobblemon") {
     throw new Error(`Invalid namespace: "${ns}". Pass it with --ns (lowercase letters, digits and _).`);
   }
-  const data = path8.join(dataRoot, ns);
-  const assets = path8.join(args.input, "assets", ns);
+  const data = path11.join(dataRoot, ns);
+  const assets = path11.join(args.input, "assets", ns);
   const out = args.out ?? resolveFromRoot(`dist/kit/${ns}`);
-  const bp = path8.join(out, "BP");
-  const rp = path8.join(out, "RP");
-  await rm3(bp, { recursive: true, force: true });
-  await rm3(rp, { recursive: true, force: true });
+  const bp = path11.join(out, "BP");
+  const rp = path11.join(out, "RP");
+  await rm4(bp, { recursive: true, force: true });
+  await rm4(rp, { recursive: true, force: true });
   const rawSpecies = [];
-  for (const file of (await walk2(path8.join(data, "species"))).filter((f) => f.endsWith(".json"))) {
-    rawSpecies.push(await readJson(file));
+  for (const file of (await walk4(path11.join(data, "species"))).filter((f) => f.endsWith(".json"))) {
+    rawSpecies.push(await readJson3(file));
   }
   const own = new Set(rawSpecies.map((s) => speciesName(s.name)));
   const resolved = await resolveAssets([assets], own);
@@ -4281,9 +6677,9 @@ async function main() {
     };
     const lengths = /* @__PURE__ */ new Map();
     const renamed = {};
-    const animFiles = (await Promise.all(animRoots.map((r) => walk2(path8.join(r, "bedrock", "pokemon", "animations", res.folder))))).flat();
+    const animFiles = (await Promise.all(animRoots.map((r) => walk4(path11.join(r, "bedrock", "pokemon", "animations", res.folder))))).flat();
     for (const file of animFiles.filter((f) => f.endsWith(".animation.json"))) {
-      const payload = await readJson(file);
+      const payload = await readJson3(file);
       const tree = sanitizeAnimationTree(payload.animations ?? {});
       for (const [key, anim] of Object.entries(tree)) {
         const ref = key.split(".").slice(1).join(".");
@@ -4293,7 +6689,7 @@ async function main() {
       }
     }
     const rolesFor = async (poserFile, tag, poserName) => {
-      const poser = poserFile ? await readJson(poserFile) : null;
+      const poser = poserFile ? await readJson3(poserFile) : null;
       const roles = poser ? rolesFromPoser(poser) : rolesFromNames(poserName, (ref) => lengths.has(ref));
       for (const [role, info] of roles) {
         if (info.clip && !lengths.has(info.clip)) {
@@ -4337,7 +6733,7 @@ async function main() {
         if (e) battleClips[n] = e;
       }
     }
-    const baseGeo = JSON.parse(await readFile8(base2.geoFile, "utf8"));
+    const baseGeo = JSON.parse(await readFile12(base2.geoFile, "utf8"));
     const modelLocators = locatorsOf(baseGeo);
     const locators = {};
     for (const [locName, vec2] of modelLocators) {
@@ -4402,30 +6798,30 @@ async function main() {
         default: await writeGeometry(ns, variant.geoFile, rp, fileName, name)
       };
       const texDir = `${animTex}/${name}`;
-      await composedTexture(variant, path8.join(rp, `${texDir}/${fileName}.png`));
-      await composedTexture(res.resolve([...baseAspects, ...aspects, "shiny"]) ?? variant, path8.join(rp, `${texDir}/${fileName}_shiny.png`));
+      await composedTexture(variant, path11.join(rp, `${texDir}/${fileName}.png`));
+      await composedTexture(res.resolve([...baseAspects, ...aspects, "shiny"]) ?? variant, path11.join(rp, `${texDir}/${fileName}_shiny.png`));
       const textures = { default: `${texDir}/${fileName}`, shiny: `${texDir}/${fileName}_shiny` };
       const female = res.resolve([...baseAspects, ...aspects, "female"]);
       const femaleGeo = !!female && female.geoFile !== variant.geoFile;
       const femaleTex = !!female && (female.texture !== variant.texture || female.layers.join() !== variant.layers.join());
       if (female && femaleGeo) geometry.female = await writeGeometry(ns, female.geoFile, rp, `${fileName}_female`, name);
       if (female && femaleTex) {
-        await composedTexture(female, path8.join(rp, `${texDir}/${fileName}_female.png`));
-        await composedTexture(res.resolve([...baseAspects, ...aspects, "female", "shiny"]) ?? female, path8.join(rp, `${texDir}/${fileName}_female_shiny.png`));
+        await composedTexture(female, path11.join(rp, `${texDir}/${fileName}_female.png`));
+        await composedTexture(res.resolve([...baseAspects, ...aspects, "female", "shiny"]) ?? female, path11.join(rp, `${texDir}/${fileName}_female_shiny.png`));
         textures.female = `${texDir}/${fileName}_female`;
         textures.female_shiny = `${texDir}/${fileName}_female_shiny`;
       }
       const roles = variant.poserFile && variant.poserFile !== base2.poserFile ? (await rolesFor(variant.poserFile, `${form}_`, variant.poserName)).roles : baseRoles.roles;
-      await writeJson3(
-        path8.join(bp, "entities", `${fileName}.json`),
+      await writeJson5(
+        path11.join(bp, "entities", `${fileName}.json`),
         await behaviorEntity(entityId, `${ns}_${name}`, raw, { shoulder: !!shoulderPose, seats, rideSpeed })
       );
-      await writeJson3(
-        path8.join(rp, "entity", `${fileName}.entity.json`),
+      await writeJson5(
+        path11.join(rp, "entity", `${fileName}.entity.json`),
         clientEntity(entityId, fileName, geometry, textures, roles, animId, battleClips, shoulderClip)
       );
-      await writeJson3(
-        path8.join(rp, "render_controllers", `${ns}.${fileName}.render_controllers.json`),
+      await writeJson5(
+        path11.join(rp, "render_controllers", `${ns}.${fileName}.render_controllers.json`),
         renderController(entityId, { geometry: femaleGeo, texture: femaleTex })
       );
       spriteJobs.push(
@@ -4434,7 +6830,7 @@ async function main() {
       return true;
     };
     await buildEntity(null, []);
-    await writeJson3(path8.join(rp, "animations", ns, `${entityName}.animation.json`), { format_version: "1.8.0", animations: renamed });
+    await writeJson5(path11.join(rp, "animations", ns, `${entityName}.animation.json`), { format_version: "1.8.0", animations: renamed });
     if (addition) {
       const list = additions.get(name) ?? [];
       list.push({ name: addition.form, entity: id, battleClips, locators });
@@ -4462,13 +6858,13 @@ async function main() {
   const ADDITIONS = [...additions].map(([target, forms]) => ({ target, forms }));
   const sprites = args.sprites && spriteJobs.length ? await renderSprites(
     ns,
-    [path8.join(args.input, "assets", "cobblemon"), assets].filter((d) => existsSync7(d)),
+    [path11.join(args.input, "assets", "cobblemon"), assets].filter((d) => existsSync10(d)),
     spriteJobs,
     rp,
-    path8.join(out, ".sprites"),
+    path11.join(out, ".sprites"),
     args.glyphPage
   ) : {};
-  const spawnFiles = (await walk2(path8.join(data, "spawn_pool_world"))).filter((f) => f.endsWith(".json"));
+  const spawnFiles = (await walk4(path11.join(data, "spawn_pool_world"))).filter((f) => f.endsWith(".json"));
   const pools = spawnFiles.length ? await convertJavaSpawnPools({ files: spawnFiles, generationOf: () => 0, quiet: true }) : {};
   const entries = [];
   const levels = {};
@@ -4481,14 +6877,22 @@ async function main() {
     entries.push(...bundleSpawnRules(id, spawn));
     levels[id] = { min: spawn.levelMin, max: spawn.levelMax };
   }
-  const items = await convertItems({ input: args.input, ns, bp, rp });
-  if (species.length === 0 && ADDITIONS.length === 0 && items.items.length === 0) {
-    throw new Error(`No species or items found in ${args.input} (data/${ns}/species, assets/${ns}/models/item)`);
+  const zones = await convertZoneSpawns({ input: args.input, ns, own, tmp: path11.join(out, ".zone-spawns") });
+  if (zones) {
+    entries.push(...zones.entries);
+    for (const note of zones.notes) logWarn(note);
   }
-  const langFiles = (await walk2(path8.join(assets, "lang"))).filter((f) => f.endsWith(".json"));
+  const items = await convertItems({ input: args.input, ns, bp, rp });
+  const blockMap = args.blockMap ? await readJson3(args.blockMap) : {};
+  const structures = await convertStructures({ input: args.input, ns, bp, blockMap, zones: Object.keys(zones?.zones ?? {}) });
+  if (structures) await writeJson5(path11.join(out, "structures-report.json"), structures.report);
+  if (species.length === 0 && ADDITIONS.length === 0 && items.items.length === 0 && !structures) {
+    throw new Error(`No species, items or structures found in ${args.input} (data/${ns}/species, assets/${ns}/models/item, data/${ns}/structure)`);
+  }
+  const langFiles = (await walk4(path11.join(assets, "lang"))).filter((f) => f.endsWith(".json"));
   const languages = [];
   for (const file of langFiles) {
-    const src = await readJson(file);
+    const src = await readJson3(file);
     const lines = [];
     for (const s of species) {
       const id = String(s.id);
@@ -4499,12 +6903,19 @@ async function main() {
       const desc = pick("desc");
       if (desc) lines.push(`cooblemon.species.${id}.desc=${desc.replace(/\n/g, " ")}`);
     }
-    lines.push(...items.langLines.get(path8.basename(file, ".json")) ?? []);
-    const locale = bedrockLocale(path8.basename(file, ".json"));
+    lines.push(...items.langLines.get(path11.basename(file, ".json")) ?? []);
+    lines.push(...structures?.langLines.get(path11.basename(file, ".json")) ?? []);
+    const locale = bedrockLocale(path11.basename(file, ".json"));
     languages.push(locale);
-    await mkdir3(path8.join(rp, "texts"), { recursive: true });
-    await writeFile5(path8.join(rp, "texts", `${locale}.lang`), `${lines.join("\n")}
+    await mkdir6(path11.join(rp, "texts"), { recursive: true });
+    await writeFile8(path11.join(rp, "texts", `${locale}.lang`), `${lines.join("\n")}
 `, "utf8");
+  }
+  if (!languages.includes("en_US") && structures?.langLines.get("en_us")?.length) {
+    await mkdir6(path11.join(rp, "texts"), { recursive: true });
+    await writeFile8(path11.join(rp, "texts", "en_US.lang"), `${structures.langLines.get("en_us").join("\n")}
+`, "utf8");
+    languages.push("en_US");
   }
   const SIBLINGS = {
     es_ES: ["es_MX"],
@@ -4521,30 +6932,33 @@ async function main() {
   for (const locale of [...languages]) {
     for (const sibling of SIBLINGS[locale] ?? []) {
       if (languages.includes(sibling)) continue;
-      await copyFile3(path8.join(rp, "texts", `${locale}.lang`), path8.join(rp, "texts", `${sibling}.lang`));
+      await copyFile3(path11.join(rp, "texts", `${locale}.lang`), path11.join(rp, "texts", `${sibling}.lang`));
       languages.push(sibling);
     }
   }
-  if (languages.length) await writeJson3(path8.join(rp, "texts", "languages.json"), languages);
+  if (languages.length) await writeJson5(path11.join(rp, "texts", "languages.json"), languages);
   const version = args.version.join(".");
-  await mkdir3(path8.join(bp, "scripts"), { recursive: true });
+  await mkdir6(path11.join(bp, "scripts"), { recursive: true });
   const apiLib = resolveFromRoot("packages/api/dist/cobblemon-bedrock-api.js");
-  if (!existsSync7(apiLib)) throw new Error("Missing packages/api/dist/cobblemon-bedrock-api.js: run npm run api:build first");
-  await copyFile3(apiLib, path8.join(bp, "scripts", "cobblemon-bedrock-api.js"));
-  await writeFile5(
-    path8.join(bp, "scripts", "main.js"),
+  if (!existsSync10(apiLib)) throw new Error("Missing packages/api/dist/cobblemon-bedrock-api.js: run npm run api:build first");
+  await copyFile3(apiLib, path11.join(bp, "scripts", "cobblemon-bedrock-api.js"));
+  await writeFile8(
+    path11.join(bp, "scripts", "main.js"),
     [
       "// Generated by the Cobblemon Bedrock creator kit: do not edit, regenerate it instead.",
       'import { registerAddon } from "./cobblemon-bedrock-api.js";',
-      'import { ADDITIONS, ADDON, EVOLUTIONS, SPAWN, SPECIES, SPRITES, VERSION } from "./data.js";',
+      'import { ADDITIONS, ADDON, EVOLUTIONS, NPCS, NPC_MARKER, POKEMON_MARKER, SPAWN, SPECIES, SPRITES, VERSION, ZONES, ZONE_MARKER } from "./data.js";',
       "",
-      "registerAddon({ addon: ADDON, version: VERSION, species: SPECIES, additions: ADDITIONS, spawn: SPAWN, sprites: SPRITES, evolutions: EVOLUTIONS });",
+      "const cobblemon = registerAddon({ addon: ADDON, version: VERSION, species: SPECIES, additions: ADDITIONS, spawn: SPAWN, sprites: SPRITES, evolutions: EVOLUTIONS, npcs: NPCS, zones: ZONES });",
+      ...structures && Object.keys(structures.npcMarker).length ? [`cobblemon.npcMarker("${ns}:npc_marker", NPC_MARKER, { tag: "${ns}:structure"${structures.npcGroups > 1 ? `, groupState: "${ns}:npc_group"` : ""} });`] : [],
+      ...structures && Object.keys(structures.pokemonMarker).length ? [`cobblemon.pokemonMarker("${ns}:pokemon_marker", POKEMON_MARKER${structures.pokemonGroups > 1 ? `, { groupState: "${ns}:pokemon_group" }` : ""});`] : [],
+      ...structures && Object.keys(structures.zoneMarker).length ? [`cobblemon.zoneMarker("${ns}:zone_marker", ZONE_MARKER${structures.zoneGroups > 1 ? `, { groupState: "${ns}:zone_group" }` : ""});`] : [],
       ""
     ].join("\n"),
     "utf8"
   );
-  await writeFile5(
-    path8.join(bp, "scripts", "data.js"),
+  await writeFile8(
+    path11.join(bp, "scripts", "data.js"),
     [
       "// Generated by the Cobblemon Bedrock creator kit: do not edit, regenerate it instead.",
       `export const ADDON = ${JSON.stringify(ns)};`,
@@ -4554,18 +6968,23 @@ async function main() {
       `export const SPAWN = ${JSON.stringify({ entries, levels })};`,
       `export const SPRITES = ${JSON.stringify(sprites)};`,
       "export const EVOLUTIONS = {};",
+      `export const NPCS = ${JSON.stringify(structures?.npcs ?? {})};`,
+      `export const NPC_MARKER = ${JSON.stringify(structures?.npcMarker ?? {})};`,
+      `export const POKEMON_MARKER = ${JSON.stringify(structures?.pokemonMarker ?? {})};`,
+      `export const ZONES = ${JSON.stringify(zones?.zones ?? {})};`,
+      `export const ZONE_MARKER = ${JSON.stringify(structures?.zoneMarker ?? {})};`,
       ""
     ].join("\n"),
     "utf8"
   );
-  const base = await readJson(resolveFromRoot("package.json"));
+  const base = await readJson3(resolveFromRoot("package.json"));
   const cv = base.version.split(".").map(Number);
-  const bpManifest = await readJson(resolveFromRoot("bp/manifest.json"));
-  const rpManifest = await readJson(resolveFromRoot("rp/manifest.json"));
+  const bpManifest = await readJson3(resolveFromRoot("bp/manifest.json"));
+  const rpManifest = await readJson3(resolveFromRoot("rp/manifest.json"));
   const engine = [1, 26, 50];
-  await writeJson3(path8.join(bp, "manifest.json"), {
+  await writeJson5(path11.join(bp, "manifest.json"), {
     format_version: 2,
-    header: { name: `${ns} (Cobblemon Bedrock)`, description: `Cobblemon Bedrock add-on generated by the creator kit (${species.length} species, ${ADDITIONS.length} species changed, ${items.items.length} items).`, uuid: stableUuid(`${ns}:bp`), version: args.version, min_engine_version: engine },
+    header: { name: `${ns} (Cobblemon Bedrock)`, description: `Cobblemon Bedrock add-on generated by the creator kit (${species.length} species, ${ADDITIONS.length} species changed, ${items.items.length} items, ${Object.keys(structures?.npcs ?? {}).length} NPCs).`, uuid: stableUuid(`${ns}:bp`), version: args.version, min_engine_version: engine },
     modules: [
       { type: "data", uuid: stableUuid(`${ns}:bp:data`), version: args.version },
       { type: "script", language: "javascript", uuid: stableUuid(`${ns}:bp:script`), version: args.version, entry: "scripts/main.js" }
@@ -4576,7 +6995,7 @@ async function main() {
       { module_name: "@minecraft/server", version: "2.10.0" }
     ]
   });
-  await writeJson3(path8.join(rp, "manifest.json"), {
+  await writeJson5(path11.join(rp, "manifest.json"), {
     format_version: 2,
     capabilities: ["pbr"],
     header: { name: `${ns} (Cobblemon Bedrock, resources)`, description: "Models, animations, textures and texts.", uuid: stableUuid(`${ns}:rp`), version: args.version, min_engine_version: engine },
@@ -4589,7 +7008,7 @@ async function main() {
       { uuid: stableUuid(`${ns}:bp`), version: args.version }
     ]
   });
-  const pack = path8.join(out, `${ns}.mcaddon`);
+  const pack = path11.join(out, `${ns}.mcaddon`);
   await new Promise((resolve, reject) => {
     const output = createWriteStream2(pack);
     const archive = archiver2("zip", { zlib: { level: 9 } });
@@ -4602,7 +7021,7 @@ async function main() {
     archive.finalize();
   });
   logStep(
-    `Kit: ${species.length} species, ${ADDITIONS.length} Cobblemon species changed, ${entries.length} spawns, ${items.items.length} items, ${items.recipes} recipes, ${languages.length} languages, ${Object.keys(sprites).length} sprite sets \u2192 ${pack}`
+    `Kit: ${species.length} species, ${ADDITIONS.length} Cobblemon species changed, ${entries.length} spawns (${Object.keys(zones?.zones ?? {}).length} zones), ${items.items.length} items, ${items.recipes} recipes, ${languages.length} languages, ${Object.keys(sprites).length} sprite sets \u2192 ${pack}`
   );
 }
 var run = process.argv[2] === "init" ? Promise.resolve().then(() => (init_init(), init_exports)).then((m) => m.runInit(process.argv.slice(3))) : main();

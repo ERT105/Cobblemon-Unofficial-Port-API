@@ -93,6 +93,11 @@
           ],
           "default": 0,
           "client_sync": true
+        },
+        "cooblemon:alpha_eyes": {
+          "type": "bool",
+          "default": true,
+          "client_sync": true
         }
       }
     },
@@ -639,8 +644,8 @@
             {
               "position": [
                 0,
-                1.313,
-                -0.063
+                1.289,
+                -0.069
               ]
             }
           ],
@@ -659,6 +664,7 @@
             "range_max": 0.8
           }
         },
+        "minecraft:can_power_jump": {},
         "minecraft:variable_max_auto_step": {
           "base_value": 1.0625,
           "controlled_value": 1.0625,
@@ -755,6 +761,19 @@
         "time_down_event": {
           "event": "cooblemon:may_despawn"
         }
+      },
+      "minecraft:equipment": {
+        "table": "loot_tables/empty.json",
+        "slot_drop_chance": [
+          {
+            "slot": "slot.weapon.mainhand",
+            "drop_chance": 0
+          },
+          {
+            "slot": "slot.weapon.offhand",
+            "drop_chance": 0
+          }
+        ]
       }
     },
     "events": {

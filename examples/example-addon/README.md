@@ -15,6 +15,7 @@ own.
 | `BP/scripts/cobblemon-bedrock-api.js` | The library, copied from `api/dist/`. |
 | `BP/entities/` | The entities (`pikachu_surf`, its form `pikachu_surf_night` and its mega `pikachu_surf_mega`). |
 | `BP/items/`, `RP/textures/item_texture.json` | The mega stone (`ejemplo:surfite`), a generic Key Stone for testing (`ejemplo:key_stone`), and two items used on a party Pokémon (`ejemplo:surf_soda`, `ejemplo:surf_charm`). |
+| `BP/blocks/npc_marker.json` | The NPC marker block: in a structure, it turns into the NPC its state says (`npcMarker`). |
 | `RP/entity/`, `RP/textures/` | Client entities (with Cobblemon Bedrock's Pikachu model and animations) and their textures. |
 | `RP/font/glyph_F0.png` | The party panel portraits. |
 | `RP/texts/` | Name, description and the event texts. |
@@ -52,9 +53,17 @@ What should happen:
 | `/scriptevent ejemplo:info` | Your party, your Pokédex totals and the wild Pokémon within 32 blocks. |
 | `/scriptevent ejemplo:items` | Gives you Surf Sodas (heal 40 HP, only if hurt) and Surf Charms (+1 level, only Surfing Pikachu). Use one looking at your Pokémon, or anywhere to choose from your party. |
 | `/scriptevent ejemplo:mega` | Gives you the test Key Stone and a Surfite, and a Surfing Pikachu already holding one. Put the Key Stone in your offhand and battle: the Mega button turns it into Mega Surfing Pikachu (green, Electric/Water, Drizzle). |
+| `/scriptevent ejemplo:npcs` | Three NPCs in front of you: Kai, a trainer with a greeting window and a team with its own levels; Marina, a nurse; and Nico, a shopkeeper who opens his shop straight away. Hit Kai or Marina and talk to them again: they won't. To try the marker, `/setblock ~2 ~ ~ ejemplo:npc_marker ["ejemplo:npc"=1]` turns into Marina. Needs Cobblemon Bedrock 1.8.13. |
 
 A Pokémon with a tag shows it in the event messages: catch the Articuno and
 the chat says `(tag: altar)`.
+
+## Buttons in screens
+
+Open your party summary, or the PC with a Pokémon picked: an **Add-ons**
+button shows up. **Rest** (summary only) heals that Pokémon fully; **Wave**
+(both screens, only Pikachu and Surfing Pikachu) says where it is, party or
+box. Needs Cobblemon Bedrock 1.8.13.
 
 It uses Cobblemon models and textures (CC BY-NC): see
 [`LICENSE.md`](../../LICENSE.md).

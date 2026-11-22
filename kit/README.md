@@ -40,9 +40,13 @@ assets/<ns>/lang/*.json
 assets/<ns>/models/item/*.json      (items, with their textures)
 data/<ns>/recipe/**/*.json          (recipes)
 data/<ns>/tags/item/*.json          (item tags used by your recipes)
+data/<ns>/structure/**/*.nbt        (structures, see below)
+data/<ns>/worldgen/…                (their template pools, structures and sets)
+data/cobblemon/{npcs,dialogues}/…   (the NPCs your structures place)
 ```
 
-Species and items are both optional: an addon with only items works too.
+Species, items and structures are all optional: an addon with only items, or
+only structures, works too.
 
 The output goes to `dist/kit/<ns>/`: `BP/`, `RP/` and `<ns>.mcaddon`, ready
 to install on top of Cobblemon Bedrock.
@@ -54,6 +58,7 @@ to install on top of Cobblemon Bedrock.
 | `--version 1.0.0` | Your add-on's version. **Bump it on every release**: the game keeps the old one if the version matches. |
 | `--glyph-page F0` | The glyph page for the party panel portraits (`F0` to `F8`). If you use several add-ons, they must not overlap. |
 | `--no-sprites` | Skip sprite rendering (faster; the UI shows a Poké Ball). |
+| `--block-map <file>` | Replacements for blocks from other mods in your structures (see below). |
 
 ## Starting an add-on from scratch
 
@@ -134,6 +139,49 @@ add-on's script with the [API](../docs/REFERENCE.md#actions-and-queries).
   campfire). If Cobblemon Bedrock already smelts that ingredient (for example,
   berries into dyes), or your addon has two such recipes, the extra one is
   skipped with a warning instead of failing when the world loads.
+
+## Structures
+
+The kit converts your `.nbt` structures and their jigsaw generation
+(`template_pool`, `structure`, `structure_set`, `processor_list`), the biome
+tags they use and your chest loot tables. It writes
+`structures-report.json` next to the output with everything it did.
+
+- **Blocks** go through Cobblemon Bedrock's own block map (`cobblemon:` blocks
+  become Cobblemon Bedrock's). Blocks from **other mods** are removed, unless
+  you give a replacement with `--block-map`:
+
+  ```json
+  { "othermod:fancy_lamp": "minecraft:lantern", "gachamod:*": null }
+  ```
+
+  A block id or `"mod:*"` for a whole mod; `null` removes it.
+- **Entities can't travel in a Bedrock structure.** The ones that matter
+  become marker blocks of your add-on that turn into the real thing when the
+  chunk loads (see [NPCs](../docs/REFERENCE.md#npcs)):
+  - `cobbledollars:cobble_merchant` → a merchant NPC with its shop
+    categories, prices 1:1;
+  - `cobblemon:npc` → the NPC of its class in `data/cobblemon/npcs`: its team,
+    skill (0–5 becomes 0.55–1), rematch and cooldown, and a greeting, options
+    and "you hit me" line taken from its dialogue. Only plain lines are
+    kept: Molang logic isn't converted, and the lines stay in English;
+  - `cobblemon:pokemon` → the same Pokémon (species, level, shiny) standing
+    there, or swimming if it was in water.
+
+  Villagers, paintings, item frames and other mods' entities are left out
+  and listed in the report.
+- **Pokémon that only spawn in your structures.** A spawn entry with
+  `condition.structures` naming one of your structures (directly or through
+  a `#<ns>:` structure tag), in `data/<ns>/spawn_pool_world` or in
+  `data/cobblemon/spawn_pool_world`, becomes a
+  [spawn zone](../docs/REFERENCE.md#spawn-zones): one zone per structure, with
+  a radius of 60% of its `max_distance_from_center`, and a zone marker in the
+  middle of its start piece. Cobblemon Bedrock species are allowed there;
+  they keep their usual levels, not the entry's `level`.
+- **Vanilla structure sets.** Java mods replace `minecraft:villages` to put
+  their villages instead of the vanilla ones. An add-on can't do that, so the
+  set becomes `<ns>:villages` and your villages generate **in addition to**
+  vanilla villages. Adjust its `spacing` if they come out too often.
 
 ## Afterwards
 

@@ -85,6 +85,10 @@
           "default": false,
           "client_sync": true
         },
+        "cooblemon:in_water": {
+          "type": "bool",
+          "default": false
+        },
         "cooblemon:beam": {
           "type": "int",
           "range": [
@@ -92,6 +96,11 @@
             3
           ],
           "default": 0,
+          "client_sync": true
+        },
+        "cooblemon:alpha_eyes": {
+          "type": "bool",
+          "default": true,
           "client_sync": true
         }
       }
@@ -104,17 +113,58 @@
             "deals_damage": "no"
           }
         },
-        "minecraft:buoyant": {
-          "apply_gravity": false,
-          "base_buoyancy": 1,
-          "big_wave_probability": 0,
-          "big_wave_speed": 0,
-          "drag_down_on_buoyancy_removed": 0,
-          "liquid_blocks": [
-            "minecraft:water",
-            "minecraft:flowing_water"
-          ],
-          "simulate_waves": false
+        "minecraft:underwater_movement": {
+          "value": 0.28
+        },
+        "minecraft:environment_sensor": {
+          "triggers": [
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "in_water",
+                    "operator": "==",
+                    "value": true
+                  },
+                  {
+                    "test": "rider_count",
+                    "operator": "==",
+                    "value": 0
+                  },
+                  {
+                    "test": "bool_property",
+                    "domain": "cooblemon:in_water",
+                    "operator": "==",
+                    "value": false
+                  }
+                ]
+              },
+              "event": "cooblemon:flyer_enter_water"
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "in_water",
+                    "operator": "!=",
+                    "value": true
+                  },
+                  {
+                    "test": "rider_count",
+                    "operator": "==",
+                    "value": 0
+                  },
+                  {
+                    "test": "bool_property",
+                    "domain": "cooblemon:in_water",
+                    "operator": "==",
+                    "value": true
+                  }
+                ]
+              },
+              "event": "cooblemon:flyer_leave_water"
+            }
+          ]
         },
         "minecraft:movement": {
           "value": 0.28
@@ -126,6 +176,7 @@
         "minecraft:navigation.fly": {
           "can_path_from_air": true,
           "can_path_over_water": true,
+          "avoid_water": true,
           "avoid_damage_blocks": true
         },
         "minecraft:movement.fly": {},
@@ -133,6 +184,9 @@
         "minecraft:pushable": {
           "is_pushable": true,
           "is_pushable_by_piston": true
+        },
+        "minecraft:behavior.float": {
+          "priority": 1
         },
         "minecraft:behavior.panic": {
           "priority": 1,
@@ -255,17 +309,58 @@
             "deals_damage": "no"
           }
         },
-        "minecraft:buoyant": {
-          "apply_gravity": false,
-          "base_buoyancy": 1,
-          "big_wave_probability": 0,
-          "big_wave_speed": 0,
-          "drag_down_on_buoyancy_removed": 0,
-          "liquid_blocks": [
-            "minecraft:water",
-            "minecraft:flowing_water"
-          ],
-          "simulate_waves": false
+        "minecraft:underwater_movement": {
+          "value": 0.28
+        },
+        "minecraft:environment_sensor": {
+          "triggers": [
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "in_water",
+                    "operator": "==",
+                    "value": true
+                  },
+                  {
+                    "test": "rider_count",
+                    "operator": "==",
+                    "value": 0
+                  },
+                  {
+                    "test": "bool_property",
+                    "domain": "cooblemon:in_water",
+                    "operator": "==",
+                    "value": false
+                  }
+                ]
+              },
+              "event": "cooblemon:flyer_enter_water"
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "in_water",
+                    "operator": "!=",
+                    "value": true
+                  },
+                  {
+                    "test": "rider_count",
+                    "operator": "==",
+                    "value": 0
+                  },
+                  {
+                    "test": "bool_property",
+                    "domain": "cooblemon:in_water",
+                    "operator": "==",
+                    "value": true
+                  }
+                ]
+              },
+              "event": "cooblemon:flyer_leave_water"
+            }
+          ]
         },
         "minecraft:movement": {
           "value": 0.35000000000000003
@@ -277,6 +372,7 @@
         "minecraft:navigation.fly": {
           "can_path_from_air": true,
           "can_path_over_water": true,
+          "avoid_water": true,
           "avoid_damage_blocks": true
         },
         "minecraft:movement.fly": {},
@@ -353,17 +449,58 @@
             "deals_damage": "no"
           }
         },
-        "minecraft:buoyant": {
-          "apply_gravity": false,
-          "base_buoyancy": 1,
-          "big_wave_probability": 0,
-          "big_wave_speed": 0,
-          "drag_down_on_buoyancy_removed": 0,
-          "liquid_blocks": [
-            "minecraft:water",
-            "minecraft:flowing_water"
-          ],
-          "simulate_waves": false
+        "minecraft:underwater_movement": {
+          "value": 0.28
+        },
+        "minecraft:environment_sensor": {
+          "triggers": [
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "in_water",
+                    "operator": "==",
+                    "value": true
+                  },
+                  {
+                    "test": "rider_count",
+                    "operator": "==",
+                    "value": 0
+                  },
+                  {
+                    "test": "bool_property",
+                    "domain": "cooblemon:in_water",
+                    "operator": "==",
+                    "value": false
+                  }
+                ]
+              },
+              "event": "cooblemon:flyer_enter_water"
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "in_water",
+                    "operator": "!=",
+                    "value": true
+                  },
+                  {
+                    "test": "rider_count",
+                    "operator": "==",
+                    "value": 0
+                  },
+                  {
+                    "test": "bool_property",
+                    "domain": "cooblemon:in_water",
+                    "operator": "==",
+                    "value": true
+                  }
+                ]
+              },
+              "event": "cooblemon:flyer_leave_water"
+            }
+          ]
         },
         "minecraft:movement": {
           "value": 0.29750000000000004
@@ -375,6 +512,7 @@
         "minecraft:navigation.fly": {
           "can_path_from_air": true,
           "can_path_over_water": true,
+          "avoid_water": true,
           "avoid_damage_blocks": true
         },
         "minecraft:movement.fly": {},
@@ -422,6 +560,9 @@
           "priority": 5,
           "look_distance": 16
         },
+        "minecraft:behavior.float": {
+          "priority": 0
+        },
         "minecraft:behavior.random_stroll": {
           "priority": 7,
           "speed_multiplier": 1.1333333333333335
@@ -440,17 +581,58 @@
             "deals_damage": "no"
           }
         },
-        "minecraft:buoyant": {
-          "apply_gravity": false,
-          "base_buoyancy": 1,
-          "big_wave_probability": 0,
-          "big_wave_speed": 0,
-          "drag_down_on_buoyancy_removed": 0,
-          "liquid_blocks": [
-            "minecraft:water",
-            "minecraft:flowing_water"
-          ],
-          "simulate_waves": false
+        "minecraft:underwater_movement": {
+          "value": 0.28
+        },
+        "minecraft:environment_sensor": {
+          "triggers": [
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "in_water",
+                    "operator": "==",
+                    "value": true
+                  },
+                  {
+                    "test": "rider_count",
+                    "operator": "==",
+                    "value": 0
+                  },
+                  {
+                    "test": "bool_property",
+                    "domain": "cooblemon:in_water",
+                    "operator": "==",
+                    "value": false
+                  }
+                ]
+              },
+              "event": "cooblemon:flyer_enter_water"
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "in_water",
+                    "operator": "!=",
+                    "value": true
+                  },
+                  {
+                    "test": "rider_count",
+                    "operator": "==",
+                    "value": 0
+                  },
+                  {
+                    "test": "bool_property",
+                    "domain": "cooblemon:in_water",
+                    "operator": "==",
+                    "value": true
+                  }
+                ]
+              },
+              "event": "cooblemon:flyer_leave_water"
+            }
+          ]
         },
         "minecraft:movement": {
           "value": 0.36400000000000005
@@ -462,6 +644,7 @@
         "minecraft:navigation.fly": {
           "can_path_from_air": true,
           "can_path_over_water": true,
+          "avoid_water": true,
           "avoid_damage_blocks": true
         },
         "minecraft:movement.fly": {},
@@ -506,17 +689,58 @@
             "deals_damage": "no"
           }
         },
-        "minecraft:buoyant": {
-          "apply_gravity": false,
-          "base_buoyancy": 1,
-          "big_wave_probability": 0,
-          "big_wave_speed": 0,
-          "drag_down_on_buoyancy_removed": 0,
-          "liquid_blocks": [
-            "minecraft:water",
-            "minecraft:flowing_water"
-          ],
-          "simulate_waves": false
+        "minecraft:underwater_movement": {
+          "value": 0.28
+        },
+        "minecraft:environment_sensor": {
+          "triggers": [
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "in_water",
+                    "operator": "==",
+                    "value": true
+                  },
+                  {
+                    "test": "rider_count",
+                    "operator": "==",
+                    "value": 0
+                  },
+                  {
+                    "test": "bool_property",
+                    "domain": "cooblemon:in_water",
+                    "operator": "==",
+                    "value": false
+                  }
+                ]
+              },
+              "event": "cooblemon:flyer_enter_water"
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "in_water",
+                    "operator": "!=",
+                    "value": true
+                  },
+                  {
+                    "test": "rider_count",
+                    "operator": "==",
+                    "value": 0
+                  },
+                  {
+                    "test": "bool_property",
+                    "domain": "cooblemon:in_water",
+                    "operator": "==",
+                    "value": true
+                  }
+                ]
+              },
+              "event": "cooblemon:flyer_leave_water"
+            }
+          ]
         },
         "minecraft:movement": {
           "value": 0.28
@@ -528,6 +752,7 @@
         "minecraft:navigation.fly": {
           "can_path_from_air": true,
           "can_path_over_water": true,
+          "avoid_water": true,
           "avoid_damage_blocks": true
         },
         "minecraft:movement.fly": {},
@@ -767,6 +992,14 @@
           "height": 0.7
         }
       },
+      "cooblemon:flyer_in_water": {
+        "minecraft:physics": {
+          "has_gravity": false
+        }
+      },
+      "cooblemon:flyer_on_land": {
+        "minecraft:physics": {}
+      },
       "cooblemon:habitat_resident": {
         "minecraft:timer": {
           "looping": false,
@@ -831,17 +1064,58 @@
           "deals_damage": "no"
         }
       },
-      "minecraft:buoyant": {
-        "apply_gravity": false,
-        "base_buoyancy": 1,
-        "big_wave_probability": 0,
-        "big_wave_speed": 0,
-        "drag_down_on_buoyancy_removed": 0,
-        "liquid_blocks": [
-          "minecraft:water",
-          "minecraft:flowing_water"
-        ],
-        "simulate_waves": false
+      "minecraft:underwater_movement": {
+        "value": 0.28
+      },
+      "minecraft:environment_sensor": {
+        "triggers": [
+          {
+            "filters": {
+              "all_of": [
+                {
+                  "test": "in_water",
+                  "operator": "==",
+                  "value": true
+                },
+                {
+                  "test": "rider_count",
+                  "operator": "==",
+                  "value": 0
+                },
+                {
+                  "test": "bool_property",
+                  "domain": "cooblemon:in_water",
+                  "operator": "==",
+                  "value": false
+                }
+              ]
+            },
+            "event": "cooblemon:flyer_enter_water"
+          },
+          {
+            "filters": {
+              "all_of": [
+                {
+                  "test": "in_water",
+                  "operator": "!=",
+                  "value": true
+                },
+                {
+                  "test": "rider_count",
+                  "operator": "==",
+                  "value": 0
+                },
+                {
+                  "test": "bool_property",
+                  "domain": "cooblemon:in_water",
+                  "operator": "==",
+                  "value": true
+                }
+              ]
+            },
+            "event": "cooblemon:flyer_leave_water"
+          }
+        ]
       },
       "minecraft:movement": {
         "value": 0.28
@@ -853,6 +1127,7 @@
       "minecraft:navigation.fly": {
         "can_path_from_air": true,
         "can_path_over_water": true,
+        "avoid_water": true,
         "avoid_damage_blocks": true
       },
       "minecraft:movement.fly": {},
@@ -872,6 +1147,19 @@
         "time_down_event": {
           "event": "cooblemon:may_despawn"
         }
+      },
+      "minecraft:equipment": {
+        "table": "loot_tables/empty.json",
+        "slot_drop_chance": [
+          {
+            "slot": "slot.weapon.mainhand",
+            "drop_chance": 0
+          },
+          {
+            "slot": "slot.weapon.offhand",
+            "drop_chance": 0
+          }
+        ]
       }
     },
     "events": {
@@ -1557,6 +1845,36 @@
         "add": {
           "component_groups": [
             "cooblemon:companion_behavior"
+          ]
+        }
+      },
+      "cooblemon:flyer_enter_water": {
+        "set_property": {
+          "cooblemon:in_water": true
+        },
+        "remove": {
+          "component_groups": [
+            "cooblemon:flyer_on_land"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:flyer_in_water"
+          ]
+        }
+      },
+      "cooblemon:flyer_leave_water": {
+        "set_property": {
+          "cooblemon:in_water": false
+        },
+        "remove": {
+          "component_groups": [
+            "cooblemon:flyer_in_water"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "cooblemon:flyer_on_land"
           ]
         }
       }

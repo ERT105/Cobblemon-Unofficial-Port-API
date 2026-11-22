@@ -16,6 +16,9 @@
 | `evolutions` | New evolutions for species that aren't yours. |
 | `megas`, `megaAccessories` | Mega evolutions for your species (or for Cobblemon Bedrock ones, through `additions`), and the items that work as a Key Stone. See [Megas](#megas). |
 | `partyItems` | Your items that are used on a party Pokémon. See [Items used on a Pokémon](#items-used-on-a-pokémon). |
+| `npcs` | Trainers, merchants, nurses and people who talk. See [NPCs](#npcs). |
+| `zones` | Places with their own Pokémon, like your villages. See [Spawn zones](#spawn-zones). |
+| `buttons` | Your buttons in the party summary and the PC. See [Buttons in screens](#buttons-in-screens). |
 | `onAck` | What to do with the reply. By default, it goes to the content log. |
 
 It's sent when the world loads and whenever Cobblemon Bedrock asks for it,
@@ -64,7 +67,7 @@ evolutions?, moves? }`.
 spawn: {
   entries: [{ species, form?, biome, biomeTag?, biomeAny?, biomeAll?, biomeNot?,
               habitat?, light?, dimension?, weather?, bucket?, entryWeight?,
-              heightMin?, heightMax?, baseBlocks?, nearbyBlocks? }],
+              heightMin?, heightMax?, baseBlocks?, nearbyBlocks?, zone? }],
   levels: { "myaddon:species": { min, max } },
 }
 ```
@@ -77,9 +80,57 @@ spawn: {
 | `dimension` | `overworld`, `nether`, `end`. |
 | `bucket` | `common`, `uncommon`, `rare`, `ultra-rare`. |
 | `form` | A form of the same species, by its id. |
+| `zone` | Only inside these zones of yours (a zone id or a list). See [Spawn zones](#spawn-zones). |
 
 Your species don't spawn until Cobblemon Bedrock closes registration (once
 every add-on has finished sending).
+
+### Spawn zones
+
+Bedrock can't tell whether a spot is inside a structure, so "only in my
+village" can't be said with a biome. A **zone** says it instead: you register
+it, mark its center once when the village generates, and your entries with
+`zone` only spawn within its radius.
+
+```js
+zones: {
+  "myaddon:village": { radius: 64 },               // 4 to 128 blocks, default 48
+  "myaddon:pond":    { radius: 12, replaceSpawns: true },
+},
+spawn: {
+  entries: [
+    { species: "meowth", zone: "myaddon:village", bucket: "common", entryWeight: 9 },
+    { species: "myaddon:koi", zone: ["myaddon:pond"], habitat: "water" },
+  ],
+},
+```
+
+- **Any species** works in a zone entry, Cobblemon Bedrock's too: the zone is
+  yours, and what spawns in it changes nothing outside. They keep their usual
+  levels.
+- `biome` is optional in a zone entry. The rest of the conditions (`light`,
+  `habitat`, `weather`…) still apply.
+- Zone entries **join** the world's spawns there, by weight. With
+  `replaceSpawns: true`, only the zone's entries spawn inside it.
+- A Habitat block that replaces spawns still wins inside its own radius: the
+  player placed it on purpose.
+- The world keeps the centers, so a zone works with no block left behind.
+  Without your add-on, the centers stay but do nothing; reinstalling it brings
+  the zones back.
+
+Mark a center with **`markZone(zone, at)`**, or with a marker block in your
+structure: **`zoneMarker(blockId, zones, options?)`** works like
+[`npcMarker`](#putting-npcs-in-the-world), with the state `<addon>:zone`, and
+marks the zone (or the list of zones) its number says, centered on the block.
+Put it in the middle piece of the village. Marking the same zone again within
+8 blocks does nothing.
+
+```js
+cobblemon.zoneMarker("myaddon:zone_marker", { 0: "myaddon:village", 1: ["myaddon:village", "myaddon:pond"] });
+```
+
+`/scriptevent cooblemon:spawn_debug` shows the zones you are standing in, and
+which zone each Pokémon came from.
 
 ## Sprites
 
@@ -257,6 +308,170 @@ onCobblemonEvent("item_used", (e) => {
 If the Pokémon you're looking at can't use it, nothing happens, as in
 Cobblemon.
 
+## Buttons in screens
+
+Cobblemon Bedrock's screens can't be edited from another pack, so your
+buttons go in a list. When at least one of them fits the Pokémon on screen,
+the **party summary** and the **PC** (with a Pokémon picked) show an
+**Add-ons** button. It closes the screen and opens a list with every add-on's
+buttons for that Pokémon; picking one sends you `ui_button`. What it does is
+up to you: your own form, an action, a message…
+
+```js
+const cobblemon = registerAddon({
+  addon: "myaddon",
+  buttons: [
+    { id: "myaddon:rest", screen: "summary", label: "myaddon.button.rest", icon: "textures/myaddon/ui/rest" },
+    { id: "myaddon:inspect", screen: ["summary", "pc"], label: "myaddon.button.inspect", species: ["eevee"] },
+  ],
+});
+
+onCobblemonEvent("ui_button", (e) => {
+  if (e.button === "myaddon:rest") cobblemon.updatePokemon(e.player.id, e.pokemon.uuid, { heal: "full" });
+});
+```
+
+| Field | Notes |
+| --- | --- |
+| `id` | `myaddon:<name>`. It comes back in `ui_button`. |
+| `screen` | `summary`, `pc`, or a list with both. |
+| `label` | A key in your add-on's `.lang`. |
+| `icon` | Optional. A texture path in your resource pack (or any loaded pack), without `.png`. |
+| `species` | Only for these species. |
+
+- `ui_button` reaches every add-on: check `e.addon` or your button ids.
+- In the PC the Pokémon may be in a box (`place.kind` is `"pc"`), and
+  `updatePokemon` only works on the party.
+- Neither the texture nor the key can be checked from a script: a missing
+  texture shows the game's pink square, and a missing key shows the key.
+- Battle screens have no buttons: their turns are too delicate.
+- Players who use the simple menus (the game's own forms) don't see the
+  button.
+
+## NPCs
+
+Trainers, merchants, nurses or people who just talk. **Needs Cobblemon
+Bedrock with API 2** (1.8.13 or later). An NPC is a Cobblemon Bedrock
+trainer: battles, the shop, healing and the windows are the same as for its
+own NPCs. Your add-on only provides the data.
+
+```js
+const cobblemon = registerAddon({
+  addon: "myaddon",
+  npcs: {
+    "myaddon:surfer_kai": {
+      name: "Kai",
+      role: "trainer",
+      skin: "ace_trainer_abel_04a5",
+      team: [
+        { species: "wingull", level: 18 },
+        { species: "pikachu", level: 24, moves: ["thunderbolt", "quickattack"] },
+      ],
+      battle: { cooldown: 120, reward: 900 },
+      dialogue: {
+        greeting: ["myaddon.npc.kai.greeting"],
+        options: ["battle", "close"],
+        victory: ["myaddon.npc.kai.victory"],
+      },
+    },
+  },
+});
+```
+
+| Field | Notes |
+| --- | --- |
+| `name` | Plain text, up to 32 characters. It's a name, so it isn't translated. |
+| `role` | `trainer` (default), `merchant`, `nurse` (heals the party) or `talker`. |
+| `skin` | A Cobblemon Bedrock trainer skin, by file name: `nurse-joy`, `shop_keeper`, `shop_keeper_2`, `ace_trainer_abel_04a5`… An unknown one gets one for its role. |
+| `team` | Only for trainers. Up to six: `{ species, level?, heldItem?, moves?, ability?, shiny? }`. Unknown species, items or moves are left out with a warning. |
+| `level` | For the whole team. Each Pokémon's own `level` wins. With neither, the team adapts to the player's level. |
+| `skill` | How well it plays, 0 to 1. Without it, the one for its `battle.kind`. |
+| `battle` | `format` (`singles`, `doubles`), `start` (`request`: talk to it; `sight`: it challenges you when it sees you), `rematch` (`false`: never again once beaten), `cooldown` (seconds before a rematch; default five minutes), `reward` (money when beaten), `kind` (`standard`, `gym_leader`, `elite_four`, `champion`), `items` (up to three, used in battle). |
+| `shop` | Only for merchants. Categories: `[{ name, offers: [{ item, price, stock? }] }]`, prices in the player's money. `name` is a language key or plain text. With two or more categories, the player picks one first; each shows 12 offers per page. Up to 16 categories and 64 offers. `stock` is units per in-game day for all players together; without it, an offer never runs out. |
+| `dialogue` | See below. |
+| `movement` | `still` (default) or `free`. |
+
+### Dialogue
+
+Every line is a **language key** from your `.lang`, and one is picked at
+random. `%s` in the text is the player's name.
+
+| Field | When |
+| --- | --- |
+| `greeting` | When the player talks to it. |
+| `options` | The buttons: `battle`, `shop`, `heal`, `close`. Default: the one for its role, and "Goodbye". |
+| `challenge`, `victory`, `defeat` | Before a battle, when the player wins, when the player loses. |
+| `cooldown` | When asked for a rematch too soon. |
+| `hurt` | If the player hit it in the last ten minutes: it won't talk. |
+
+With `greeting` or `options`, a window opens. Without them, touching the NPC
+does what its role does, with no window: a merchant opens the shop, a nurse
+heals, a trainer challenges.
+
+### Putting NPCs in the world
+
+**`spawnNpc({ npc, at, yaw?, tag? })`** puts one where you say. It looks up to
+two blocks higher for room to stand. The result is `{ entityId }`.
+`despawnNpc(entityId)` removes it.
+
+**`npcMarker(blockId, npcs, options?)`** is for structures. A `.mcstructure`
+can't carry an NPC's data, so you place a marker block where it should stand.
+When the chunk loads, the marker turns into air and spawns the NPC its state
+says.
+
+```js
+// When your script loads, not later: block components are registered on startup.
+cobblemon.npcMarker("myaddon:npc_marker", { 0: "myaddon:surfer_kai", 1: "myaddon:nurse" });
+```
+
+The block needs the component, a tick and the state (`<addon>:npc`, 0–15):
+
+```json
+"description": {
+  "identifier": "myaddon:npc_marker",
+  "menu_category": { "category": "none" },
+  "states": { "myaddon:npc": { "values": { "min": 0, "max": 15 } } }
+},
+"components": {
+  "minecraft:custom_components": ["myaddon:npc_marker"],
+  "minecraft:tick": { "interval_range": [10, 30] },
+  "minecraft:geometry": "geometry.cooblemon_empty",
+  "minecraft:material_instances": { "*": { "texture": "cooblemon_empty", "render_method": "blend" } },
+  "minecraft:collision_box": false,
+  "minecraft:selection_box": false
+}
+```
+
+For more than 16 NPCs, add a second state and pass it as
+`options.groupState`: the number is `group * 16 + npc`. `options.tag` goes to
+every NPC the marker spawns.
+
+**`pokemonMarker(blockId, pokemon, options?)`** does the same for Pokémon that
+stand in your structures, like a Chansey in a Pokémon Center. Each number is
+a `spawn` request (see [The Pokémon](#the-pokémon-spawn-and-give)); the state
+is `<addon>:pokemon`.
+
+```js
+cobblemon.pokemonMarker("myaddon:pokemon_marker", { 0: { species: "chansey", level: 30 } });
+```
+
+A marker inside water (with `minecraft:liquid_detection` allowing water, and
+placed waterlogged in your structure) leaves water behind instead of air: a
+Magikarp in a pond doesn't leave an air pocket.
+
+The [creator kit](../kit/README.md#structures) writes the marker blocks, their tables and the
+markers inside your structures for you, zones included.
+
+### What the NPC keeps
+
+The NPC stores **which definition it comes from**, not a copy. If a new
+version of your add-on changes a team or a price, NPCs already in the world
+pick it up. Without your add-on, an NPC keeps its name and skin and says it
+isn't attending.
+
+Battles against your NPCs come with `npc` (its id) and `npcTag` in
+`battle_start` and `battle_end`.
+
 ## Reply (`ack`)
 
 `{ addon, api, ok, errors[], warnings[] }`. An **error** leaves that part out
@@ -273,7 +488,7 @@ except battle events, `player` (`{ id, name }`). `pokemon` is a summary:
 | Event | Data | When |
 | --- | --- | --- |
 | `captured` | `player`, `pokemon`, `ball`, `source` (`wild`, `battle`, `raid`), `destination` (`party`, `pc`) | A capture was saved. |
-| `battle_start` | `kind` (`wild`, `trainer`, `raid`, `pvp`), `players`, `opponent`, `raidTier`, `trainerName` | A battle starts. |
+| `battle_start` | `kind` (`wild`, `trainer`, `raid`, `pvp`), `players`, `opponent`, `raidTier`, `trainerName`, and against an add-on NPC `npc` and `npcTag` | A battle starts. |
 | `battle_end` | The same plus `result` (`win`, `loss`, `run`, `catch`, `aborted`) | A battle ends. |
 | `level_up` | `player`, `from`, `pokemon` | Levels up (several levels at once are one event). |
 | `evolved` | `player`, `from`, `pokemon` | Evolves. |
@@ -281,6 +496,8 @@ except battle events, `player` (`{ id, name }`). `pokemon` is a summary:
 | `starter_chosen` | `player`, `pokemon` | The starter is chosen. |
 | `pokedex_registered` | `player`, `species`, `status` (`seen`, `caught`) | First time seen or caught. |
 | `item_used` | `player`, `item`, `slot`, `pokemon` (with `hp`, `maxHp` and `status`) | One of your `partyItems` was used on a party Pokémon. |
+| `ui_button` | `player`, `addon`, `button`, `screen` (`summary`, `pc`), `place` (`{ kind: "party", slot }` or `{ kind: "pc", box, slot }`), `pokemon` (with `hp`, `maxHp` and `status`) | One of your `buttons` was picked. The screen is already closed. |
+| `npc_purchase` | `player`, `npc` (`null` for Cobblemon Bedrock's own merchants), `npcTag`, `merchant` (its name), `item`, `price`, `category`, `wallet` (what the player has left) | Something was bought in a merchant's shop. |
 
 **In a chat message**, every parameter of a `rawtext` must be an object: the
 level goes as `{ text: "10" }`. A bare number makes `sendMessage` fail with
@@ -345,6 +562,9 @@ made.
 | `give({ player, pokemon, destination? })` | Gives a Pokémon to a player. `destination`: `party` (default, the PC if the party is full) or `pc`. `pokemon.ball`: the Poké Ball it comes in (`cooblemon:ultra_ball`…). It's registered in their Pokédex as caught. | `{ destination, pokemon }` |
 | `startBattle(player, entityId)` | A battle against a wild Pokémon already in the world. | `{ battle }` |
 | `heal(player)` | Heals the whole party, like a healing machine. | — |
+| `spawnNpc({ npc, at, yaw?, tag? })` | Puts one of your NPCs in the world. See [NPCs](#npcs). | `{ entityId }` |
+| `despawnNpc(entityId)` | Removes one of your NPCs. | — |
+| `markZone(zone, at)` | Marks the center of one of your zones. See [Spawn zones](#spawn-zones). | `{ added }` |
 | `updatePokemon(player, uuid, changes)` | Changes a Pokémon in the party (not in battle). `changes`: `heal` (HP, or `"full"`; also revives), `cure` (status), `levels` (like a Rare Candy: moves and evolution included), and `nature`, `ivs`, `evs`, `ability`, `moves`, `heldItem`, `friendship`, `nickname`, `tag` as above. HP isn't refilled by the other fields. | `{ pokemon, evolved }` |
 
 ### Queries

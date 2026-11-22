@@ -80,7 +80,9 @@
         "pikachu.status": "animation.pikachu.status",
         "pikachu.sleep_state": "animation.pikachu.sleep",
         "pikachu.shoulder": "animation.pikachu.shoulder_seat",
-        "cooblemon_beam": "controller.animation.cooblemon.beam"
+        "cooblemon_beam": "controller.animation.cooblemon.beam",
+        "cooblemon_held_item": "animation.cooblemon.held_item",
+        "cooblemon_alpha_eyes": "animation.cooblemon.alpha_eyes.eye1_eye2"
       },
       "scripts": {
         "animate": [
@@ -117,6 +119,10 @@
           },
           {
             "pikachu.shoulder": "(query.property('cooblemon:form') == 'default' || query.property('cooblemon:form') == '') && (query.is_riding)"
+          },
+          "cooblemon_held_item",
+          {
+            "cooblemon_alpha_eyes": "q.property('cooblemon:alpha') && q.property('cooblemon:alpha_eyes')"
           }
         ],
         "pre_animation": [
@@ -125,6 +131,10 @@
           "v.beam_red = (v.beam_mode ?? 0) == 3 ? math.clamp((v.beam_t - 0.2) / 0.4, 0, 1) * 0.6 : 0;"
         ],
         "scale": "(v.beam_scale ?? 1)"
+      },
+      "enable_attachables": true,
+      "particle_effects": {
+        "alpha_eyes": "cooblemon:alpha_eyes"
       }
     }
   }

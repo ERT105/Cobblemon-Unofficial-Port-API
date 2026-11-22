@@ -240,7 +240,11 @@ npm run kit -- --in <your addon> --cobblemon <extracted jar>
 
 ## Versions
 
-The API has its own version (`1`), separate from Cobblemon Bedrock's
-(`1.8.12`). If your add-on requires a newer API than the installed Cobblemon
-Bedrock provides, Cobblemon Bedrock rejects it with a clear error. Breaking
+The API has its own version (`2`), separate from Cobblemon Bedrock's
+(`1.8.13`). If your add-on requires a newer API than the installed Cobblemon
+Bedrock provides, Cobblemon Bedrock rejects it with a clear error.
+
+API 2 adds NPCs (`npcs`, `spawnNpc`, `npcMarker`). An add-on built with an
+older library (API 1) keeps working; one built with this library needs
+Cobblemon Bedrock 1.8.13 or later, even if it doesn't use NPCs. Breaking
 changes bump the major version and are announced one version in advance.

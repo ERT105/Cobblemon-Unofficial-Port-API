@@ -4,7 +4,7 @@
  * (`docs/REFERENCE.md`).
  */
 
-export const API_VERSION = 1;
+export const API_VERSION = 2;
 
 export const ApiEvents = {
     HELLO: "cooblemon:api.hello",
@@ -36,7 +36,7 @@ export interface ApiResult {
 
 export const EVENT_PREFIX = "cooblemon:event.";
 
-export type ApiKind = "moves" | "species" | "additions" | "spawn" | "sprites" | "evolutions" | "megas" | "party_items";
+export type ApiKind = "moves" | "species" | "additions" | "spawn" | "sprites" | "evolutions" | "megas" | "party_items" | "npcs" | "zones" | "ui";
 
 export interface ApiHello {
   addon: string;
