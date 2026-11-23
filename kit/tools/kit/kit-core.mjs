@@ -3987,6 +3987,30 @@ var JAVA_TO_BEDROCK_VANILLA = {
   "minecraft:end_stone_bricks": "minecraft:end_bricks",
   "minecraft:end_stone_brick_stairs": "minecraft:end_brick_stairs",
   "minecraft:warped_sign": "minecraft:warped_standing_sign",
+  "minecraft:oak_sign": "minecraft:standing_sign",
+  "minecraft:spruce_sign": "minecraft:spruce_standing_sign",
+  "minecraft:birch_sign": "minecraft:birch_standing_sign",
+  "minecraft:jungle_sign": "minecraft:jungle_standing_sign",
+  "minecraft:acacia_sign": "minecraft:acacia_standing_sign",
+  "minecraft:dark_oak_sign": "minecraft:darkoak_standing_sign",
+  "minecraft:mangrove_sign": "minecraft:mangrove_standing_sign",
+  "minecraft:cherry_sign": "minecraft:cherry_standing_sign",
+  "minecraft:bamboo_sign": "minecraft:bamboo_standing_sign",
+  "minecraft:crimson_sign": "minecraft:crimson_standing_sign",
+  "minecraft:pale_oak_sign": "minecraft:pale_oak_standing_sign",
+  // Bedrock has no separate *_wall_hanging_sign; wall ones are hanging_sign + facing.
+  "minecraft:oak_wall_hanging_sign": "minecraft:oak_hanging_sign",
+  "minecraft:spruce_wall_hanging_sign": "minecraft:spruce_hanging_sign",
+  "minecraft:birch_wall_hanging_sign": "minecraft:birch_hanging_sign",
+  "minecraft:jungle_wall_hanging_sign": "minecraft:jungle_hanging_sign",
+  "minecraft:acacia_wall_hanging_sign": "minecraft:acacia_hanging_sign",
+  "minecraft:dark_oak_wall_hanging_sign": "minecraft:dark_oak_hanging_sign",
+  "minecraft:mangrove_wall_hanging_sign": "minecraft:mangrove_hanging_sign",
+  "minecraft:cherry_wall_hanging_sign": "minecraft:cherry_hanging_sign",
+  "minecraft:bamboo_wall_hanging_sign": "minecraft:bamboo_hanging_sign",
+  "minecraft:crimson_wall_hanging_sign": "minecraft:crimson_hanging_sign",
+  "minecraft:warped_wall_hanging_sign": "minecraft:warped_hanging_sign",
+  "minecraft:pale_oak_wall_hanging_sign": "minecraft:pale_oak_hanging_sign",
   "minecraft:oak_button": "minecraft:wooden_button",
   // **Los que trajeron los pueblos de CobbleTowns.** Nombres que Bedrock nunca
   // renombró, comprobados uno a uno contra su lista de bloques: la puerta de
@@ -4292,6 +4316,7 @@ function remapBlockId(rawJavaName) {
 }
 var HORIZONTAL = /* @__PURE__ */ new Set(["north", "south", "east", "west"]);
 var STAIRS_WEIRDO = { east: 0, west: 1, south: 2, north: 3 };
+// Used by furnaces/barrels/jigsaws (legacy Bedrock facing_direction).
 var FACING_DIRECTION = {
   down: 0,
   up: 1,
@@ -4299,6 +4324,15 @@ var FACING_DIRECTION = {
   west: 3,
   south: 4,
   north: 5
+};
+// Wall signs, buttons and similar: 2=north, 3=south, 4=west, 5=east
+// (wiki / aux-value map). Using FACING_DIRECTION here makes every wall sign
+// attach to the wrong face and pop into item entities on load.
+var WALL_ATTACH_FACING = {
+  north: 2,
+  south: 3,
+  west: 4,
+  east: 5
 };
 function isStairsBlock(name) {
   return name.endsWith("_stairs") || name === "minecraft:stone_stairs";
@@ -4355,6 +4389,15 @@ function mapJavaBlockState(javaName, props) {
   const isStairs = isStairsBlock(name);
   const isBarrel = name === "minecraft:barrel";
   const isTrapdoor = /_trapdoor$/.test(name) || name === "minecraft:trapdoor";
+  const isButton = /_button$/.test(name) || name === "minecraft:wooden_button" || name === "minecraft:stone_button";
+  const isCampfire = name === "minecraft:campfire" || name === "minecraft:soul_campfire";
+  const isLantern = name === "minecraft:lantern" || name === "minecraft:soul_lantern" || /_lantern$/.test(name) && name.includes("copper");
+  const isTripwireHook = name === "minecraft:tripwire_hook";
+  const isStandingSign = /_standing_sign$/.test(name) || name === "minecraft:standing_sign";
+  const isHangingSign = /_hanging_sign$/.test(name);
+  const isWallSign = /_wall_sign$/.test(name) || name === "minecraft:wall_sign";
+  // Bedrock tripwire hook direction: 0=south, 1=west, 2=north, 3=east
+  const HOOK_DIRECTION = { south: 0, west: 1, north: 2, east: 3 };
   if (isTrapdoor) {
     if (p.facing && TRAPDOOR_DIRECTION[p.facing] !== void 0) {
       states["direction"] = TRAPDOOR_DIRECTION[p.facing];
@@ -4362,7 +4405,61 @@ function mapJavaBlockState(javaName, props) {
     states["upside_down_bit"] = p.half === "top";
     states["open_bit"] = p.open === "true";
   }
-  if (!isDoor && !isBed && !isCarpet && !isTrapdoor) {
+  // Java buttons use face=floor|wall|ceiling + facing; Bedrock uses facing_direction
+  // (0=down/ceiling, 1=up/floor, 2–5=N/S/W/E). Without this, floor buttons float as walls.
+  if (isButton) {
+    if (p.face === "floor") states["facing_direction"] = 1;
+    else if (p.face === "ceiling") states["facing_direction"] = 0;
+    else if (p.facing && WALL_ATTACH_FACING[p.facing] !== void 0) {
+      states["facing_direction"] = WALL_ATTACH_FACING[p.facing];
+    } else {
+      states["facing_direction"] = 1;
+    }
+    states["button_pressed_bit"] = p.powered === "true";
+  }
+  // Java lit=false → Bedrock extinguished=true (BCA uses unlit campfires as decoration).
+  if (isCampfire) {
+    states["extinguished"] = p.lit === "false";
+    if (p.facing && HORIZONTAL.has(p.facing)) {
+      states["minecraft:cardinal_direction"] = p.facing;
+    }
+  }
+  // Lanterns without hanging pop off chains/ceilings as floor items.
+  if (isLantern) {
+    states["hanging"] = p.hanging === "true";
+  }
+  if (isTripwireHook) {
+    if (p.facing && HOOK_DIRECTION[p.facing] !== void 0) {
+      states["direction"] = HOOK_DIRECTION[p.facing];
+    }
+    states["attached_bit"] = p.attached === "true";
+    states["powered_bit"] = p.powered === "true";
+  }
+  if (isStandingSign) {
+    const rot = Number(p.rotation ?? "0");
+    if (Number.isFinite(rot)) states["ground_sign_direction"] = ((Math.round(rot) % 16) + 16) % 16;
+  }
+  if (isHangingSign) {
+    // Wall hanging (Java *_wall_hanging_sign) → hanging + facing_direction.
+    // Ceiling hanging → hanging + attached_bit + ground_sign_direction.
+    const fromWall = /_wall_hanging_sign$/.test(javaName);
+    states["hanging"] = true;
+    if (fromWall && p.facing && WALL_ATTACH_FACING[p.facing] !== void 0) {
+      states["facing_direction"] = WALL_ATTACH_FACING[p.facing];
+      states["attached_bit"] = false;
+    } else {
+      const rot = Number(p.rotation ?? "0");
+      if (Number.isFinite(rot)) states["ground_sign_direction"] = ((Math.round(rot) % 16) + 16) % 16;
+      states["attached_bit"] = p.attached === "true";
+      if (p.facing && WALL_ATTACH_FACING[p.facing] !== void 0) {
+        states["facing_direction"] = WALL_ATTACH_FACING[p.facing];
+      }
+    }
+  }
+  if (isWallSign && p.facing && WALL_ATTACH_FACING[p.facing] !== void 0) {
+    states["facing_direction"] = WALL_ATTACH_FACING[p.facing];
+  }
+  if (!isDoor && !isBed && !isCarpet && !isTrapdoor && !isButton && !isCampfire && !isLantern && !isTripwireHook && !isStandingSign && !isHangingSign && !isWallSign) {
     if (isStairs) {
       if (p.facing && STAIRS_WEIRDO[p.facing] !== void 0) {
         states["weirdo_direction"] = STAIRS_WEIRDO[p.facing];
@@ -4437,14 +4534,18 @@ function mapJavaBlockState(javaName, props) {
     for (const key of Object.keys(states)) {
       if (!allowed.has(key)) delete states[key];
     }
-    applyFacing(
-      states,
-      allowed,
-      p.facing,
-      isDoor,
-      p.half === "upper",
-      FACING_IS_WALL_SIDE.has(javaName)
-    );
+    // These blocks already have Bedrock-specific states; applyFacing would
+    // overwrite floor buttons / hooks / hanging lanterns with wrong facings.
+    if (!isButton && !isCampfire && !isLantern && !isTripwireHook && !isStandingSign && !isHangingSign && !isWallSign) {
+      applyFacing(
+        states,
+        allowed,
+        p.facing,
+        isDoor,
+        p.half === "upper",
+        FACING_IS_WALL_SIDE.has(javaName)
+      );
+    }
   }
   return { name, states, waterlogged };
 }
