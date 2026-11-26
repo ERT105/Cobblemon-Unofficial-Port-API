@@ -693,6 +693,49 @@ has the engine; your resource pack draws the screen. See
 Spawn Radar is a working one.
 
 
+## Sounds
+
+**API 3.** Cobblemon Bedrock's sounds live in its resource pack, so your
+add-on can play them with `player.playSound(id)` or
+`dimension.playSound(id, location)`, without shipping copies. The ones below
+are part of the API: they won't be renamed or removed without a new API
+version. Any other `cooblemon.*` sound may change at any time.
+
+| Sound | When Cobblemon Bedrock plays it |
+| --- | --- |
+| `cooblemon.pc.on` | A PC or chest screen opens. |
+| `cooblemon.pc.off` | It closes. |
+| `cooblemon.pc.click` | A button is pressed in a chest screen. |
+| `cooblemon.pc.grab` | A Pokémon is picked up in the PC. |
+| `cooblemon.pc.drop` | It's put down. |
+| `cooblemon.pc.release` | It's released. |
+| `cooblemon.gui.trade` | A trade goes through. |
+| `cooblemon.pokedex.scan_open` | The Pokédex scanner opens. |
+| `cooblemon.pokedex.scan_close` | It closes. |
+| `cooblemon.pokedex.scan_detail` | It locks onto a Pokémon. |
+| `cooblemon.pokedex.scan_register` | A new Pokémon is registered. |
+| `cooblemon.fishing.cast` | A Poké Rod is cast. |
+| `cooblemon.fishing.reel_in` | It's reeled in. |
+| `cooblemon.fishing.notification` | Something bites. |
+| `cooblemon.fishing.splash_small` | A small splash on the water. |
+| `cooblemon.fishing.splash_big` | A big one. |
+| `cooblemon.poke_ball.throw` | A Poké Ball is thrown. |
+| `cooblemon.poke_ball.hit` | It hits the Pokémon. |
+| `cooblemon.poke_ball.open` | It opens. |
+| `cooblemon.poke_ball.shake` | It shakes while catching. |
+| `cooblemon.poke_ball.break` | The Pokémon breaks free. |
+| `cooblemon.poke_ball.capture_succeeded` | The catch works. |
+| `cooblemon.poke_ball.send_out` | A Pokémon is sent out. |
+| `cooblemon.poke_ball.recall` | It's recalled. |
+| `cooblemon.evolution.full` | An evolution ends. |
+| `cooblemon.healing_machine.active` | The healing machine heals. |
+| `cooblemon.particle.shiny_chime` | A shiny Pokémon sparkles. |
+| `cooblemon.status.up` | A stat goes up in battle. |
+| `cooblemon.status.down` | A stat goes down. |
+
+Cries follow a pattern: `cooblemon.pokemon.cry.<species>`
+(`cooblemon.pokemon.cry.pikachu`), for every species that has one.
+
 ## Debugging
 
 - Content log: `[myaddon] registered…`, `[myaddon] error: …`,
