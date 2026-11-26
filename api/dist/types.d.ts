@@ -887,6 +887,22 @@ export interface SpawnTableEntry {
      * then the highest it had in any of them (Cobblemon's `highestWeight`).
      */
     positions?: number;
+    /**
+     * Where it falls: the place it can spawn (with `area`, the first sampled
+     * place where it fits). Enough to pick a platform the way Cobblenav does.
+     */
+    place: SpawnPlace;
+}
+/** The place a spawn entry falls in. See `SpawnTableEntry.place`. */
+export interface SpawnPlace {
+    /** Bedrock biome id (`minecraft:savanna`), or `null` if unknown. */
+    biome: string | null;
+    /** Cobblemon's biome tags for that biome (`cobblemon:is_arid`, `cobblemon:is_overworld`…). */
+    biomeTags: string[];
+    /** Cobblemon's spawnable position type: `grounded`, `submerged`, `surface` or `seafloor`. */
+    positionType: string;
+    /** Fluid the entry needs (`water`, `lava`), or `null`. */
+    fluid: string | null;
 }
 export interface SpawnTableResult {
     at: {

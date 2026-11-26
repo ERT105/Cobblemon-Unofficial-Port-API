@@ -1865,7 +1865,10 @@ var COBBLEMON_TAG_SELECTORS = {
   is_freshwater: [{ any: ["river"] }],
   // --- Áridos ---
   is_desert: [{ any: ["desert"] }],
-  is_arid: [{ any: ["desert", "mesa"] }],
+  // El del mod es `is_badlands` + `is_desert` + `is_savanna`. Sin la sabana,
+  // las 98 especies que lo citan no salían allí (o salían donde lo excluyen),
+  // y Cobblenav le pondría hierba en vez de arena a lo que sale en ella.
+  is_arid: [{ any: ["desert", "mesa", "savanna"] }],
   is_sandy: [{ any: ["desert", "beach"] }],
   is_badlands: [{ any: ["mesa"] }],
   is_mesa: [{ any: ["mesa"] }],

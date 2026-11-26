@@ -591,7 +591,9 @@ within it**, by weight, among the entries whose conditions hold there.
 
 - `player`: where the player stands. `at`: a point `{ dimension, x, y, z }`.
   `snack`: the position of a Poké Snack placed in the world; then the table
-  uses the snack's own buckets and the bias of its seasonings.
+  uses the snack's own buckets and the bias of its seasonings. The placed
+  Poké Snack is the block `cooblemon:poke_snack` (the item has the same id),
+  so you can find it with `block.typeId` or `dimension.getBlock()`.
 - `bucket`: only that bucket. A whole biome can have dozens of entries; one
   bucket at a time keeps the answer small.
 - `area` (with `player`): the **area** around the player instead of one
@@ -607,7 +609,9 @@ const table = await cobblemon.spawnTable({ player, bucket: "rare" });
 // table.buckets: [{ bucket: "common", chance: 0.938 }, …]
 // table.entries: [{ id: "bulbasaur-1", species: "bulbasaur", form: null, bucket: "rare",
 //                   weight: 18, chance: 0.12, levels: { min: 5, max: 32 }, alpha: false,
-//                   conditions: { biome: "is_jungle", light: "surface", … } }, …]
+//                   conditions: { biome: "is_jungle", light: "surface", … },
+//                   place: { biome: "minecraft:jungle", biomeTags: ["cobblemon:is_jungle", …],
+//                            positionType: "grounded", fluid: null } }, …]
 ```
 
 - `entries[].chance` is the chance **within its bucket**. Multiply it by the
@@ -626,6 +630,14 @@ const table = await cobblemon.spawnTable({ player, bucket: "rare" });
 - `weight` includes Cobblemon's weight multipliers that apply there and then
   (night, thunderstorm, moon phase, a Poké Snack, nearby blocks…);
   `baseWeight` is without them, and `weightMultipliers` lists them.
+- `place` says where the entry falls: `biome` (the Bedrock biome id of the
+  spot; with `area`, of the first sampled place where it fits, like
+  Cobblemon's `firstFitting`), `biomeTags` (Cobblemon's tags for that biome:
+  `cobblemon:is_arid`, `cobblemon:is_mountain`…), `positionType`
+  (`grounded`, `submerged`, `surface`, `seafloor`) and `fluid` (`water`,
+  `lava` or `null`). It's what Cobblenav uses to pick the platform under each
+  Pokémon: first the fluid and position type (water, lava), then the biome
+  tags (sand for `is_arid`, stone for `is_mountain`, grass for `is_plains`…).
 - Fishing entries are in `fishingTable`, below.
 
 **Detail.** `spawnDetail(ids)` gives Cobblemon's own conditions for up to 32
