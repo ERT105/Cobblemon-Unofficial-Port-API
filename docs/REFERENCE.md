@@ -640,6 +640,12 @@ const table = await cobblemon.spawnTable({ player, bucket: "rare" });
 - `entries[].chance` is the chance **within its bucket**. Multiply it by the
   bucket's `chance` for the overall one. A bucket can have a chance and no
   entries there: that attempt spawns nothing, as in Cobblemon.
+- `entries[].form` is written as everywhere else in the API (`alolan`,
+  `hisuian`, `east`…), so you can pass it as-is to `sprites`, `spawn` or
+  `give`. `alola_bias`, `galar_bias` and `hisui_bias` are Cobblemon's
+  "region bias" forms (`Hisui-Bias`): they look like the base form and only
+  change what the Pokémon evolves into (a `hisui_bias` Cyndaquil ends as a
+  Hisuian Typhlosion), so `sprites` gives the base form's images for them.
 - `entries[].id` is the entry's **stable id** (`bulbasaur-1`, Cobblemon's own),
   the same in every world. Several rules of one entry (one per biome, day and
   night…) share it. `wild_spawned` and `nearby` give the `entryId` of each wild
