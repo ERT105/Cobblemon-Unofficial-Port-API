@@ -1215,6 +1215,15 @@ export interface CobblemonClient {
     }>): Promise<{
         sprites: SpriteInfo[];
     }>;
+    /**
+     * API 3. Every spawn entry id (world and fishing, as Cobblemon's world
+     * spawn pool), or only a species' ones: what Cobblenav's `catalogue grant
+     * all` and `grant species` use. The same ids as `spawnTable`,
+     * `fishingTable` and `wild_spawned`. A few requests under the hood.
+     */
+    spawnEntries(species?: string): Promise<{
+        ids: string[];
+    }>;
     /** API 3. Icon texture path and lang key for 1–64 item or block ids. */
     itemInfo(ids: string[]): Promise<{
         items: ItemInfo[];

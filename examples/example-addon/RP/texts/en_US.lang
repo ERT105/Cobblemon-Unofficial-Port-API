@@ -84,3 +84,4 @@ ejemplo.radar.encountered=Encountered: %s (entry %s, %s)
 ejemplo.hud.title=Example HUD (API 3)
 ejemplo.cmd.hud_on=HUD box on. Run it again to turn it off.
 ejemplo.cmd.hud_off=HUD box off.
+ejemplo.cmd.entries=%s spawn entries in all; Pikachu has %s: %s

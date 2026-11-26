@@ -184,6 +184,17 @@ export function registerAddon(def: AddonDefinition): CobblemonClient {
     fishingTable: (player, bucket) => query("fishing_table", { player: playerId(player), bucket }),
     sprites: (pokemon) => query("sprites", { pokemon }),
     itemInfo: (ids) => query("item_info", { ids }),
+    spawnEntries: async (species) => {
+      // Por páginas: la lista entera no cabe en un mensaje.
+      const ids: string[] = [];
+      let offset: number | null = 0;
+      while (offset !== null) {
+        const page: { ids: string[]; next: number | null } = await query("spawn_entries", { species, offset });
+        ids.push(...page.ids);
+        offset = page.next;
+      }
+      return { ids };
+    },
     hud: (player, content) => action("hud", { player: playerId(player), content: content ?? null }),
     spawnNpc: (req) => action("spawn_npc", { npc: req.npc, at: req.at, yaw: req.yaw, tag: req.tag }),
     despawnNpc: (entityId) => action<undefined>("despawn_npc", { entity: entityId }).then(() => undefined),

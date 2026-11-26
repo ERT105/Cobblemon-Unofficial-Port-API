@@ -84,3 +84,4 @@ ejemplo.radar.encountered=Encontrado: %s (entrada %s, %s)
 ejemplo.hud.title=HUD de ejemplo (API 3)
 ejemplo.cmd.hud_on=Recuadro del HUD activado. Vuelve a ejecutarlo para quitarlo.
 ejemplo.cmd.hud_off=Recuadro del HUD desactivado.
+ejemplo.cmd.entries=%s entradas de aparición en total; Pikachu tiene %s: %s

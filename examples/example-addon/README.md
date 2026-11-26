@@ -58,6 +58,7 @@ What should happen:
 | `/scriptevent ejemplo:spawns` | **API 3.** What can spawn where you stand, bucket by bucket, with the chance of each. Needs Cobblemon Bedrock 1.8.14. |
 | `/scriptevent ejemplo:fishing` | **API 3.** What can bite on your Poké Rod (in hand or in your inventory), with its bait, Lure and Luck of the Sea, bucket by bucket. While you fish, the Spawn Radar's screen closes as soon as something swims to the bobber, like Cobblenav's Fishingnav. Needs Cobblemon Bedrock 1.8.14. |
 | `/scriptevent ejemplo:radar` | **API 3.** Gives you the Spawn Radar. See below. |
+| `/scriptevent ejemplo:entries` | **API 3.** How many spawn entries there are, and Pikachu's ids, through `spawnEntries`. Needs Cobblemon Bedrock 1.8.14. |
 | `/scriptevent ejemplo:hud` | **API 3.** Turns on (and off) a small box at the top of the HUD with your coordinates, through `hud`: Cobblemon Bedrock adds it to its own HUD title, and `RP/ui/ejemplo_hud.json` draws it. The party panel stays where it is. Needs Cobblemon Bedrock 1.8.14. |
 
 A Pokémon with a tag shows it in the event messages: catch the Articuno and

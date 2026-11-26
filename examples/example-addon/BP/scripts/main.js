@@ -484,6 +484,7 @@ for (const [name, describe] of Object.entries(ON_EVENT)) {
 // `/scriptevent ejemplo:fishing` What can bite on your rod (API 3), bucket by bucket.
 // `/scriptevent ejemplo:radar`  The Spawn Radar: hold it and tap to open a chest screen (API 3).
 // `/scriptevent ejemplo:hud`    Turns a small HUD box with your coordinates on and off (API 3).
+// `/scriptevent ejemplo:entries` How many spawn entries there are, all and Pikachu's (API 3).
 
 /** Sends a chat line to one player with this example's prefix. */
 function say(player, key, params = []) {
@@ -512,6 +513,11 @@ async function sendHud(player) {
 }
 
 const COMMANDS = {
+  async entries(player) {
+    const all = await cobblemon.spawnEntries();
+    const pikachu = await cobblemon.spawnEntries("pikachu");
+    say(player, "ejemplo.cmd.entries", [String(all.ids.length), String(pikachu.ids.length), pikachu.ids.join(", ")]);
+  },
   async hud(player) {
     const timer = hudTimers.get(player.id);
     if (timer !== undefined) {

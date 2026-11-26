@@ -580,6 +580,7 @@ made.
 | `species(id)` | Its data: name, number, types, base stats, abilities, catch rate, forms, `labels` (`gen1`, `starter`, `legendary`…), `evYield`, and which add-on registered it (`null` for Cobblemon Bedrock's own). `labels` and `evYield` are API 3. |
 | `spawnTable({ player \| at \| snack, bucket?, area? })` | **API 3.** What can spawn there and how likely it is. See [Spawn tables](#spawn-tables). |
 | `spawnDetail(ids)` | **API 3.** Cobblemon's own conditions for 1–32 entries. See [Spawn tables](#spawn-tables). |
+| `spawnEntries(species?)` | **API 3.** `{ ids }`: every spawn entry id, world and fishing, or only a species' ones. What Cobblenav's `catalogue grant all` and `grant species` use. See [Spawn tables](#spawn-tables). |
 | `fishingTable(player, bucket?)` | **API 3.** What can bite on the player's rod and how likely it is. See [Fishing](#fishing). |
 | `sprites([{ species, form?, shiny? }])` | **API 3.** `{ sprites: [{ species, form, shiny, sprite, face }] }`: texture paths for 1–64 Pokémon, to use as-is in your UI (resource pack textures are shared between packs). `null` when there's none. |
 | `itemInfo(ids)` | **API 3.** `{ items: [{ id, kind, nameKey, icon }] }` for 1–64 item or block ids, Cobblemon Bedrock's or Minecraft's. See [Item icons and names](#item-icons-and-names). |
@@ -668,6 +669,11 @@ const table = await cobblemon.spawnTable({ player, bucket: "rare" });
   Pokémon: first the fluid and position type (water, lava), then the biome
   tags (sand for `is_arid`, stone for `is_mountain`, grass for `is_plains`…).
 - Fishing entries are in `fishingTable`, below.
+- `spawnEntries()` lists every entry id there is (world and fishing, as
+  Cobblemon's world spawn pool, add-on entries included), and
+  `spawnEntries("pikachu")` only a species' ones: what you need to mark them
+  all as seen in a catalogue. The list is long, so the library fetches it
+  in a few requests.
 
 **Detail.** `spawnDetail(ids)` gives Cobblemon's own conditions for up to 32
 entries, merged with their presets as Cobblemon does: what Cobblenav's detail
