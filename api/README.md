@@ -1,7 +1,7 @@
 # cobblemon-bedrock-api
 
 Registration and events of [Cobblemon Bedrock](../docs/README.md) for
-Minecraft Bedrock add-ons. API **1**.
+Minecraft Bedrock add-ons. API **3** (needs Cobblemon Bedrock 1.8.14 or later).
 
 ## Usage
 
@@ -19,6 +19,7 @@ For TypeScript, the types are in `dist/index.d.ts`.
 
 - [Guide: your first add-on](../docs/README.md)
 - [Format and event reference](../docs/REFERENCE.md)
+- [Chest screens](../docs/CHEST_SCREENS.md)
 
 Its only dependency is `@minecraft/server` (2.10.0 or later).
 

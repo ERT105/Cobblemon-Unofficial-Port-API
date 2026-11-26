@@ -1,6 +1,6 @@
 {
   "name": "cobblemon-bedrock-kit",
-  "version": "1.8.13",
+  "version": "1.8.14",
   "private": true,
   "description": "Convierte un addon de Cobblemon Java en un add-on para Cobblemon Bedrock.",
   "type": "module",

@@ -57,3 +57,27 @@ ejemplo.button.wave=Wave
 ejemplo.button.waved=%s waves back from %s.
 ejemplo.button.in_party=party slot %s
 ejemplo.button.in_box=box %s, slot %s
+
+## API 3: spawn table and chest screen
+item.ejemplo.spawn_radar=Spawn Radar (API 3 test)
+ejemplo.cmd.fishing=Fishing with %s (bait %s, Lure %s, Luck %s): %s% chance of a Pokémon
+ejemplo.cmd.fishing_empty=Nothing can bite here (%s at %s, %s, %s). Look at water, or check the content log.
+ejemplo.cmd.spawns=Spawns here (%s, %s):
+ejemplo.cmd.spawns_bucket=§7%s§r (%s%): %s
+ejemplo.cmd.spawns_item=%s (%s%)
+ejemplo.cmd.radar=Hold the Spawn Radar and tap to open it.
+ejemplo.radar.bucket.common=Common
+ejemplo.radar.bucket.uncommon=Uncommon
+ejemplo.radar.bucket.rare=Rare
+ejemplo.radar.bucket.ultra-rare=Ultra rare
+ejemplo.radar.bucket.common.on=§eCommon
+ejemplo.radar.bucket.uncommon.on=§eUncommon
+ejemplo.radar.bucket.rare.on=§eRare
+ejemplo.radar.bucket.ultra-rare.on=§eUltra rare
+ejemplo.radar.close=Close
+ejemplo.radar.loading=...
+ejemplo.radar.nothing=None
+ejemplo.radar.entry=%s: %s% in its bucket (entry %s, levels %s)
+ejemplo.radar.spawned=New in the catalogue: %s (entry %s, %s)
+ejemplo.radar.detail=Position: %s · fits %s places nearby · conditions: %s
+ejemplo.radar.encountered=Encountered: %s (entry %s, %s)

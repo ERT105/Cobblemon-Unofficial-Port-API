@@ -26,7 +26,7 @@ own.
 1. Zip `BP` and `RP` into a `.mcaddon` (or copy them to the game's
    development folders).
 2. Enable it in a world with Cobblemon Bedrock, **above** Cobblemon Bedrock.
-3. In the content log: `[ejemplo] registered in Cobblemon Bedrock (API 1)`.
+3. In the content log: `[ejemplo] registered in Cobblemon Bedrock (API 3)`.
 4. `/scriptevent cooblemon:debug.registry` to see the state.
 
 What should happen:
@@ -55,8 +55,28 @@ What should happen:
 | `/scriptevent ejemplo:mega` | Gives you the test Key Stone and a Surfite, and a Surfing Pikachu already holding one. Put the Key Stone in your offhand and battle: the Mega button turns it into Mega Surfing Pikachu (green, Electric/Water, Drizzle). |
 | `/scriptevent ejemplo:npcs` | Three NPCs in front of you: Kai, a trainer with a greeting window and a team with its own levels; Marina, a nurse; and Nico, a shopkeeper who opens his shop straight away. Hit Kai or Marina and talk to them again: they won't. To try the marker, `/setblock ~2 ~ ~ ejemplo:npc_marker ["ejemplo:npc"=1]` turns into Marina. Needs Cobblemon Bedrock 1.8.13. |
 
+| `/scriptevent ejemplo:spawns` | **API 3.** What can spawn where you stand, bucket by bucket, with the chance of each. Needs Cobblemon Bedrock 1.8.14. |
+| `/scriptevent ejemplo:fishing` | **API 3.** What can bite on your Poké Rod (in hand or in your inventory), with its bait, Lure and Luck of the Sea, bucket by bucket. While you fish, the Spawn Radar's screen closes as soon as something swims to the bobber, like Cobblenav's Fishingnav. Needs Cobblemon Bedrock 1.8.14. |
+| `/scriptevent ejemplo:radar` | **API 3.** Gives you the Spawn Radar. See below. |
+
 A Pokémon with a tag shows it in the event messages: catch the Articuno and
 the chat says `(tag: altar)`.
+
+## Chest screen: the Spawn Radar
+
+**API 3**, Cobblemon Bedrock 1.8.14. Hold the Spawn Radar and tap: a chest
+screen opens with what can spawn in the area around you (`spawnTable` with
+`area`). The top row picks the rarity; tap a Pokémon to get its chance, entry
+id and levels in chat, and then Cobblemon's own conditions for it
+(`spawnDetail`). While you hold it, a spawn entry that appears around you for the
+first time is announced, like a catalogue (`wild_spawned`), and so is every
+wild Pokémon you come across in battle, with a Poké Ball or with the Pokédex
+scanner (`pokemon_encountered`).
+
+It's built with the library's chest screen engine and three UI files; see
+[Chest screens](../../docs/CHEST_SCREENS.md). With this add-on installed,
+Cobblemon Bedrock's own chest screens (the PC, the Pokédex) must keep working:
+each pack only adds its own variant to `chest_screen.json`.
 
 ## Buttons in screens
 

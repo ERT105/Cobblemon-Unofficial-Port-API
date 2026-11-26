@@ -20,6 +20,7 @@ import { API_VERSION, ApiEvents, EVENT_PREFIX } from "./protocol.generated.js";
 import type { Ack, AddonDefinition, CobblemonClient, CobblemonEvents, Place, PlayerLike } from "./types.js";
 
 export * from "./types.js";
+export * from "./chestScreen.js";
 export { API_VERSION };
 
 /** Default chunk size, until Cobblemon Bedrock says how much fits in a message. */
@@ -175,6 +176,13 @@ export function registerAddon(def: AddonDefinition): CobblemonClient {
     pokedex: (player, species) => query("pokedex", { player: playerId(player), species }),
     nearby: (req) => query("nearby", { player: playerId(req.player), at: req.at, radius: req.radius }),
     species: (id) => query("species", { species: id }),
+    spawnTable: (req) => {
+      const r = req as { player?: PlayerLike; at?: Place; snack?: Place; bucket?: string; area?: boolean | { positions?: number } };
+      return query("spawn_table", { player: playerId(r.player), at: r.at, snack: r.snack, bucket: r.bucket, area: r.area });
+    },
+    spawnDetail: (ids) => query("spawn_detail", { ids }),
+    fishingTable: (player, bucket) => query("fishing_table", { player: playerId(player), bucket }),
+    sprites: (pokemon) => query("sprites", { pokemon }),
     spawnNpc: (req) => action("spawn_npc", { npc: req.npc, at: req.at, yaw: req.yaw, tag: req.tag }),
     despawnNpc: (entityId) => action<undefined>("despawn_npc", { entity: entityId }).then(() => undefined),
     npcMarker: (blockId, npcs, options) =>

@@ -1,0 +1,102 @@
+{
+  "namespace": "ejemplo_radar",
+
+  "bg": {
+    "type": "image",
+    "texture": "textures/ui/white_background",
+    "size": ["100%", "100%"],
+    "keep_ratio": false,
+    "color": [0, 0, 0],
+    "alpha": 0.45
+  },
+
+  "root": {
+    "type": "collection_panel",
+    "collection_name": "container_items",
+    "size": ["100%", "100%"],
+    "layer": 1,
+    "controls": [{ "frame@ejemplo_radar.frame": {} }]
+  },
+
+  "frame": {
+    "type": "image",
+    "texture": "textures/ui/dialog_background_opaque",
+    "anchor_from": "center",
+    "anchor_to": "center",
+    "size": [200, 140],
+    "layer": 2,
+    "controls": [
+      {
+        "grid": {
+          "type": "grid",
+          "anchor_from": "top_left",
+          "anchor_to": "top_left",
+          "offset": [10, 10],
+          "size": [180, 120],
+          "grid_dimensions": [9, 6],
+          "grid_item_template": "ejemplo_radar.cell",
+          "collection_name": "container_items"
+        }
+      }
+    ]
+  },
+
+  "cell": {
+    "type": "panel",
+    "size": [20, 20],
+    "controls": [
+      {
+        "img": {
+          "type": "image",
+          "size": [18, 18],
+          "layer": 3,
+          "bilinear": false,
+          "keep_ratio": false,
+          "bindings": [
+            { "binding_name": "#hover_text", "binding_type": "collection", "binding_collection_name": "container_items" },
+            { "binding_type": "view", "source_property_name": "(#hover_text - '§o' - '§r' - '§f')", "target_property_name": "#texture" },
+            { "binding_type": "view", "source_property_name": "(not ((#hover_text - 'textures/') = #hover_text))", "target_property_name": "#visible" }
+          ]
+        }
+      },
+      {
+        "txt": {
+          "type": "label",
+          "size": [20, 20],
+          "layer": 4,
+          "text": "#text",
+          "localize": true,
+          "shadow": true,
+          "font_scale_factor": 0.5,
+          "text_alignment": "center",
+          "bindings": [
+            { "binding_name": "#hover_text", "binding_type": "collection", "binding_collection_name": "container_items" },
+            { "binding_type": "view", "source_property_name": "(#hover_text - '§o' - '§r' - '§f')", "target_property_name": "#text" },
+            {
+              "binding_type": "view",
+              "source_property_name": "(((#hover_text - 'textures/') = #hover_text) and ((#hover_text - '~v~') = #hover_text) and (not (#hover_text = '')))",
+              "target_property_name": "#visible"
+            }
+          ]
+        }
+      },
+      {
+        "b@common.button": {
+          "$pressed_button_name|default": "button.container_take_all_place_all",
+          "variables": [{ "requires": "$touch", "$pressed_button_name": "button.container_auto_place" }],
+          "size": [20, 20],
+          "layer": 5,
+          "default_control": "default",
+          "hover_control": "hover",
+          "pressed_control": "pressed",
+          "bindings": [{ "binding_type": "collection_details", "binding_collection_name": "container_items", "binding_condition": "once" }],
+          "controls": [
+            { "default": { "type": "panel" } },
+            { "hover": { "type": "image", "texture": "textures/ui/white_background", "alpha": 0.15, "size": ["100%", "100%"], "keep_ratio": false } },
+            { "pressed": { "type": "image", "texture": "textures/ui/white_background", "alpha": 0.3, "size": ["100%", "100%"], "keep_ratio": false } }
+          ]
+        }
+      }
+    ]
+  }
+}

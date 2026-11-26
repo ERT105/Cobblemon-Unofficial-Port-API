@@ -57,3 +57,27 @@ ejemplo.button.wave=Saludar
 ejemplo.button.waved=%s te devuelve el saludo desde %s.
 ejemplo.button.in_party=el hueco %s del equipo
 ejemplo.button.in_box=la caja %s, hueco %s
+
+## API 3: spawn table and chest screen
+item.ejemplo.spawn_radar=Radar de apariciones (prueba API 3)
+ejemplo.cmd.fishing=Pescando con %s (cebo %s, Atracción %s, Suerte %s): %s% de que sea un Pokémon
+ejemplo.cmd.fishing_empty=Aquí no puede picar nada (%s en %s, %s, %s). Mira al agua o revisa el registro de contenido.
+ejemplo.cmd.spawns=Apariciones aquí (%s, %s):
+ejemplo.cmd.spawns_bucket=§7%s§r (%s%): %s
+ejemplo.cmd.spawns_item=%s (%s%)
+ejemplo.cmd.radar=Lleva el radar en la mano y toca para abrirlo.
+ejemplo.radar.bucket.common=Común
+ejemplo.radar.bucket.uncommon=Poco común
+ejemplo.radar.bucket.rare=Raro
+ejemplo.radar.bucket.ultra-rare=Ultra raro
+ejemplo.radar.bucket.common.on=§eComún
+ejemplo.radar.bucket.uncommon.on=§ePoco común
+ejemplo.radar.bucket.rare.on=§eRaro
+ejemplo.radar.bucket.ultra-rare.on=§eUltra raro
+ejemplo.radar.close=Cerrar
+ejemplo.radar.loading=...
+ejemplo.radar.nothing=Nada
+ejemplo.radar.entry=%s: %s% en su rareza (entrada %s, niveles %s)
+ejemplo.radar.spawned=Nueva en el catálogo: %s (entrada %s, %s)
+ejemplo.radar.detail=Posición: %s · cabe en %s sitios cercanos · condiciones: %s
+ejemplo.radar.encountered=Encontrado: %s (entrada %s, %s)

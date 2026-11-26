@@ -65,6 +65,9 @@
         "pikachu.physical": "animation.pikachu.physical",
         "pikachu.special": "animation.pikachu.special",
         "pikachu.recoil": "animation.pikachu.recoil",
+        "pikachu.faint": "animation.pikachu.faint",
+        "pikachu.battle_cry": "animation.pikachu.battle_cry",
+        "pikachu.status": "animation.pikachu.status",
         "pikachu.battle_quirk1": "animation.pikachu.battle_quirk1",
         "pikachu.battle_quirk2": "animation.pikachu.battle_quirk2",
         "pikachu.look_quirk": "animation.pikachu.look_quirk",
@@ -74,12 +77,10 @@
         "pikachu.angry": "animation.pikachu.angry",
         "pikachu.shoulder_left": "animation.pikachu.shoulder_left",
         "pikachu.shoulder_right": "animation.pikachu.shoulder_right",
-        "pikachu.faint": "animation.pikachu.faint",
-        "pikachu.battle_cry": "animation.pikachu.battle_cry",
         "pikachu.volttackle": "animation.pikachu.volttackle",
-        "pikachu.status": "animation.pikachu.status",
         "pikachu.sleep_state": "animation.pikachu.sleep",
         "pikachu.shoulder": "animation.pikachu.shoulder_seat",
+        "pikachu.locomotion_controller": "controller.animation.cooblemon.pikachu.locomotion",
         "cooblemon_beam": "controller.animation.cooblemon.beam",
         "cooblemon_held_item": "animation.cooblemon.held_item",
         "cooblemon_alpha_eyes": "animation.cooblemon.alpha_eyes.eye1_eye2"
@@ -87,39 +88,7 @@
       "scripts": {
         "animate": [
           "cooblemon_beam",
-          {
-            "pikachu.locomotion_idle": "(query.property('cooblemon:form') == 'default' || query.property('cooblemon:form') == '') && (((!query.is_in_water && query.is_on_ground) && !(query.ground_speed > 0.08)) && !query.property('cooblemon:in_battle') && !query.property('cooblemon:sleeping') && !query.is_riding)"
-          },
-          {
-            "pikachu.locomotion_walk": "(query.property('cooblemon:form') == 'default' || query.property('cooblemon:form') == '') && (((!query.is_in_water && query.is_on_ground) && query.ground_speed > 0.08) && !query.property('cooblemon:in_battle') && !query.property('cooblemon:sleeping') && !query.is_riding)"
-          },
-          {
-            "pikachu.locomotion_air_idle": "(query.property('cooblemon:form') == 'default' || query.property('cooblemon:form') == '') && (((!query.is_in_water && !query.is_on_ground) && !(query.ground_speed > 0.08)) && !query.property('cooblemon:in_battle') && !query.property('cooblemon:sleeping') && !query.is_riding)"
-          },
-          {
-            "pikachu.locomotion_air_move": "(query.property('cooblemon:form') == 'default' || query.property('cooblemon:form') == '') && (((!query.is_in_water && !query.is_on_ground) && query.ground_speed > 0.08) && !query.property('cooblemon:in_battle') && !query.property('cooblemon:sleeping') && !query.is_riding)"
-          },
-          {
-            "pikachu.locomotion_wade_idle": "(query.property('cooblemon:form') == 'default' || query.property('cooblemon:form') == '') && (((query.is_in_water && query.is_on_ground) && !(query.ground_speed > 0.08)) && !query.property('cooblemon:in_battle') && !query.property('cooblemon:sleeping') && !query.is_riding)"
-          },
-          {
-            "pikachu.locomotion_wade": "(query.property('cooblemon:form') == 'default' || query.property('cooblemon:form') == '') && (((query.is_in_water && query.is_on_ground) && query.ground_speed > 0.08) && !query.property('cooblemon:in_battle') && !query.property('cooblemon:sleeping') && !query.is_riding)"
-          },
-          {
-            "pikachu.locomotion_swim_idle": "(query.property('cooblemon:form') == 'default' || query.property('cooblemon:form') == '') && (((query.is_in_water && !query.is_on_ground) && !((query.ground_speed > 0.08 || math.abs(query.vertical_speed) > 0.08))) && !query.property('cooblemon:in_battle') && !query.property('cooblemon:sleeping') && !query.is_riding)"
-          },
-          {
-            "pikachu.locomotion_swim": "(query.property('cooblemon:form') == 'default' || query.property('cooblemon:form') == '') && (((query.is_in_water && !query.is_on_ground) && (query.ground_speed > 0.08 || math.abs(query.vertical_speed) > 0.08)) && !query.property('cooblemon:in_battle') && !query.property('cooblemon:sleeping') && !query.is_riding)"
-          },
-          {
-            "pikachu.battle_idle": "(query.property('cooblemon:form') == 'default' || query.property('cooblemon:form') == '') && (query.property('cooblemon:in_battle') && !query.property('cooblemon:attacking') && !query.property('cooblemon:sleeping'))"
-          },
-          {
-            "pikachu.sleep_state": "(query.property('cooblemon:form') == 'default' || query.property('cooblemon:form') == '') && (query.property('cooblemon:sleeping'))"
-          },
-          {
-            "pikachu.shoulder": "(query.property('cooblemon:form') == 'default' || query.property('cooblemon:form') == '') && (query.is_riding)"
-          },
+          "pikachu.locomotion_controller",
           "cooblemon_held_item",
           {
             "cooblemon_alpha_eyes": "q.property('cooblemon:alpha') && q.property('cooblemon:alpha_eyes')"
@@ -134,7 +103,11 @@
       },
       "enable_attachables": true,
       "particle_effects": {
-        "alpha_eyes": "cooblemon:alpha_eyes"
+        "alpha_eyes": "cooblemon:alpha_eyes",
+        "cooblemon_shiny_sparkle": "cooblemon:ambient_shiny_sparkle",
+        "cooblemon_shiny_sparkle_wild": "cooblemon:shiny_sparkle_ambient_wild",
+        "cooblemon_shiny_ring": "cooblemon:shiny_ring",
+        "cooblemon_wild_shiny_ring": "cooblemon:wild_shiny_ring"
       }
     }
   }

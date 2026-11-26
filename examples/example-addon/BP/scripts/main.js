@@ -27,7 +27,15 @@
  */
 
 import { ItemStack, system, world } from "@minecraft/server";
-import { onCobblemonEvent, registerAddon } from "./cobblemon-bedrock-api.js";
+import {
+  CHEST_EMPTY_NAME,
+  closeChestScreen,
+  hasOpenChestScreen,
+  onCobblemonEvent,
+  redrawChestScreen,
+  registerAddon,
+  registerChestScreen,
+} from "./cobblemon-bedrock-api.js";
 // Battle animations and model points: Pikachu's, since that's the model this
 // species uses.
 import { BATTLE_CLIPS, LOCATORS } from "./battleData.js";
@@ -472,6 +480,9 @@ for (const [name, describe] of Object.entries(ON_EVENT)) {
 // `/scriptevent ejemplo:mega`   The test Key Stone, a Surfite, and a Surfing Pikachu already holding one.
 // `/scriptevent ejemplo:items`  Surf Sodas and Surf Charms, items used on a party Pokémon.
 // `/scriptevent ejemplo:npcs`   Kai, Marina and Nico in a row in front of you.
+// `/scriptevent ejemplo:spawns` What can spawn where you stand (API 3), bucket by bucket.
+// `/scriptevent ejemplo:fishing` What can bite on your rod (API 3), bucket by bucket.
+// `/scriptevent ejemplo:radar`  The Spawn Radar: hold it and tap to open a chest screen (API 3).
 
 /** Sends a chat line to one player with this example's prefix. */
 function say(player, key, params = []) {
@@ -547,6 +558,60 @@ const COMMANDS = {
     inventory?.addItem(new ItemStack("ejemplo:surf_charm", 5));
     say(player, "ejemplo.cmd.items");
   },
+  async spawns(player) {
+    const table = await cobblemon.spawnTable({ player });
+    say(player, "ejemplo.cmd.spawns", [table.biome ?? "?", table.isDay ? "day" : "night"]);
+    for (const { bucket, chance } of table.buckets) {
+      // The percent sign goes in the .lang file, as a single `%` that is never
+      // the last character: chat messages don't turn `%%` into `%`, and a `%`
+      // at the end of a parameter is dropped.
+      const top = [];
+      table.entries
+        .filter((e) => e.bucket === bucket)
+        .slice(0, 6)
+        .forEach((e, i) => {
+          if (i > 0) top.push({ text: ", " });
+          top.push({
+            translate: "ejemplo.cmd.spawns_item",
+            with: { rawtext: [{ text: `${e.species}${e.form ? ` (${e.form})` : ""}` }, { text: String(Math.round(e.chance * 100)) }] },
+          });
+        });
+      say(player, "ejemplo.cmd.spawns_bucket", [bucket, String(Math.round(chance * 1000) / 10), top.length ? { rawtext: top } : "-"]);
+    }
+  },
+  async fishing(player) {
+    const table = await cobblemon.fishingTable(player);
+    say(player, "ejemplo.cmd.fishing", [
+      table.rod?.id ?? "-",
+      table.bait?.item ?? "-",
+      String(table.lureLevel),
+      String(table.luckLevel),
+      String(Math.round(table.pokemonChance * 100)),
+    ]);
+    // An empty table says where it looked, so a wrong spot is easy to tell apart.
+    if (table.entries.length === 0) {
+      say(player, "ejemplo.cmd.fishing_empty", [table.biome ?? "-", String(table.at.x), String(table.at.y), String(table.at.z)]);
+      return;
+    }
+    for (const { bucket, chance } of table.buckets) {
+      const top = [];
+      table.entries
+        .filter((e) => e.bucket === bucket)
+        .slice(0, 6)
+        .forEach((e, i) => {
+          if (i > 0) top.push({ text: ", " });
+          top.push({
+            translate: "ejemplo.cmd.spawns_item",
+            with: { rawtext: [{ text: e.species }, { text: String(Math.round(e.chance * 100)) }] },
+          });
+        });
+      say(player, "ejemplo.cmd.spawns_bucket", [bucket, String(Math.round(chance * 1000) / 10), top.length ? { rawtext: top } : "-"]);
+    }
+  },
+  async radar(player) {
+    player.getComponent("minecraft:inventory")?.container?.addItem(new ItemStack("ejemplo:spawn_radar", 1));
+    say(player, "ejemplo.cmd.radar");
+  },
   async npcs(player) {
     // In a row, three blocks in front of the player, facing them.
     const yaw = player.getRotation().y;
@@ -576,4 +641,127 @@ system.afterEvents.scriptEventReceive.subscribe((event) => {
   if (!command) return;
   // A failed request rejects with the reason: show it, so it's easy to see what went wrong.
   command(player).catch((err) => say(player, "ejemplo.cmd.error", [String(err?.message ?? err)]));
+});
+
+// —— Chest screen (API 3): the Spawn Radar ——
+//
+// A small Cobblenav-style screen: the top row picks the rarity bucket, the
+// rest shows what can spawn here as sprites. Tap one to get its chance in
+// chat. The screen is the inventory of `cooblemon:addon_screen`; each slot's
+// item is named with what to draw (a texture path or a translation key), and
+// `RP/ui/ejemplo_radar.json` draws it.
+
+const BUCKETS = ["common", "uncommon", "rare", "ultra-rare"];
+const CLOSE_SLOT = 8;
+const FIRST_ENTRY = 9;
+
+/** Fetches the table and the sprites for the open screen, then redraws it. */
+async function loadRadar(player, state) {
+  state.loading = true;
+  try {
+    // `area`: the places around the player where wild Pokémon really spawn,
+    // not just the block they stand on. Takes a few ticks.
+    const table = await cobblemon.spawnTable({ player, bucket: state.bucket, area: true });
+    state.places = table.area?.positions ?? 1;
+    const entries = table.entries.slice(0, 54 - FIRST_ENTRY);
+    const sprites = entries.length
+      ? (await cobblemon.sprites(entries.map((e) => ({ species: e.species, form: e.form ?? undefined })))).sprites
+      : [];
+    state.entries = entries.map((e, i) => ({ ...e, sprite: sprites[i]?.sprite ?? null }));
+  } catch (err) {
+    say(player, "ejemplo.cmd.error", [String(err?.message ?? err)]);
+    state.entries = [];
+  }
+  state.loading = false;
+  if (player.isValid) redrawChestScreen(player);
+}
+
+registerChestScreen({
+  addon: ADDON,
+  // Invisible mark that `RP/ui/chest_screen.json` recognizes. Unique to this add-on.
+  title: "§e§j§r",
+  items: ["ejemplo:spawn_radar"],
+  newState: () => ({ bucket: "common", entries: [], loading: false, places: 1 }),
+  onOpen: (player, state) => void loadRadar(player, state),
+  names(_player, state) {
+    const names = new Array(54).fill(CHEST_EMPTY_NAME);
+    BUCKETS.forEach((bucket, i) => {
+      names[i] = `ejemplo.radar.bucket.${bucket}${state.bucket === bucket ? ".on" : ""}`;
+    });
+    names[CLOSE_SLOT] = "ejemplo.radar.close";
+    if (state.loading) names[FIRST_ENTRY] = "ejemplo.radar.loading";
+    else if (state.entries.length === 0) names[FIRST_ENTRY] = "ejemplo.radar.nothing";
+    else state.entries.forEach((e, i) => {
+      names[FIRST_ENTRY + i] = e.sprite ?? `entity.cooblemon:${e.species}.name`;
+    });
+    return names;
+  },
+  touchable: (state) => [0, 1, 2, 3, CLOSE_SLOT, ...state.entries.map((_, i) => FIRST_ENTRY + i)],
+  action(player, state, slot) {
+    if (slot === CLOSE_SLOT) return "close";
+    if (slot < BUCKETS.length) {
+      state.bucket = BUCKETS[slot];
+      state.entries = [];
+      void loadRadar(player, state);
+      return;
+    }
+    const entry = state.entries[slot - FIRST_ENTRY];
+    if (!entry) return;
+    say(player, "ejemplo.radar.entry", [
+      speciesName(entry.species),
+      String(Math.round(entry.chance * 1000) / 10),
+      entry.id,
+      entry.levels ? `${entry.levels.min}-${entry.levels.max}` : "?",
+    ]);
+    // Cobblemon's own conditions for that entry, as Cobblenav's detail shows them.
+    void cobblemon
+      .spawnDetail([entry.id])
+      .then(({ details }) => {
+        const detail = details[0];
+        if (!detail || !player.isValid) return;
+        const condition = detail.conditions[0] ?? {};
+        const keys = Object.keys(condition).filter((k) => k !== "biomes");
+        say(player, "ejemplo.radar.detail", [
+          detail.positionType,
+          `${entry.positions ?? 1}/${state.places}`,
+          keys.join(", ") || "-",
+        ]);
+      })
+      .catch(() => {});
+  },
+});
+
+// While holding the radar, a spawn entry that appears around you for the
+// first time is announced: a Cobblenav-style catalogue. Only the first time
+// (per player, until the world is reloaded): the spawner keeps replacing
+// Pokémon that despawn, so announcing every spawn floods the chat. A real
+// catalogue would keep the set with dynamic properties.
+const catalogue = new Map();
+onCobblemonEvent("wild_spawned", (e) => {
+  if (!e.player || !e.pokemon.entryId) return;
+  const player = world.getAllPlayers().find((p) => p.id === e.player.id);
+  const held = player?.getComponent("minecraft:inventory")?.container?.getItem(player.selectedSlotIndex);
+  if (held?.typeId !== "ejemplo:spawn_radar") return;
+  const seen = catalogue.get(player.id) ?? new Set();
+  catalogue.set(player.id, seen);
+  if (seen.has(e.pokemon.entryId)) return;
+  seen.add(e.pokemon.entryId);
+  say(player, "ejemplo.radar.spawned", [speciesName(e.pokemon.species), e.pokemon.entryId, e.pokemon.bucket ?? "-"]);
+});
+
+// Like Cobblenav's Fishingnav: once something starts swimming to the bobber,
+// the radar's screen closes, so it can't be used to peek at the bite.
+onCobblemonEvent("fishing", (e) => {
+  if (e.stage !== "approach") return;
+  const player = world.getAllPlayers().find((p) => p.id === e.player.id);
+  if (player && hasOpenChestScreen(player)) closeChestScreen(player);
+});
+
+// And each one you come across (battle, Poké Ball or Pokédex scanner): the
+// other way Cobblenav's catalogue learns an entry.
+onCobblemonEvent("pokemon_encountered", (e) => {
+  const player = world.getAllPlayers().find((p) => p.id === e.player.id);
+  const held = player?.getComponent("minecraft:inventory")?.container?.getItem(player.selectedSlotIndex);
+  if (held?.typeId !== "ejemplo:spawn_radar") return;
+  say(player, "ejemplo.radar.encountered", [speciesName(e.pokemon.species), e.pokemon.entryId ?? "-", e.via]);
 });

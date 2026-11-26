@@ -3,7 +3,7 @@
  * Message ids and API version shared by Cobblemon Bedrock and this library
  * (`docs/REFERENCE.md`).
  */
-export declare const API_VERSION = 2;
+export declare const API_VERSION = 3;
 export declare const ApiEvents: {
     readonly HELLO: "cooblemon:api.hello";
     readonly PART: "cooblemon:api.part";

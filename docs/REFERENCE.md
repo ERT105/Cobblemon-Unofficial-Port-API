@@ -498,6 +498,9 @@ except battle events, `player` (`{ id, name }`). `pokemon` is a summary:
 | `item_used` | `player`, `item`, `slot`, `pokemon` (with `hp`, `maxHp` and `status`) | One of your `partyItems` was used on a party Pokémon. |
 | `ui_button` | `player`, `addon`, `button`, `screen` (`summary`, `pc`), `place` (`{ kind: "party", slot }` or `{ kind: "pc", box, slot }`), `pokemon` (with `hp`, `maxHp` and `status`) | One of your `buttons` was picked. The screen is already closed. |
 | `npc_purchase` | `player`, `npc` (`null` for Cobblemon Bedrock's own merchants), `npcTag`, `merchant` (its name), `item`, `price`, `category`, `wallet` (what the player has left) | Something was bought in a merchant's shop. |
+| `wild_spawned` | `player` (the one it spawned around, or the one fishing; `null` for a Poké Snack), `pokemon` (as in `nearby`, without `distance`) | **API 3.** One of Cobblemon Bedrock's spawners put a wild Pokémon in the world. Sent two ticks later, once its level and form are set. |
+| `fishing` | `player`, `stage` (`cast`, `approach`, `bite`, `end`), `rod`, `location`; `pokemon` on `bite`; `outcome` (`pokemon`, `item`, `nothing`, `escaped`, `cancelled`) and `item` on `end` | **API 3.** A player's fishing. See [Fishing](#fishing). |
+| `pokemon_encountered` | `player`, `via` (`battle`, `capture`, `scan`), `pokemon` (as in `nearby`, without `distance`) | **API 3.** A player came across a wild Pokémon: a battle with it started, a Poké Ball was thrown at it outside battle, or the Pokédex scanner registered it. Sent every time, not only the first; `pokemon.entryId` says which spawn entry it came from. |
 
 **In a chat message**, every parameter of a `rawtext` must be an object: the
 level goes as `{ text: "10" }`. A bare number makes `sendMessage` fail with
@@ -572,9 +575,123 @@ made.
 | Call | Result |
 | --- | --- |
 | `party(player)` | `{ pokemon: [...] }`: the party, as event summaries (with `tag`). |
-| `pokedex(player, species?)` | `{ seen, caught, total, entries: [{ species, status }] }`. `species` narrows the list. |
-| `nearby({ player \| at, radius? })` | `{ pokemon: [{ entityId, species, form, level, shiny, alpha, tag, location, distance }] }`: wild Pokémon, nearest first. `radius` 1–64 blocks (default 16), up to 50 results. |
-| `species(id)` | Its data: name, number, types, base stats, abilities, catch rate, forms, and which add-on registered it (`null` for Cobblemon Bedrock's own). |
+| `pokedex(player, species?)` | `{ seen, caught, total, entries: [{ species, status, forms }] }`. `species` narrows the list. `forms` (API 3): `[{ form, status, genders, shinies }]`, per form as in Cobblemon's Pokédex (`form: null` is the base form); empty when only the species is known. |
+| `nearby({ player \| at, radius? })` | `{ pokemon: [{ entityId, species, form, level, shiny, alpha, tag, source, entryId, bucket, dimension, location, distance }] }`: wild Pokémon, nearest first. `radius` 1–128 blocks (1–64 before API 3; default 16), up to 50 results. `source` (`world`, `snack`, `fishing`), `entryId` and `bucket` say where it came from; see [Spawn tables](#spawn-tables). |
+| `species(id)` | Its data: name, number, types, base stats, abilities, catch rate, forms, `labels` (`gen1`, `starter`, `legendary`…), `evYield`, and which add-on registered it (`null` for Cobblemon Bedrock's own). `labels` and `evYield` are API 3. |
+| `spawnTable({ player \| at \| snack, bucket?, area? })` | **API 3.** What can spawn there and how likely it is. See [Spawn tables](#spawn-tables). |
+| `spawnDetail(ids)` | **API 3.** Cobblemon's own conditions for 1–32 entries. See [Spawn tables](#spawn-tables). |
+| `fishingTable(player, bucket?)` | **API 3.** What can bite on the player's rod and how likely it is. See [Fishing](#fishing). |
+| `sprites([{ species, form?, shiny? }])` | **API 3.** `{ sprites: [{ species, form, shiny, sprite, face }] }`: texture paths for 1–64 Pokémon, to use as-is in your UI (resource pack textures are shared between packs). `null` when there's none. |
+
+### Spawn tables
+
+`spawnTable` answers "what can I find here?", worked out the same way
+Cobblemon Bedrock's spawner draws: **first the rarity bucket, then an entry
+within it**, by weight, among the entries whose conditions hold there.
+
+- `player`: where the player stands. `at`: a point `{ dimension, x, y, z }`.
+  `snack`: the position of a Poké Snack placed in the world; then the table
+  uses the snack's own buckets and the bias of its seasonings.
+- `bucket`: only that bucket. A whole biome can have dozens of entries; one
+  bucket at a time keeps the answer small.
+- `area` (with `player`): the **area** around the player instead of one
+  spot. Cobblemon Bedrock's spawner places wild Pokémon 16 to 64 blocks away
+  from each player; `area` samples places there the same way it does (12 by
+  default, `{ positions: 1–32 }` to change it) and averages. It takes a few
+  ticks. The result adds `area: { positions, biomes }`, and each entry
+  `positions` (in how many of those places it can spawn); `weight` is then the
+  highest it had, like Cobblemon's.
+
+```js
+const table = await cobblemon.spawnTable({ player, bucket: "rare" });
+// table.buckets: [{ bucket: "common", chance: 0.938 }, …]
+// table.entries: [{ id: "bulbasaur-1", species: "bulbasaur", form: null, bucket: "rare",
+//                   weight: 18, chance: 0.12, levels: { min: 5, max: 32 }, alpha: false,
+//                   conditions: { biome: "is_jungle", light: "surface", … } }, …]
+```
+
+- `entries[].chance` is the chance **within its bucket**. Multiply it by the
+  bucket's `chance` for the overall one. A bucket can have a chance and no
+  entries there: that attempt spawns nothing, as in Cobblemon.
+- `entries[].id` is the entry's **stable id** (`bulbasaur-1`, Cobblemon's own),
+  the same in every world. Several rules of one entry (one per biome, day and
+  night…) share it. `wild_spawned` and `nearby` give the `entryId` of each wild
+  Pokémon, so you can keep a catalogue of the entries a player has seen.
+- `conditions` are Cobblemon Bedrock's, already converted from Cobblemon's:
+  `biome` (a biome tag), `light` (`surface`, `cave`, `day`, `night`),
+  `dimension`, `habitat`, `weather` (`any`, `clear`, `rain`), and when they
+  apply `minY`/`maxY`, `baseBlocks`, `nearbyBlocks`, `zones`, `moonPhases`
+  (0 = full moon), `timeRange` (`dusk`, `twilight`…), `thunder`,
+  `pokeSnack`, `slimeChunk` and `coords`.
+- `weight` includes Cobblemon's weight multipliers that apply there and then
+  (night, thunderstorm, moon phase, a Poké Snack, nearby blocks…);
+  `baseWeight` is without them, and `weightMultipliers` lists them.
+- Fishing entries are in `fishingTable`, below.
+
+**Detail.** `spawnDetail(ids)` gives Cobblemon's own conditions for up to 32
+entries, merged with their presets as Cobblemon does: what Cobblenav's detail
+view shows (light and sky light ranges, open sky, slime chunk, coordinates,
+structures, blocks…). The fields and values are Cobblemon's, Java ids and tags
+included; `blocks` translates each block or block tag they mention into
+Bedrock block ids, for icons; `partialBlocks` lists the ones that are
+incomplete because they use Java vanilla tags that don't ship with Cobblemon
+(`#cobblemon:natural`, "any natural ground", is one). Some of these conditions are approximated by
+Cobblemon Bedrock's spawner (light becomes day, night or cave) or can't be
+checked at all (structures): `spawnTable`'s `conditions` are the ones that
+really apply.
+
+```js
+const { details, blocks } = await cobblemon.spawnDetail(["gastly-1"]);
+// details[0]: { id: "gastly-1", pokemon: "gastly", positionType: "grounded",
+//   bucket: "common", weight: 72, level: "6-31", presets: ["natural"],
+//   conditions: [{ biomes: ["#cobblemon:is_overworld", …], minSkyLight: 0, maxSkyLight: 0,
+//                  maxLight: 0, neededBaseBlocks: ["#cobblemon:natural"] }],
+//   anticonditions: [{ biomes: ["#cobblemon:is_deep_dark"] },
+//                    { neededBaseBlocks: ["minecraft:farmland"] }],
+//   weightMultipliers: [{ multiplier: 1.25, condition: { isPokeSnack: true } }] }
+// blocks["minecraft:farmland"]: ["minecraft:farmland"]
+// partialBlocks: ["#cobblemon:natural"]
+```
+
+### Fishing
+
+`fishingTable(player, bucket?)` is the fishing counterpart of `spawnTable`,
+what Cobblenav's Fishingnav shows. It reads what an add-on can't: while the
+player is fishing, the cast rod and the bobber; otherwise the rod in hand (or
+the first one in the inventory) and the water the player is looking at. The
+rod's bait, Lure and Luck of the Sea count as they do when fishing.
+
+```js
+const fishing = await cobblemon.fishingTable(player);
+// fishing.stage: "idle" | "waiting" | "approach" | "bitten"
+// fishing.rod: { id: "cooblemon:love_rod", ball: "cooblemon:love_ball", lineColor: "#…" }
+// fishing.bait: { item: "cooblemon:love_sweet", count: 3, seasonings: [] }
+// fishing.pokemonChance: 0.8416  (a bite is a Pokémon, not an item)
+// fishing.buckets: [{ bucket: "common", chance: 0.83 }, …]
+// fishing.entries: [{ id: "magikarp-1", species: "magikarp", bucket: "common",
+//                     chance: 0.4, conditions: { biome: "ocean", … }, … }, …]
+```
+
+- The overall chance of an entry is `pokemonChance × bucket chance × chance`.
+- `conditions` adds the fishing ones: `minLureLevel`/`maxLureLevel`,
+  `belowLureLevel` (it stops biting from that level up), `slimeChunk`, `rod`
+  and `bait` (entries that need a specific rod or bait).
+- `entries[].id` works with `spawnDetail`, and `wild_spawned` gives it for
+  what is fished up.
+
+The `fishing` event follows a player's fishing: `cast`, `approach` (something
+starts swimming to the bobber; Cobblenav closes its Fishingnav here and doesn't
+let it open until the fishing ends), `bite` and `end` (with `outcome`).
+
+## Chest screens
+
+**API 3.** Menus drawn inside a chest's inventory screen, the technique
+Cobblemon Bedrock uses for its PC, Pokédex and battle screens. Unlike a form,
+the screen updates live: no closing and reopening on every tap. The library
+has the engine; your resource pack draws the screen. See
+[Chest screens](CHEST_SCREENS.md) for the whole recipe; the example add-on's
+Spawn Radar is a working one.
+
 
 ## Debugging
 

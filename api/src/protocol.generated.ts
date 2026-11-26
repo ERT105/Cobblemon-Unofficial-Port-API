@@ -4,7 +4,7 @@
  * (`docs/REFERENCE.md`).
  */
 
-export const API_VERSION = 2;
+export const API_VERSION = 3;
 
 export const ApiEvents = {
     HELLO: "cooblemon:api.hello",

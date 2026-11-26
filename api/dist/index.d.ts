@@ -17,6 +17,7 @@
 import { API_VERSION } from "./protocol.generated.js";
 import type { AddonDefinition, CobblemonClient, CobblemonEvents } from "./types.js";
 export * from "./types.js";
+export * from "./chestScreen.js";
 export { API_VERSION };
 /**
  * Registers the add-on with Cobblemon Bedrock, and returns a client to ask it

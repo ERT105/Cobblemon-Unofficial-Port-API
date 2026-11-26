@@ -154,7 +154,7 @@ for the exact file and falls back to English if it's missing. With only
 
 1. Enable Cobblemon Bedrock and your add-on in a world, yours on top.
 2. The **content log** should show
-   `[myaddon] registered in Cobblemon Bedrock (API 1): 1 species`, followed by
+   `[myaddon] registered in Cobblemon Bedrock (API 3): 1 species`, followed by
    any errors and warnings.
 3. `/scriptevent cooblemon:debug.registry` shows in chat what was registered
    and what failed.
@@ -240,11 +240,19 @@ npm run kit -- --in <your addon> --cobblemon <extracted jar>
 
 ## Versions
 
-The API has its own version (`2`), separate from Cobblemon Bedrock's
-(`1.8.13`). If your add-on requires a newer API than the installed Cobblemon
+The API has its own version (`3`), separate from Cobblemon Bedrock's
+(`1.8.14`). If your add-on requires a newer API than the installed Cobblemon
 Bedrock provides, Cobblemon Bedrock rejects it with a clear error.
 
-API 2 adds NPCs (`npcs`, `spawnNpc`, `npcMarker`). An add-on built with an
-older library (API 1) keeps working; one built with this library needs
-Cobblemon Bedrock 1.8.13 or later, even if it doesn't use NPCs. Breaking
-changes bump the major version and are announced one version in advance.
+- API 2 added NPCs (`npcs`, `spawnNpc`, `npcMarker`).
+- API 3 adds spawn tables (`spawnTable`, for a spot or the area around a
+  player) with Cobblemon's own conditions (`spawnDetail`), the fishing table
+  and events (`fishingTable`, `fishing`), sprite paths
+  (`sprites`), the `wild_spawned` and `pokemon_encountered` events, where each
+  wild Pokémon came from in `nearby`, the Pokédex per form, species `labels`
+  and `evYield`, and [chest screens](CHEST_SCREENS.md).
+
+An add-on built with an older library keeps working; one built with this
+library needs Cobblemon Bedrock 1.8.14 or later, even if it doesn't use the
+new calls. Breaking changes bump the major version and are announced one
+version in advance.

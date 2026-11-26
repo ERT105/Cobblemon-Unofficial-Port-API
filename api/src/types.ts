@@ -558,6 +558,36 @@ export interface CobblemonEvents {
    * One of your `buttons` was picked. The screen is already closed. In the PC
    * the Pokémon may be in a box: `updatePokemon` only works on the party.
    */
+  /**
+   * API 3. A wild Pokémon was spawned by one of Cobblemon Bedrock's spawners.
+   * `player` is the player it spawned around (world spawner) or the one
+   * fishing, and `null` for a Poké Snack. Sent two ticks after it appears, once
+   * its level and form are set.
+   */
+  wild_spawned: { api: number; player: PlayerRef | null; pokemon: WildPokemon };
+  /**
+   * API 3. A player came across a wild Pokémon: a battle with it started, a
+   * Poké Ball was thrown at it outside battle, or the Pokédex scanner
+   * registered it. Sent **every time**, not only the first (that is
+   * `pokedex_registered`): `pokemon.entryId` tells which spawn entry it was.
+   */
+  pokemon_encountered: { api: number; player: PlayerRef; via: EncounterVia; pokemon: WildPokemon };
+  /**
+   * API 3. A player's fishing: `cast`, `approach` (a Pokémon or item starts
+   * swimming to the bobber; Cobblenav closes its Fishingnav here), `bite`
+   * (`pokemon` says which it is) and `end` (`outcome`: `pokemon`, `item`,
+   * `nothing`, `escaped` or `cancelled`; `item` with an item).
+   */
+  fishing: {
+    api: number;
+    player: PlayerRef;
+    stage: "cast" | "approach" | "bite" | "end";
+    rod: string | null;
+    location?: { x: number; y: number; z: number };
+    pokemon?: boolean;
+    outcome?: "pokemon" | "item" | "nothing" | "escaped" | "cancelled";
+    item?: string;
+  };
   ui_button: {
     api: number;
     player: PlayerRef;
@@ -694,11 +724,15 @@ export interface NearbyRequest {
   player?: PlayerLike;
   /** …or around a point. */
   at?: Place;
-  /** Blocks, 1–64. Default 16. */
+  /** Blocks, 1–128 (1–64 before API 3). Default 16. */
   radius?: number;
 }
 
-export interface NearbyPokemon {
+/** Which of Cobblemon Bedrock's spawners put a wild Pokémon in the world. */
+export type WildSpawnSource = "world" | "snack" | "fishing";
+
+/** A wild Pokémon in the world, as `nearby` and `wild_spawned` report it. */
+export interface WildPokemon {
   entityId: string;
   species: string;
   form: string | null;
@@ -706,15 +740,273 @@ export interface NearbyPokemon {
   shiny: boolean;
   alpha: boolean;
   tag: string | null;
+  /**
+   * API 3. Which spawner put it there, or `null` if none did: spawned by an
+   * add-on with `spawn`, a raid boss, or one from before Cobblemon Bedrock 1.8.14.
+   */
+  source: WildSpawnSource | null;
+  /**
+   * API 3. The spawn entry it came from (`bulbasaur-1`, as in `spawnTable`),
+   * or `null` when no spawner of Cobblemon Bedrock put it there (see `source`).
+   * Fishing entries have ids too (`fishingTable`).
+   */
+  entryId: string | null;
+  /** API 3. Its rarity bucket (`common`, `uncommon`…), or `null`. */
+  bucket: string | null;
+  dimension: "overworld" | "nether" | "the_end";
   location: { x: number; y: number; z: number };
+}
+
+export interface NearbyPokemon extends WildPokemon {
   distance: number;
+}
+
+/**
+ * Where to look for spawns: around a player, at a point, or what a Poké Snack
+ * placed in the world attracts. `bucket` narrows the list to one rarity, which
+ * keeps the answer small (a whole biome can have dozens of entries).
+ */
+export type SpawnTableRequest =
+  | ({ player: PlayerLike; area?: boolean | { positions?: number } } & { bucket?: string })
+  | (({ at: Place } | { snack: Place }) & { bucket?: string });
+
+/** One thing that can spawn, as Cobblemon Bedrock's spawner sees it. */
+export interface SpawnTableEntry {
+  /**
+   * Stable id of the entry (`bulbasaur-1`), the same in every world and
+   * version. Several entries can share a species. `wild_spawned` and `nearby`
+   * report it, so you can tell which entries a player has seen.
+   */
+  id: string;
+  species: string;
+  form: string | null;
+  bucket: string;
+  /** Its weight in the draw of its bucket, with the multipliers that apply there and then. */
+  weight: number;
+  /** The entry's weight without multipliers. */
+  baseWeight: number;
+  /** Chance within its bucket, 0–1. Multiply by the bucket's chance for the overall one. */
+  chance: number;
+  levels: { min: number; max: number } | null;
+  /** The leader of an alpha herd. */
+  alpha: boolean;
+  /** Conditions as Cobblemon Bedrock stores them (converted from Cobblemon's). */
+  conditions: {
+    biome: string;
+    light: "surface" | "cave" | "day" | "night";
+    dimension: "overworld" | "nether" | "end";
+    habitat: string;
+    weather: "any" | "clear" | "rain";
+    minY?: number;
+    maxY?: number;
+    baseBlocks?: string[];
+    nearbyBlocks?: string[];
+    zones?: string[];
+    /** Moon phases it needs (0 = full moon … 4 = new moon), as in Cobblemon. */
+    moonPhases?: number[];
+    /** A finer time range than `light`: `dusk`, `twilight`, `dawn`… (Cobblemon's `TimeRange`). */
+    timeRange?: string;
+    /** Only during a thunderstorm. */
+    thunder?: boolean;
+    /** Only from a Poké Snack (`true`), or never from one (`false`). */
+    pokeSnack?: boolean;
+    /** Only in slime chunks (Bedrock's, which is where this game's slimes spawn). */
+    slimeChunk?: boolean;
+    /** Coordinate limits (Shellos' east sea form needs `minX: 0`). */
+    coords?: { minX?: number; maxX?: number; minZ?: number; maxZ?: number };
+  };
+  /**
+   * Cobblemon's weight multipliers: when everything in `when` holds, the weight
+   * is multiplied by `multiplier`; several stack. `weight` already has the
+   * ones that apply where you asked.
+   */
+  weightMultipliers?: Array<{
+    multiplier: number;
+    when: {
+      time?: string;
+      rain?: boolean;
+      thunder?: boolean;
+      moon?: number[];
+      minLight?: number;
+      biomes?: string[];
+      snack?: boolean;
+      nearby?: string[];
+    };
+  }>;
+  /**
+   * With `area`: in how many of the sampled places it can spawn. `weight` is
+   * then the highest it had in any of them (Cobblemon's `highestWeight`).
+   */
+  positions?: number;
+}
+
+export interface SpawnTableResult {
+  at: { dimension: string; x: number; y: number; z: number };
+  biome: string | null;
+  isDay: boolean;
+  /**
+   * The chance of each bucket being drawn (0–1). Cobblemon draws the bucket
+   * first, then an entry within it: a bucket can have a chance and no entries
+   * here, and then that attempt spawns nothing.
+   */
+  buckets: Array<{ bucket: string; chance: number }>;
+  /** Sorted from most to least likely. */
+  entries: SpawnTableEntry[];
+  /**
+   * With `area`: how many places were sampled around the player and their
+   * biomes. Chances are then the average over those places, which is what the
+   * spawner does when it picks places at random.
+   */
+  area?: { positions: number; biomes: string[] };
+}
+
+/**
+ * One spawn entry with Cobblemon's own conditions, merged with its presets as
+ * Cobblemon does. This is what Cobblenav's detail view shows. Field names and
+ * values are Cobblemon's (Java ids and tags); `blocks` in the result
+ * translates the block ones to Bedrock.
+ */
+export interface SpawnDetail {
+  id: string;
+  /** Cobblemon's Pokémon properties (`vulpix region_bias=alola`). */
+  pokemon: string;
+  /** `grounded`, `submerged`, `surface`, `seafloor` or `fishing`. */
+  positionType: string;
+  bucket: string;
+  weight: number;
+  percentage?: number;
+  /** As Cobblemon writes it: `"5-30"`. */
+  level?: string;
+  presets?: string[];
+  /**
+   * Cobblemon's conditions: `biomes`, `minSkyLight`/`maxSkyLight`,
+   * `minLight`/`maxLight`, `canSeeSky`, `minY`/`maxY`, `minX`…`maxZ`,
+   * `timeRange`, `isRaining`, `isThundering`, `moonPhase`, `isSlimeChunk`,
+   * `structures`, `neededBaseBlocks`, `neededNearbyBlocks`, `fluid`,
+   * `isPokeSnack`, `minLureLevel`…
+   */
+  conditions: Array<Record<string, unknown>>;
+  /** Conditions that must **not** hold. */
+  anticonditions?: Array<Record<string, unknown>>;
+  /** Cobblemon's raw weight multipliers (`spawnTable` gives them converted). */
+  weightMultipliers?: Array<Record<string, unknown>>;
+  /** Cobblemon's drop table, when the entry has its own. */
+  drops?: unknown;
+}
+
+export interface SpawnDetailResult {
+  details: SpawnDetail[];
+  /** Each block or block tag the details mention, as Bedrock block ids. */
+  blocks: Record<string, string[]>;
+  /**
+   * The ones in `blocks` that are incomplete: they include Java vanilla tags
+   * (`#minecraft:dirt`) or blocks that don't exist in Bedrock. Cobblemon's
+   * `#cobblemon:natural` (any natural ground) is one; Cobblenav hides it by
+   * default.
+   */
+  partialBlocks: string[];
+  /** Ids with no detail (entries Cobblemon Bedrock added by hand). */
+  unknown: string[];
+}
+
+/** How a player came across a wild Pokémon. */
+export type EncounterVia = "battle" | "capture" | "scan";
+
+/**
+ * Where a player's fishing is: not fishing, waiting for a bite, a Pokémon
+ * swimming to the bobber (`approach`, Cobblemon's fish travel), or bitten.
+ */
+export type FishingStage = "idle" | "waiting" | "approach" | "bitten";
+
+/** One thing that can bite, as Cobblemon Bedrock's fishing draws it. */
+export interface FishingTableEntry {
+  /** Stable id of the entry (`magikarp-1`), as in `spawnTable` and `spawnDetail`. */
+  id: string;
+  species: string;
+  form: string | null;
+  /** Magikarp Jump pattern (`skelly`, `calico-orange-white`…), or `null`. */
+  magikarpJump: string | null;
+  bucket: string;
+  /** Its weight with every multiplier: lure, time, biome, the bait's bias. */
+  weight: number;
+  baseWeight: number;
+  /** Chance within its bucket, 0–1. */
+  chance: number;
+  levels: { min: number; max: number } | null;
+  conditions: {
+    biome: string;
+    light: "surface" | "cave" | "day" | "night";
+    dimension: "overworld" | "nether" | "end";
+    weather: "any" | "clear" | "rain";
+    minLureLevel?: number;
+    maxLureLevel?: number;
+    /** It stops biting from this Lure level up. */
+    belowLureLevel?: number;
+    /** Only in slime chunks (`true`) or only outside them (`false`). */
+    slimeChunk?: boolean;
+    /** Only with this rod (`cooblemon:love_rod`). */
+    rod?: string;
+    /** Only with this bait on the rod. */
+    bait?: string;
+  };
+  lureMultipliers?: Array<{ multiplier: number; minLureLevel: number; maxLureLevel?: number }>;
+  weightMultipliers?: SpawnTableEntry["weightMultipliers"];
+}
+
+export interface FishingTableResult {
+  stage: FishingStage;
+  /**
+   * The rod: the cast one while fishing, otherwise the one in hand or the first
+   * in the inventory. `null` without one (the table then assumes no rod).
+   */
+  rod: { id: string; ball: string | null; lineColor: string | null } | null;
+  bait: { item: string; count: number; seasonings: string[] } | null;
+  lureLevel: number;
+  luckLevel: number;
+  /**
+   * Chance that a bite is a Pokémon rather than an item (0–1). The overall
+   * chance of an entry is `pokemonChance × bucket chance × entry chance`.
+   */
+  pokemonChance: number;
+  /** The bobber while fishing; otherwise the water the player looks at, or where they stand. */
+  at: { dimension: string; x: number; y: number; z: number };
+  biome: string | null;
+  /** Already tilted by the bait and Luck of the Sea, among the buckets present here. */
+  buckets: Array<{ bucket: string; chance: number }>;
+  entries: FishingTableEntry[];
+}
+
+/** Texture paths you can use as-is in your UI: resource pack textures are shared. */
+export interface SpriteInfo {
+  species: string;
+  form: string | null;
+  shiny: boolean;
+  /** The PC sprite, or `null` if there is none. */
+  sprite: string | null;
+  /** The small face icon, or `null`. */
+  face: string | null;
 }
 
 export interface PokedexResult {
   seen: number;
   caught: number;
   total: number;
-  entries: Array<{ species: string; status: "seen" | "caught" }>;
+  entries: Array<{
+    species: string;
+    status: "seen" | "caught";
+    /**
+     * API 3. Per form, like Cobblemon's Pokédex (`null` is the base form):
+     * whether it was caught, and which genders and shiny states were seen.
+     * Empty when only the species is known (registered before 1.8.14 or by
+     * species name).
+     */
+    forms: Array<{
+      form: string | null;
+      status: "seen" | "caught";
+      genders: Array<"male" | "female" | "genderless">;
+      shinies: Array<"normal" | "shiny">;
+    }>;
+  }>;
 }
 
 export interface SpeciesInfo {
@@ -727,6 +1019,10 @@ export interface SpeciesInfo {
   abilities: string[];
   hiddenAbility: string | null;
   catchRate: number;
+  /** API 3. Cobblemon's labels (`gen1`, `starter`, `legendary`…). */
+  labels: string[];
+  /** API 3. The EVs it gives when defeated. */
+  evYield: Stats | null;
   forms: string[];
   /** The add-on that registered it, or `null` for Cobblemon Bedrock's own. */
   addon: string | null;
@@ -755,6 +1051,18 @@ export interface CobblemonClient {
   pokedex(player: PlayerLike, species?: string[]): Promise<PokedexResult>;
   nearby(request: NearbyRequest): Promise<{ pokemon: NearbyPokemon[] }>;
   species(id: string): Promise<SpeciesInfo>;
+  /**
+   * API 3. What can spawn somewhere and how likely it is, worked out the same
+   * way Cobblemon Bedrock's spawner draws. Looks at one spot, not an area:
+   * ask for several points if you want one.
+   */
+  spawnTable(request: SpawnTableRequest): Promise<SpawnTableResult>;
+  /** API 3. Cobblemon's own conditions for 1–32 spawn entries (ids from `spawnTable` or `fishingTable`). */
+  spawnDetail(ids: string[]): Promise<SpawnDetailResult>;
+  /** API 3. What can bite on a player's rod and how likely it is. */
+  fishingTable(player: PlayerLike, bucket?: string): Promise<FishingTableResult>;
+  /** API 3. Sprite texture paths for 1–64 Pokémon. */
+  sprites(pokemon: Array<{ species: string; form?: string; shiny?: boolean }>): Promise<{ sprites: SpriteInfo[] }>;
   /** Puts one of your NPCs in the world. Needs Cobblemon Bedrock with API 2. */
   spawnNpc(request: SpawnNpcRequest): Promise<{ entityId: string }>;
   /** Removes one of your NPCs. */
