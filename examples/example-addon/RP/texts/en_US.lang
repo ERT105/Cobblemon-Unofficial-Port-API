@@ -81,3 +81,6 @@ ejemplo.radar.entry=%s: %s% in its bucket (entry %s, levels %s)
 ejemplo.radar.spawned=New in the catalogue: %s (entry %s, %s)
 ejemplo.radar.detail=Position: %s · fits %s places nearby · conditions: %s
 ejemplo.radar.encountered=Encountered: %s (entry %s, %s)
+ejemplo.hud.title=Example HUD (API 3)
+ejemplo.cmd.hud_on=HUD box on. Run it again to turn it off.
+ejemplo.cmd.hud_off=HUD box off.

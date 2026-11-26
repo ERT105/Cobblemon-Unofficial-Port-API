@@ -1,3 +1,3 @@
 {
-  "ui_defs": ["ui/ejemplo_radar.json"]
+  "ui_defs": ["ui/ejemplo_radar.json", "ui/ejemplo_hud.json"]
 }

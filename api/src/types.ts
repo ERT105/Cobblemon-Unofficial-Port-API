@@ -4,6 +4,8 @@
  * them incompatibly bumps the API's major version.
  */
 
+import type { RawMessage } from "@minecraft/server";
+
 /** The six stats, with the port's names (`defence`, not `defense`). */
 export interface Stats {
   hp: number;
@@ -916,6 +918,11 @@ export interface SpawnDetailResult {
   /** Each block or block tag the details mention, as Bedrock block ids. */
   blocks: Record<string, string[]>;
   /**
+   * Icon and name of every Bedrock block id in `blocks`, to draw them as
+   * Cobblenav does. Same as `itemInfo` gives.
+   */
+  blockInfo: Record<string, { icon: string | null; nameKey: string }>;
+  /**
    * The ones in `blocks` that are incomplete: they include Java vanilla tags
    * (`#minecraft:dirt`) or blocks that don't exist in Bedrock. Cobblemon's
    * `#cobblemon:natural` (any natural ground) is one; Cobblenav hides it by
@@ -976,8 +983,18 @@ export interface FishingTableResult {
    * The rod: the cast one while fishing, otherwise the one in hand or the first
    * in the inventory. `null` without one (the table then assumes no rod).
    */
-  rod: { id: string; ball: string | null; lineColor: string | null } | null;
-  bait: { item: string; count: number; seasonings: string[] } | null;
+  rod: {
+    id: string;
+    ball: string | null;
+    lineColor: string | null;
+    /** Texture path of the rod, and its lang key. */
+    icon: string | null;
+    nameKey: string;
+    /** Texture path and lang key of its Poké Ball, as Fishingnav draws it. */
+    ballIcon: string | null;
+    ballNameKey: string | null;
+  } | null;
+  bait: { item: string; count: number; seasonings: string[]; icon: string | null; nameKey: string } | null;
   lureLevel: number;
   luckLevel: number;
   /**
@@ -991,6 +1008,40 @@ export interface FishingTableResult {
   /** Already tilted by the bait and Luck of the Sea, among the buckets present here. */
   buckets: Array<{ bucket: string; chance: number }>;
   entries: FishingTableEntry[];
+}
+
+/** How to draw and name an item or block (`itemInfo`). */
+export interface ItemInfo {
+  id: string;
+  /** `item` when it exists as an item, `block` when it's only a block. */
+  kind: "item" | "block";
+  /** Lang key of its name (`item.cooblemon:poke_ball`, `tile.farmland.name`): use it with `translate`. */
+  nameKey: string;
+  /**
+   * Texture path to draw it (`textures/items/poke_ball`), usable as-is in
+   * your UI. Blocks without a flat item drawing give one face of the block;
+   * grass, leaves and water are stored grey and tinted by the game.
+   */
+  icon: string | null;
+}
+
+/**
+ * What you show on the HUD through `hud`. Cobblemon Bedrock adds it to its own
+ * HUD title, so your resource pack reads it the way its party panel does.
+ */
+export interface HudContent {
+  /**
+   * Names (a-z, 0-9, `_ . -`, up to 32 characters; up to 64 of them). Each
+   * one is in the HUD title as `|<addon>:<name>|`: your JSON UI shows a
+   * control when the title contains it.
+   */
+  marks?: string[];
+  /**
+   * Up to 12 lines of text (strings or raw text with `translate`). They are in
+   * the HUD subtitle from row `firstRow` (24) on: show the subtitle shifted
+   * inside a clipping panel so only your line is seen.
+   */
+  lines?: Array<string | RawMessage>;
 }
 
 /** Texture paths you can use as-is in your UI: resource pack textures are shared. */
@@ -1080,6 +1131,15 @@ export interface CobblemonClient {
   fishingTable(player: PlayerLike, bucket?: string): Promise<FishingTableResult>;
   /** API 3. Sprite texture paths for 1–64 Pokémon. */
   sprites(pokemon: Array<{ species: string; form?: string; shiny?: boolean }>): Promise<{ sprites: SpriteInfo[] }>;
+  /** API 3. Icon texture path and lang key for 1–64 item or block ids. */
+  itemInfo(ids: string[]): Promise<{ items: ItemInfo[] }>;
+  /**
+   * API 3. Your part of a player's HUD: marks and lines that Cobblemon
+   * Bedrock adds to the title it already sends. `null` takes it away. It
+   * stays until you change it or the player leaves; it isn't shown while
+   * the player scans with the Pokédex.
+   */
+  hud(player: PlayerLike, content: HudContent | null): Promise<{ firstRow: number }>;
   /** Puts one of your NPCs in the world. Needs Cobblemon Bedrock with API 2. */
   spawnNpc(request: SpawnNpcRequest): Promise<{ entityId: string }>;
   /** Removes one of your NPCs. */

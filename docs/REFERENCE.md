@@ -582,6 +582,29 @@ made.
 | `spawnDetail(ids)` | **API 3.** Cobblemon's own conditions for 1–32 entries. See [Spawn tables](#spawn-tables). |
 | `fishingTable(player, bucket?)` | **API 3.** What can bite on the player's rod and how likely it is. See [Fishing](#fishing). |
 | `sprites([{ species, form?, shiny? }])` | **API 3.** `{ sprites: [{ species, form, shiny, sprite, face }] }`: texture paths for 1–64 Pokémon, to use as-is in your UI (resource pack textures are shared between packs). `null` when there's none. |
+| `itemInfo(ids)` | **API 3.** `{ items: [{ id, kind, nameKey, icon }] }` for 1–64 item or block ids, Cobblemon Bedrock's or Minecraft's. See [Item icons and names](#item-icons-and-names). |
+
+### Item icons and names
+
+Cobblemon Bedrock's items declare their icon by an atlas name, so another
+add-on can't tell which texture to draw. `itemInfo(ids)` tells it:
+
+```js
+const { items } = await cobblemon.itemInfo(["cooblemon:poke_ball", "minecraft:sand", "cooblemon:oran_berry"]);
+// [{ id: "cooblemon:poke_ball", kind: "item", nameKey: "item.cooblemon:poke_ball", icon: "textures/items/poke_ball" },
+//  { id: "minecraft:sand", kind: "block", nameKey: "tile.sand.default.name", icon: "textures/blocks/sand" }, …]
+```
+
+- `icon` is a texture path to use as-is in your UI. A block without a flat
+  item drawing gives one face of the block (the side, or the whole block);
+  grass, leaves and water are stored grey and tinted by the game. `null`
+  when there's none.
+- `nameKey` is the lang key of its name: show it with `{ translate: nameKey }`
+  (or `%nameKey` in a label) and the player sees it in their language.
+- Cobblemon Bedrock's item icons follow `textures/items/<name>`, but don't
+  rely on it: some share a drawing, and blocks don't.
+- In a [chest screen](CHEST_SCREENS.md) you can also put the real item in a
+  slot; the game then draws it, 3D blocks included.
 
 ### Spawn tables
 
@@ -645,7 +668,8 @@ entries, merged with their presets as Cobblemon does: what Cobblenav's detail
 view shows (light and sky light ranges, open sky, slime chunk, coordinates,
 structures, blocks…). The fields and values are Cobblemon's, Java ids and tags
 included; `blocks` translates each block or block tag they mention into
-Bedrock block ids, for icons; `partialBlocks` lists the ones that are
+Bedrock block ids, and `blockInfo` gives the icon and lang key of each of
+those ids (as `itemInfo` does); `partialBlocks` lists the ones that are
 incomplete because they use Java vanilla tags that don't ship with Cobblemon
 (`#cobblemon:natural`, "any natural ground", is one). Some of these conditions are approximated by
 Cobblemon Bedrock's spawner (light becomes day, night or cave) or can't be
@@ -662,6 +686,7 @@ const { details, blocks } = await cobblemon.spawnDetail(["gastly-1"]);
 //                    { neededBaseBlocks: ["minecraft:farmland"] }],
 //   weightMultipliers: [{ multiplier: 1.25, condition: { isPokeSnack: true } }] }
 // blocks["minecraft:farmland"]: ["minecraft:farmland"]
+// blockInfo["minecraft:farmland"]: { icon: "textures/blocks/dirt", nameKey: "tile.farmland.name" }
 // partialBlocks: ["#cobblemon:natural"]
 ```
 
@@ -676,8 +701,11 @@ rod's bait, Lure and Luck of the Sea count as they do when fishing.
 ```js
 const fishing = await cobblemon.fishingTable(player);
 // fishing.stage: "idle" | "waiting" | "approach" | "bitten"
-// fishing.rod: { id: "cooblemon:love_rod", ball: "cooblemon:love_ball", lineColor: "#…" }
-// fishing.bait: { item: "cooblemon:love_sweet", count: 3, seasonings: [] }
+// fishing.rod: { id: "cooblemon:love_rod", ball: "cooblemon:love_ball", lineColor: "#…",
+//               icon: "textures/items/love_rod", nameKey: "item.cooblemon:love_rod",
+//               ballIcon: "textures/items/love_ball", ballNameKey: "item.cooblemon:love_ball" }
+// fishing.bait: { item: "cooblemon:love_sweet", count: 3, seasonings: [],
+//                 icon: "textures/items/love_sweet", nameKey: "item.cooblemon:love_sweet" }
 // fishing.pokemonChance: 0.8416  (a bite is a Pokémon, not an item)
 // fishing.buckets: [{ bucket: "common", chance: 0.83 }, …]
 // fishing.entries: [{ id: "magikarp-1", species: "magikarp", bucket: "common",
@@ -694,6 +722,70 @@ const fishing = await cobblemon.fishingTable(player);
 The `fishing` event follows a player's fishing: `cast`, `approach` (something
 starts swimming to the bobber; Cobblenav closes its Fishingnav here and doesn't
 let it open until the fishing ends), `bite` and `end` (with `outcome`).
+
+## HUD
+
+**API 3.** In Bedrock, a custom HUD can only get data from scripts through the
+title and subtitle text (`#hud_title_text_string` in `hud_screen.json`).
+Cobblemon Bedrock already uses both for its party panel and the Pokédex
+scanner, and there's only one title: if your add-on sent titles too, the
+party panel would flicker or vanish. So don't send them. Give yours to
+`hud(player, content)` and Cobblemon Bedrock adds them to the title it sends:
+
+```js
+await cobblemon.hud(player, {
+  marks: ["radar", "dot_3_5"],                 // in the title as |myaddon:radar||myaddon:dot_3_5|
+  lines: [`${x} ${y} ${z}`, { translate: "myaddon.hud.tracking" }],  // subtitle rows 24, 25…
+});
+await cobblemon.hud(player, null);             // take it all away
+```
+
+- **Marks** go in the title as `|<addon>:<mark>|`. Your JSON UI shows a
+  control when the title contains its mark, the way the party panel does.
+  Make sure no mark of yours is part of another (`dot_1` is in `dot_12`;
+  end them with a letter or pad the numbers: `dot_01`).
+- **Lines** go in the subtitle from row 24 on (`firstRow` in the reply).
+  Rows 0–23 always belong to the party panel, filled in even when it isn't
+  shown, so yours never move. A label can only show the whole subtitle: put
+  it in a panel that clips, shifted up `row × line height`, so only your line
+  shows. Only one add-on's lines are shown at a time: the last one that
+  started sending them.
+- The title starts with `§0§0`, which Cobblemon Bedrock's `hud_title_text`
+  hides, together with the subtitle. **Don't redefine `hud_title_text`**:
+  that would break the hiding for everyone.
+- It stays until you change it or the player leaves. Not shown while the
+  player scans with the Pokédex, which takes the title.
+- Send it when something changes, not every tick: every call sends the
+  title again.
+
+In your resource pack, add your control to the HUD with `modifications`, so it
+doesn't replace Cobblemon Bedrock's (defining `controls` of an existing element
+does):
+
+```json
+{
+  "namespace": "hud",
+  "root_panel": {
+    "modifications": [
+      { "array_name": "controls", "operation": "insert_back",
+        "value": [{ "myaddon_hud@myaddon_hud.root": {} }] }
+    ]
+  }
+}
+```
+
+and read the title with a binding:
+
+```json
+"bindings": [
+  { "binding_name": "#hud_title_text_string", "binding_type": "global" },
+  { "binding_type": "view",
+    "source_property_name": "(not ((#hud_title_text_string - '|myaddon:radar|') = #hud_title_text_string))",
+    "target_property_name": "#visible" }
+]
+```
+
+The example add-on's `/scriptevent ejemplo:hud` is a working one.
 
 ## Chest screens
 

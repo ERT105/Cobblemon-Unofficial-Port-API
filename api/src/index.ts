@@ -183,6 +183,8 @@ export function registerAddon(def: AddonDefinition): CobblemonClient {
     spawnDetail: (ids) => query("spawn_detail", { ids }),
     fishingTable: (player, bucket) => query("fishing_table", { player: playerId(player), bucket }),
     sprites: (pokemon) => query("sprites", { pokemon }),
+    itemInfo: (ids) => query("item_info", { ids }),
+    hud: (player, content) => action("hud", { player: playerId(player), content: content ?? null }),
     spawnNpc: (req) => action("spawn_npc", { npc: req.npc, at: req.at, yaw: req.yaw, tag: req.tag }),
     despawnNpc: (entityId) => action<undefined>("despawn_npc", { entity: entityId }).then(() => undefined),
     npcMarker: (blockId, npcs, options) =>

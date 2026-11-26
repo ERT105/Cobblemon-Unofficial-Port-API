@@ -248,7 +248,8 @@ Bedrock provides, Cobblemon Bedrock rejects it with a clear error.
 - API 3 adds spawn tables (`spawnTable`, for a spot or the area around a
   player) with Cobblemon's own conditions (`spawnDetail`), the fishing table
   and events (`fishingTable`, `fishing`), sprite paths
-  (`sprites`), the `wild_spawned` and `pokemon_encountered` events, where each
+  (`sprites`), item and block icons and names (`itemInfo`), a HUD channel
+  that shares the title with the party panel (`hud`), the `wild_spawned` and `pokemon_encountered` events, where each
   wild Pokémon came from in `nearby`, the Pokédex per form, species `labels`
   and `evYield`, and [chest screens](CHEST_SCREENS.md).
 

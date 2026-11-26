@@ -1,0 +1,52 @@
+{
+  "namespace": "ejemplo_hud",
+
+  "line": {
+    "type": "panel",
+    "size": [180, 10],
+    "clips_children": true,
+    "$text_offset|default": [0, -240],
+    "controls": [
+      {
+        "text": {
+          "type": "label",
+          "text": "#text",
+          "anchor_from": "top_left",
+          "anchor_to": "top_left",
+          "size": [180, 400],
+          "offset": "$text_offset",
+          "text_alignment": "center",
+          "shadow": true,
+          "localize": false,
+          "bindings": [
+            { "binding_name": "#hud_subtitle_text_string", "binding_name_override": "#text", "binding_type": "global" }
+          ]
+        }
+      }
+    ]
+  },
+
+  "root": {
+    "type": "image",
+    "texture": "textures/ui/white_background",
+    "color": [0, 0, 0],
+    "alpha": 0.45,
+    "anchor_from": "top_middle",
+    "anchor_to": "top_middle",
+    "offset": [0, 4],
+    "size": [184, 26],
+    "layer": 30,
+    "bindings": [
+      { "binding_name": "#hud_title_text_string", "binding_type": "global" },
+      {
+        "binding_type": "view",
+        "source_property_name": "(not ((#hud_title_text_string - '|ejemplo:hud|') = #hud_title_text_string))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      { "title@ejemplo_hud.line": { "$text_offset": [0, -250], "offset": [0, 2], "anchor_from": "top_middle", "anchor_to": "top_middle" } },
+      { "coords@ejemplo_hud.line": { "$text_offset": [0, -240], "offset": [0, 13], "anchor_from": "top_middle", "anchor_to": "top_middle" } }
+    ]
+  }
+}

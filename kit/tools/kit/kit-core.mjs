@@ -2155,7 +2155,17 @@ async function preloadNearbyBlockData() {
   const blocksDir = resolveFromRoot("bp/blocks");
   if (existsSync3(blocksDir)) {
     for (const name of await readdir10(blocksDir)) {
-      if (name.endsWith(".json")) portBlockIds.add(`cooblemon:${name.replace(/\.json$/, "")}`);
+      if (!name.endsWith(".json")) continue;
+      portBlockIds.add(`cooblemon:${name.replace(/\.json$/, "")}`);
+      try {
+        const def = JSON.parse(await readFile4(path4.join(blocksDir, name), "utf8"));
+        const id = def["minecraft:block"]?.description?.identifier;
+        if (id) {
+          portBlockIds.delete(`cooblemon:${name.replace(/\.json$/, "")}`);
+          portBlockIds.add(id);
+        }
+      } catch {
+      }
     }
   }
   for (const [tag, values] of Object.entries(VANILLA_TAGS)) tagCache.set(tag, values);

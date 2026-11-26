@@ -483,6 +483,7 @@ for (const [name, describe] of Object.entries(ON_EVENT)) {
 // `/scriptevent ejemplo:spawns` What can spawn where you stand (API 3), bucket by bucket.
 // `/scriptevent ejemplo:fishing` What can bite on your rod (API 3), bucket by bucket.
 // `/scriptevent ejemplo:radar`  The Spawn Radar: hold it and tap to open a chest screen (API 3).
+// `/scriptevent ejemplo:hud`    Turns a small HUD box with your coordinates on and off (API 3).
 
 /** Sends a chat line to one player with this example's prefix. */
 function say(player, key, params = []) {
@@ -493,7 +494,50 @@ function say(player, key, params = []) {
   player.sendMessage({ rawtext: [{ text: "§b[Example]§r " }, line] });
 }
 
+// —— HUD (API 3) ——
+//
+// Cobblemon Bedrock adds our marks and lines to the HUD title it already
+// sends (its party panel uses it), so we never send titles ourselves.
+// `RP/ui/hud_screen.json` adds `RP/ui/ejemplo_hud.json` to the HUD: it shows
+// the box while the title contains `|ejemplo:hud|`, and subtitle rows 24 and 25.
+
+const hudTimers = new Map();
+
+async function sendHud(player) {
+  const { x, y, z } = player.location;
+  await cobblemon.hud(player, {
+    marks: ["hud"],
+    lines: [`${Math.floor(x)} ${Math.floor(y)} ${Math.floor(z)}`, { translate: "ejemplo.hud.title" }],
+  });
+}
+
 const COMMANDS = {
+  async hud(player) {
+    const timer = hudTimers.get(player.id);
+    if (timer !== undefined) {
+      system.clearRun(timer);
+      hudTimers.delete(player.id);
+      await cobblemon.hud(player, null);
+      say(player, "ejemplo.cmd.hud_off");
+      return;
+    }
+    let last = "";
+    // Only when the block changes: every call sends the HUD title again.
+    const id = system.runInterval(() => {
+      if (!player.isValid) {
+        system.clearRun(id);
+        hudTimers.delete(player.id);
+        return;
+      }
+      const { x, y, z } = player.location;
+      const key = `${Math.floor(x)} ${Math.floor(y)} ${Math.floor(z)}`;
+      if (key === last) return;
+      last = key;
+      sendHud(player).catch(() => {});
+    }, 5);
+    hudTimers.set(player.id, id);
+    say(player, "ejemplo.cmd.hud_on");
+  },
   async altar(player) {
     const result = await cobblemon.spawn({
       pokemon: {

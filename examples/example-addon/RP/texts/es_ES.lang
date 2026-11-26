@@ -81,3 +81,6 @@ ejemplo.radar.entry=%s: %s% en su rareza (entrada %s, niveles %s)
 ejemplo.radar.spawned=Nueva en el catálogo: %s (entrada %s, %s)
 ejemplo.radar.detail=Posición: %s · cabe en %s sitios cercanos · condiciones: %s
 ejemplo.radar.encountered=Encontrado: %s (entrada %s, %s)
+ejemplo.hud.title=HUD de ejemplo (API 3)
+ejemplo.cmd.hud_on=Recuadro del HUD activado. Vuelve a ejecutarlo para quitarlo.
+ejemplo.cmd.hud_off=Recuadro del HUD desactivado.
