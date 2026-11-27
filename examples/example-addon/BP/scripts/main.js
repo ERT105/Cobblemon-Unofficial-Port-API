@@ -500,7 +500,7 @@ function say(player, key, params = []) {
 // Cobblemon Bedrock adds our marks and lines to the HUD title it already
 // sends (its party panel uses it), so we never send titles ourselves.
 // `RP/ui/hud_screen.json` adds `RP/ui/ejemplo_hud.json` to the HUD: it shows
-// the box while the title contains `|ejemplo:hud|`, and subtitle rows 24 and 25.
+// the box while the title contains `|ejemplo:hud|`, and title rows 0 and 1 (our two lines).
 
 const hudTimers = new Map();
 

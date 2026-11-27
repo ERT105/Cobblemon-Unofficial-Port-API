@@ -783,6 +783,11 @@ export interface WildPokemon {
     entryId: string | null;
     /** API 3. Its rarity bucket (`common`, `uncommon`…), or `null`. */
     bucket: string | null;
+    /**
+     * API 3. Pokémon of the same herd share this id (the entity id of the first
+     * one that spawned); `null` when it isn't part of a herd.
+     */
+    herdId: string | null;
     dimension: "overworld" | "nether" | "the_end";
     location: {
         x: number;
@@ -812,6 +817,44 @@ export type SpawnTableRequest = ({
 }) & {
     bucket?: string;
 });
+/** A range of levels. */
+export interface LevelRange {
+    min: number;
+    max: number;
+}
+/** One Pokémon a herd can have (Cobblemon's `herdablePokemon`). */
+export interface HerdMember {
+    species: string;
+    form: string | null;
+    alpha: boolean;
+    /** Spawns first, if it can. */
+    leader: boolean;
+    /** Can spawn after the leader. */
+    follower: boolean;
+    /** Its weight among the members that can spawn next. */
+    weight: number;
+    /** At most this many in one herd. */
+    maxTimes: number;
+    /** Its level is the herd's, clamped to this… */
+    levels?: LevelRange;
+    /** …then moved at random by this much. */
+    levelOffset?: LevelRange;
+    /** It only joins when the herd's level is in this range. */
+    herdLevels?: LevelRange;
+    heldItem?: string;
+}
+/**
+ * A herd (Cobblemon's `pokemon-herd` entries). It competes in the draw as one
+ * spawn, with the entry's weight. When it wins, one level is rolled for the
+ * whole herd and members are picked one by one until `maxSize`: first a
+ * leader, if any can spawn, then followers by weight.
+ */
+export interface HerdInfo {
+    maxSize: number;
+    /** The herd's level range; each member adjusts it (see `HerdMember`). */
+    levels: LevelRange;
+    members: HerdMember[];
+}
 /** One thing that can spawn, as Cobblemon Bedrock's spawner sees it. */
 export interface SpawnTableEntry {
     /**
@@ -829,12 +872,18 @@ export interface SpawnTableEntry {
     baseWeight: number;
     /** Chance within its bucket, 0–1. Multiply by the bucket's chance for the overall one. */
     chance: number;
+    /** For a herd, the herd's levels. */
     levels: {
         min: number;
         max: number;
     } | null;
-    /** The leader of an alpha herd. */
+    /** The face of the entry is an alpha (the leader of an alpha herd). */
     alpha: boolean;
+    /**
+     * The herd, when the entry is one; `null` otherwise. `species` and `form`
+     * are then only its face: the leader, or the member with the most weight.
+     */
+    herd: HerdInfo | null;
     /** Conditions as Cobblemon Bedrock stores them (converted from Cobblemon's). */
     conditions: {
         biome: string;
@@ -943,7 +992,12 @@ export interface SpawnTableResult {
  */
 export interface SpawnDetail {
     id: string;
-    /** Cobblemon's Pokémon properties (`vulpix region_bias=alola`). */
+    /** Cobblemon's spawn type. */
+    type: "pokemon" | "pokemon-herd";
+    /**
+     * Cobblemon's Pokémon properties (`vulpix region_bias=alola`). For a herd,
+     * its face: the leader, or the member with the most weight.
+     */
     pokemon: string;
     /** `grounded`, `submerged`, `surface`, `seafloor` or `fishing`. */
     positionType: string;
@@ -967,6 +1021,8 @@ export interface SpawnDetail {
     weightMultipliers?: Array<Record<string, unknown>>;
     /** Cobblemon's drop table, when the entry has its own. */
     drops?: unknown;
+    /** The herd's members and rules, when `type` is `pokemon-herd`; else `null`. */
+    herd: HerdInfo | null;
 }
 export interface SpawnDetailResult {
     details: SpawnDetail[];
@@ -1110,9 +1166,9 @@ export interface HudContent {
      */
     marks?: string[];
     /**
-     * Up to 12 lines of text (strings or raw text with `translate`). They are in
-     * the HUD subtitle from row `firstRow` (24) on: show the subtitle shifted
-     * inside a clipping panel so only your line is seen.
+     * Up to 12 lines of text (strings or raw text with `translate`; no `|`).
+     * They are the first rows of the HUD title, from row `firstRow` (0) on:
+     * show the title shifted inside a clipping panel so only your line is seen.
      */
     lines?: Array<string | RawMessage>;
 }

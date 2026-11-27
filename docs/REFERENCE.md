@@ -576,13 +576,13 @@ made.
 | --- | --- |
 | `party(player)` | `{ pokemon: [...] }`: the party, as event summaries (with `tag`). |
 | `pokedex(player, species?)` | `{ seen, caught, total, entries: [{ species, status, forms }] }`. `species` narrows the list. `forms` (API 3): `[{ form, status, genders, shinies }]`, per form as in Cobblemon's Pokédex (`form: null` is the base form); empty when only the species is known. |
-| `nearby({ player \| at, radius? })` | `{ pokemon: [{ entityId, species, form, level, shiny, alpha, tag, source, entryId, bucket, dimension, location, distance }] }`: wild Pokémon, nearest first. `radius` 1–128 blocks (1–64 before API 3; default 16), up to 50 results. `source` (`world`, `snack`, `fishing`), `entryId` and `bucket` say where it came from; see [Spawn tables](#spawn-tables). |
+| `nearby({ player \| at, radius? })` | `{ pokemon: [{ entityId, species, form, level, shiny, alpha, tag, source, entryId, bucket, herdId, dimension, location, distance }] }`: wild Pokémon, nearest first. `radius` 1–128 blocks (1–64 before API 3; default 16), up to 50 results. `source` (`world`, `snack`, `fishing`), `entryId` and `bucket` say where it came from; see [Spawn tables](#spawn-tables). `herdId` is shared by the Pokémon of one herd ([Herds](#herds)). |
 | `species(id)` | Its data: name, number, types, base stats, abilities, catch rate, forms, `labels` (`gen1`, `starter`, `legendary`…), `evYield`, and which add-on registered it (`null` for Cobblemon Bedrock's own). `labels` and `evYield` are API 3. |
 | `spawnTable({ player \| at \| snack, bucket?, area? })` | **API 3.** What can spawn there and how likely it is. See [Spawn tables](#spawn-tables). |
 | `spawnDetail(ids)` | **API 3.** Cobblemon's own conditions for 1–32 entries. See [Spawn tables](#spawn-tables). |
 | `spawnEntries(species?)` | **API 3.** `{ ids }`: every spawn entry id, world and fishing, or only a species' ones. What Cobblenav's `catalogue grant all` and `grant species` use. See [Spawn tables](#spawn-tables). |
 | `fishingTable(player, bucket?)` | **API 3.** What can bite on the player's rod and how likely it is. See [Fishing](#fishing). |
-| `sprites([{ species, form?, shiny? }])` | **API 3.** `{ sprites: [{ species, form, shiny, sprite, face }] }`: texture paths for 1–64 Pokémon, to use as-is in your UI (resource pack textures are shared between packs). `null` when there's none. |
+| `sprites([{ species, form?, shiny? }])` | **API 3.** `{ sprites: [{ species, form, shiny, sprite, face }] }`: texture paths for 1–64 Pokémon, to use as-is in your UI (resource pack textures are shared between packs). `null` when there's none. For a Pokémon the player hasn't seen, use `textures/ui/dex/mod/platform_unknown`, the mod's "unknown" picture that Cobblemon Bedrock's Pokédex shows. |
 | `itemInfo(ids)` | **API 3.** `{ items: [{ id, kind, nameKey, icon }] }` for 1–64 item or block ids, Cobblemon Bedrock's or Minecraft's. See [Item icons and names](#item-icons-and-names). |
 
 ### Item icons and names
@@ -632,7 +632,7 @@ within it**, by weight, among the entries whose conditions hold there.
 const table = await cobblemon.spawnTable({ player, bucket: "rare" });
 // table.buckets: [{ bucket: "common", chance: 0.938 }, …]
 // table.entries: [{ id: "bulbasaur-1", species: "bulbasaur", form: null, bucket: "rare",
-//                   weight: 18, chance: 0.12, levels: { min: 5, max: 32 }, alpha: false,
+//                   weight: 18, chance: 0.12, levels: { min: 5, max: 32 }, alpha: false, herd: null,
 //                   conditions: { biome: "is_jungle", light: "surface", … },
 //                   place: { biome: "minecraft:jungle", biomeTags: ["cobblemon:is_jungle", …],
 //                            positionType: "grounded", fluid: null } }, …]
@@ -668,6 +668,7 @@ const table = await cobblemon.spawnTable({ player, bucket: "rare" });
   `lava` or `null`). It's what Cobblenav uses to pick the platform under each
   Pokémon: first the fluid and position type (water, lava), then the biome
   tags (sand for `is_arid`, stone for `is_mountain`, grass for `is_plains`…).
+- `herd` describes the entry when it is a herd; see [Herds](#herds).
 - Fishing entries are in `fishingTable`, below.
 - `spawnEntries()` lists every entry id there is (world and fishing, as
   Cobblemon's world spawn pool, add-on entries included), and
@@ -701,6 +702,40 @@ const { details, blocks } = await cobblemon.spawnDetail(["gastly-1"]);
 // blockInfo["minecraft:farmland"]: { icon: "textures/blocks/dirt", nameKey: "tile.farmland.name" }
 // partialBlocks: ["#cobblemon:natural"]
 ```
+
+Each detail also has `type` (`pokemon` or `pokemon-herd`, as in Cobblemon)
+and `herd` (the same as in `spawnTable`, or `null`).
+
+### Herds
+
+**API 3.** Cobblemon's herds (`pokemon-herd` entries, about two thousand:
+alpha herds like `venusaur-alpha-1` and plain ones like `bulbasaur-herd-1`)
+spawn as in Cobblemon. A herd competes in the draw as **one** entry, with its
+own weight. When it wins, it takes the rest of that spawn pass: one level is
+rolled for the whole herd, then members are picked one at a time until it
+reaches `maxSize` or the pass runs out of room. First a leader, if one can
+spawn; then followers by weight, each at most `maxTimes`, and only those whose
+`herdLevels` include the herd's level. A member's level is the herd's,
+clamped to its `levels` and moved at random by its `levelOffset`.
+
+In `spawnTable` and `spawnDetail` a herd entry has `herd`:
+
+```js
+// entries[i].herd for "bulbasaur-herd-1":
+// { maxSize: 4, levels: { min: 5, max: 53 },
+//   members: [
+//     { species: "bulbasaur", form: null, alpha: false, leader: false, follower: true,
+//       weight: 80, maxTimes: 7, levels: { min: 8, max: 29 }, levelOffset: { min: -3, max: 3 } },
+//     { species: "ivysaur", … }, { species: "venusaur", … }] }
+```
+
+- `species` and `form` of a herd entry are only its face: the leader, or the
+  member with the most weight. The members are in `herd.members`.
+- `levels` of a herd entry are the herd's.
+- Every member that spawns is reported by `wild_spawned` with the herd's
+  `entryId`, and with the same `herdId`; `nearby` gives `herdId` too.
+- A Poké Snack doesn't attract herds, as in Cobblemon: a `snack` table leaves
+  them out.
 
 ### Fishing
 
@@ -741,13 +776,14 @@ let it open until the fishing ends), `bite` and `end` (with `outcome`).
 title and subtitle text (`#hud_title_text_string` in `hud_screen.json`).
 Cobblemon Bedrock already uses both for its party panel and the Pokédex
 scanner, and there's only one title: if your add-on sent titles too, the
-party panel would flicker or vanish. So don't send them. Give yours to
-`hud(player, content)` and Cobblemon Bedrock adds them to the title it sends:
+party panel would flicker or vanish. So don't send them. Give your marks and
+lines to `hud(player, content)` and Cobblemon Bedrock puts them in the title
+it sends:
 
 ```js
 await cobblemon.hud(player, {
   marks: ["radar", "dot_3_5"],                 // in the title as |myaddon:radar||myaddon:dot_3_5|
-  lines: [`${x} ${y} ${z}`, { translate: "myaddon.hud.tracking" }],  // subtitle rows 24, 25…
+  lines: [`${x} ${y} ${z}`, { translate: "myaddon.hud.tracking" }],  // title rows 0, 1…
 });
 await cobblemon.hud(player, null);             // take it all away
 ```
@@ -756,19 +792,24 @@ await cobblemon.hud(player, null);             // take it all away
   control when the title contains its mark, the way the party panel does.
   Make sure no mark of yours is part of another (`dot_1` is in `dot_12`;
   end them with a letter or pad the numbers: `dot_01`).
-- **Lines** go in the subtitle from row 24 on (`firstRow` in the reply).
-  Rows 0–23 always belong to the party panel, filled in even when it isn't
-  shown, so yours never move. A label can only show the whole subtitle: put
-  it in a panel that clips, shifted up `row × line height`, so only your line
-  shows. Only one add-on's lines are shown at a time: the last one that
-  started sending them.
-- The title starts with `§0§0`, which Cobblemon Bedrock's `hud_title_text`
-  hides, together with the subtitle. **Don't redefine `hud_title_text`**:
+- **Lines** are the first rows of the title, from row 0 on (`firstRow` in the
+  reply); the marks come after them. A label can only show the whole title:
+  put it in a panel that clips, shifted up `row × line height`, so only your
+  line shows. Keep each line short enough for your box, since a line that
+  wraps pushes the next ones down. Lines can't contain `|`. Only one add-on's
+  lines are shown at a time: the last one that started sending them.
+- **Changed in API 3 (Cobblemon Bedrock 1.8.14):** lines used to be in the
+  subtitle from row 24. They moved because the party panel draws the
+  subtitle: every change there made it lay out its portraits again, and the
+  game stuttered on each `hud` call. Read `#hud_title_text_string` instead of
+  `#hud_subtitle_text_string` and use rows 0, 1… instead of 24, 25….
+- The title starts with `§0§0§r`, which Cobblemon Bedrock's `hud_title_text`
+  hides (`§r` keeps your first line from turning black). **Don't redefine `hud_title_text`**:
   that would break the hiding for everyone.
 - It stays until you change it or the player leaves. Not shown while the
   player scans with the Pokédex, which takes the title.
-- Send it when something changes, not every tick: every call sends the
-  title again.
+- Send it when something changes, not every tick. Sending the same content
+  again sends nothing.
 
 In your resource pack, add your control to the HUD with `modifications`, so it
 doesn't replace Cobblemon Bedrock's (defining `controls` of an existing element

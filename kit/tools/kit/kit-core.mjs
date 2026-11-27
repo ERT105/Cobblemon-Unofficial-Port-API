@@ -2246,22 +2246,22 @@ function bucketSpawnWeight(bucket) {
 // tools/lib/spawn-pool-converter.ts
 init_species_id();
 init_utils();
-function expandHerdLeader(entry) {
+function expandHerd(entry) {
   if (entry.type !== "pokemon-herd") return entry;
-  const leader = (entry.herdablePokemon ?? []).find(
-    (member) => member.isLeader && /alpha=true/i.test(member.pokemon ?? "")
-  );
-  if (!leader?.pokemon) return entry;
+  const members = (entry.herdablePokemon ?? []).filter((m) => m.pokemon);
+  const leader = members.find((m) => m.isLeader);
+  const face = leader ?? [...members].filter((m) => m.isFollower !== false).sort((x, y) => (y.weight ?? 1) - (x.weight ?? 1))[0] ?? members[0];
+  if (!face?.pokemon) return entry;
   return {
     ...entry,
     type: "pokemon",
-    pokemon: leader.pokemon,
-    // El peso de la **manada**, que es lo que sortea el mod (`PokemonHerdSpawnDetail`
-    // compite con su `weight`). El del líder solo decide quién encabeza dentro de
-    // ella, y como el líder alfa sale siempre, aquí no pinta nada. Con el del
-    // líder (30 frente a 10) los alfas salían el triple de lo que tocaba.
-    weight: entry.weight ?? leader.weight,
-    levelRange: entry.levelRange ?? leader.levelRange
+    pokemon: face.pokemon,
+    // El peso de la **manada**, que es lo que sortea el mod. El de cada miembro
+    // solo decide quién sale dentro de ella. (Con el del líder, los alfas
+    // salían el triple de lo que tocaba.)
+    weight: entry.weight ?? face.weight,
+    levelRange: entry.levelRange ?? face.levelRange,
+    herd: true
   };
 }
 function heldItemFromProperties(properties) {
@@ -2457,7 +2457,7 @@ function resolveBaseBlocks(needed) {
   return [...out].sort();
 }
 function pendingRuleKey(rule) {
-  return `${rule.pokeSnack ?? ""}|${(rule.moonPhases ?? []).join(",")}|${rule.timeRange ?? ""}|${rule.thunder ?? ""}|${rule.slimeChunk ?? ""}|${JSON.stringify(rule.coords ?? {})}|` + ruleKey(
+  return `${rule.herd ? rule.entryId ?? "herd" : ""}|${rule.pokeSnack ?? ""}|${(rule.moonPhases ?? []).join(",")}|${rule.timeRange ?? ""}|${rule.thunder ?? ""}|${rule.slimeChunk ?? ""}|${JSON.stringify(rule.coords ?? {})}|` + ruleKey(
     rule.species,
     rule.form,
     rule.biome,
@@ -2657,7 +2657,7 @@ async function convertJavaSpawnPools(options) {
     filesRead++;
     const fileName = path5.basename(filePath);
     for (const rawEntry of pool.spawns ?? []) {
-      const entry = expandHerdLeader(rawEntry);
+      const entry = expandHerd(rawEntry);
       if (entry.type !== "pokemon" || !entry.pokemon) {
         omit(rawEntry, "not_pokemon", fileName);
         continue;
@@ -2798,7 +2798,8 @@ async function convertJavaSpawnPools(options) {
               ...entry.id ? { entryId: entry.id } : {},
               ...extras,
               alpha: /alpha=true/i.test(entry.pokemon ?? "") || void 0,
-              heldItem: /alpha=true/i.test(entry.pokemon ?? "") ? heldItemFromProperties(entry.pokemon ?? "") : void 0
+              heldItem: /alpha=true/i.test(entry.pokemon ?? "") ? heldItemFromProperties(entry.pokemon ?? "") : void 0,
+              herd: entry.herd || void 0
             };
             const key = pendingRuleKey(pending);
             const existing = pendingDedup.get(key);
@@ -2843,6 +2844,7 @@ async function convertJavaSpawnPools(options) {
       bucket: rule.bucket,
       ...rule.alpha ? { alpha: true } : {},
       ...rule.heldItem ? { heldItem: rule.heldItem } : {},
+      ...rule.herd ? { herd: true } : {},
       habitat: rule.habitat,
       population: rule.population,
       light: rule.light,
@@ -2945,6 +2947,7 @@ function bundleSpawnRules(id, spawn, options) {
     if (rule.weightMults) bundled.weightMults = rule.weightMults;
     if (rule.alpha) bundled.alpha = true;
     if (rule.heldItem) bundled.heldItem = rule.heldItem;
+    if (rule.herd) bundled.herd = true;
     if (rule.biomeTag && rule.biomeTag !== rule.biome) bundled.biomeTag = rule.biomeTag;
     const selector = rule.biomeSelector;
     if (selector?.any && selector.any.length > 1) bundled.biomeAny = [...selector.any];

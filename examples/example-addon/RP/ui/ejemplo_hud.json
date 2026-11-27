@@ -5,7 +5,7 @@
     "type": "panel",
     "size": [180, 10],
     "clips_children": true,
-    "$text_offset|default": [0, -240],
+    "$text_offset|default": [0, 0],
     "controls": [
       {
         "text": {
@@ -19,7 +19,7 @@
           "shadow": true,
           "localize": false,
           "bindings": [
-            { "binding_name": "#hud_subtitle_text_string", "binding_name_override": "#text", "binding_type": "global" }
+            { "binding_name": "#hud_title_text_string", "binding_name_override": "#text", "binding_type": "global" }
           ]
         }
       }
@@ -45,8 +45,8 @@
       }
     ],
     "controls": [
-      { "title@ejemplo_hud.line": { "$text_offset": [0, -250], "offset": [0, 2], "anchor_from": "top_middle", "anchor_to": "top_middle" } },
-      { "coords@ejemplo_hud.line": { "$text_offset": [0, -240], "offset": [0, 13], "anchor_from": "top_middle", "anchor_to": "top_middle" } }
+      { "title@ejemplo_hud.line": { "$text_offset": [0, -10], "offset": [0, 2], "anchor_from": "top_middle", "anchor_to": "top_middle" } },
+      { "coords@ejemplo_hud.line": { "$text_offset": [0, 0], "offset": [0, 13], "anchor_from": "top_middle", "anchor_to": "top_middle" } }
     ]
   }
 }
